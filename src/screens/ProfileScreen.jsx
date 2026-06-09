@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 
 /**
  * ProfileScreen — Экран «Профиль / Личный кабинет».
- *
- * Интегрирован переключатель табов («Основное» и «Активность») на чистом Tailwind.
- * Карточки распределены по табам с полным сохранением их стилей и структуры.
  */
 export default function ProfileScreen({
   profile,
@@ -15,12 +12,15 @@ export default function ProfileScreen({
   achievements,
 }) {
   const [activeTab, setActiveTab] = useState("main"); // "main" | "activity"
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Локальные состояния для полей формы редактирования
   const [formAge, setFormAge] = useState(profile.age);
   const [formCountry, setFormCountry] = useState(profile.country);
   const [formRehab, setFormRehab] = useState(profile.passedRehabilitation);
   const [saveMessage, setSaveMessage] = useState("");
 
-  // Sync local form state if global state changes (e.g. initial loads)
+  // Синхронизация формы при изменении внешнего профиля
   useEffect(() => {
     setFormAge(profile.age);
     setFormCountry(profile.country);
@@ -35,6 +35,15 @@ export default function ProfileScreen({
     });
     setSaveMessage("Данные успешно сохранены");
     setTimeout(() => setSaveMessage(""), 3000);
+    setIsEditing(false);
+  }
+
+  function handleCancelProfile() {
+    // Сбросить к сохраненным значениям
+    setFormAge(profile.age);
+    setFormCountry(profile.country);
+    setFormRehab(profile.passedRehabilitation);
+    setIsEditing(false);
   }
 
   function toggleReminders() {
@@ -51,10 +60,6 @@ export default function ProfileScreen({
     }));
   }
 
-  function setLanguage(lang) {
-    onSettingsChange((prev) => ({ ...prev, language: lang }));
-  }
-
   return (
     <section className="screen" id="screen-profile">
       <header className="screen__header">
@@ -62,15 +67,13 @@ export default function ProfileScreen({
         <p className="screen__subtitle">Личный кабинет пользователя</p>
       </header>
 
-      {/* Переключатель табов на чистом Tailwind */}
-      <div className="flex bg-gray-200/60 p-1 rounded-xl w-full">
+      {/* Полноценные мобильные табы */}
+      <div className="profile-tabs">
         <button
           type="button"
           onClick={() => setActiveTab("main")}
-          className={`w-1/2 py-2 text-xs font-medium rounded-lg text-center transition-all ${
-            activeTab === "main"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+          className={`profile-tabs__btn ${
+            activeTab === "main" ? "profile-tabs__btn--active" : ""
           }`}
         >
           Основное
@@ -78,85 +81,148 @@ export default function ProfileScreen({
         <button
           type="button"
           onClick={() => setActiveTab("activity")}
-          className={`w-1/2 py-2 text-xs font-medium rounded-lg text-center transition-all ${
-            activeTab === "activity"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+          className={`profile-tabs__btn ${
+            activeTab === "activity" ? "profile-tabs__btn--active" : ""
           }`}
         >
           Активность
         </button>
       </div>
 
+      {/* Сообщение об успешном сохранении */}
+      {saveMessage && (
+        <div className="save-message" id="save-message" style={{ margin: "8px 0" }}>
+          {saveMessage}
+        </div>
+      )}
+
       {/* Вкладка «Основное» */}
       {activeTab === "main" && (
         <>
-          {/* 1. Profile Editing Form */}
+          {/* Блок: Профиль пользователя */}
           <div className="card" id="card-profile-form">
             <h2 className="card__title">Профиль пользователя</h2>
 
-            <div className="form-field">
-              <label className="form-field__label" htmlFor="input-age">
-                Возраст
-              </label>
-              <input
-                id="input-age"
-                className="form-field__input"
-                type="number"
-                min="1"
-                max="120"
-                value={formAge}
-                onChange={(e) => setFormAge(e.target.value)}
-              />
-            </div>
+            {!isEditing ? (
+              /* Режим просмотра информации с фото-заглушкой */
+              <div className="profile-view">
+                <div className="profile-view__avatar-section">
+                  <div className="profile-view__avatar-placeholder">
+                    <svg
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: "var(--color-accent)" }}
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <span className="profile-view__avatar-label">[ Фото-заглушка ]</span>
+                </div>
 
-            <div className="form-field">
-              <label className="form-field__label" htmlFor="input-country">
-                Страна
-              </label>
-              <input
-                id="input-country"
-                className="form-field__input"
-                type="text"
-                value={formCountry}
-                onChange={(e) => setFormCountry(e.target.value)}
-              />
-            </div>
+                <div className="profile-view__fields">
+                  <div className="profile-view__row">
+                    <span className="profile-view__label">Возраст:</span>
+                    <span className="profile-view__value">{profile.age} лет</span>
+                  </div>
+                  <div className="profile-view__row">
+                    <span className="profile-view__label">Страна:</span>
+                    <span className="profile-view__value">{profile.country}</span>
+                  </div>
+                  <div className="profile-view__row">
+                    <span className="profile-view__label">Реабилитация:</span>
+                    <span className="profile-view__value">
+                      {profile.passedRehabilitation ? "Да" : "Нет"}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="form-field form-field--row">
-              <span className="form-field__label">
-                Проходил реабилитацию в центре
-              </span>
-              <button
-                id="toggle-rehab"
-                className={`toggle ${formRehab ? "toggle--on" : ""}`}
-                onClick={() => setFormRehab(!formRehab)}
-                role="switch"
-                aria-checked={formRehab}
-              >
-                <span className="toggle__track">
-                  <span className="toggle__thumb" />
-                </span>
-                <span className="toggle__label">{formRehab ? "Да" : "Нет"}</span>
-              </button>
-            </div>
+                <button
+                  id="btn-edit-profile"
+                  className="btn-save mt-4"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Редактировать
+                </button>
+              </div>
+            ) : (
+              /* Режим редактирования */
+              <div className="profile-edit">
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="input-age">
+                    Возраст
+                  </label>
+                  <input
+                    id="input-age"
+                    className="form-field__input"
+                    type="number"
+                    min="1"
+                    max="120"
+                    value={formAge}
+                    onChange={(e) => setFormAge(e.target.value)}
+                  />
+                </div>
 
-            <button
-              id="btn-save-profile"
-              className="btn-save"
-              onClick={handleSaveProfile}
-            >
-              Сохранить
-            </button>
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="input-country">
+                    Страна
+                  </label>
+                  <input
+                    id="input-country"
+                    className="form-field__input"
+                    type="text"
+                    value={formCountry}
+                    onChange={(e) => setFormCountry(e.target.value)}
+                  />
+                </div>
 
-            {saveMessage && (
-              <div className="save-message" id="save-message">
-                {saveMessage}
+                <div className="form-field form-field--row">
+                  <span className="form-field__label">
+                    Проходил реабилитацию в центре
+                  </span>
+                  <button
+                    id="toggle-rehab"
+                    className={`toggle ${formRehab ? "toggle--on" : ""}`}
+                    onClick={() => setFormRehab(!formRehab)}
+                    role="switch"
+                    aria-checked={formRehab}
+                  >
+                    <span className="toggle__track">
+                      <span className="toggle__thumb" />
+                    </span>
+                    <span className="toggle__label">{formRehab ? "Да" : "Нет"}</span>
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                  <button
+                    id="btn-save-profile"
+                    className="btn-save"
+                    style={{ flex: 1, margin: 0 }}
+                    onClick={handleSaveProfile}
+                  >
+                    Сохранить
+                  </button>
+                  <button
+                    id="btn-cancel-profile"
+                    className="modal__btn modal__btn--secondary"
+                    style={{ flex: 1, margin: 0 }}
+                    onClick={handleCancelProfile}
+                  >
+                    Отмена
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 4. Settings Card */}
+          {/* Настройки */}
           <div className="card" id="card-settings">
             <h2 className="card__title">Настройки</h2>
 
@@ -199,24 +265,6 @@ export default function ProfileScreen({
                 </span>
               </button>
             </div>
-
-            <div className="settings-row">
-              <span className="settings-row__label">Язык интерфейса</span>
-              <div className="lang-tabs" id="lang-tabs">
-                <button
-                  className={`lang-tabs__btn ${settings.language === "RU" ? "lang-tabs__btn--active" : ""}`}
-                  onClick={() => setLanguage("RU")}
-                >
-                  RU
-                </button>
-                <button
-                  className={`lang-tabs__btn ${settings.language === "EN" ? "lang-tabs__btn--active" : ""}`}
-                  onClick={() => setLanguage("EN")}
-                >
-                  EN
-                </button>
-              </div>
-            </div>
           </div>
         </>
       )}
@@ -224,7 +272,7 @@ export default function ProfileScreen({
       {/* Вкладка «Активность» */}
       {activeTab === "activity" && (
         <>
-          {/* 2. Achievements Card */}
+          {/* Достижения */}
           <div className="card" id="card-achievements">
             <h2 className="card__title">Достижения</h2>
             <div className="achievement-row">
@@ -258,7 +306,7 @@ export default function ProfileScreen({
             </div>
           </div>
 
-          {/* 3. Workouts History Card */}
+          {/* История тренировок */}
           <div className="card" id="card-history">
             <h2 className="card__title">История тренировок</h2>
             {history.length === 0 ? (

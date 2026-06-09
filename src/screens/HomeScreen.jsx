@@ -14,7 +14,7 @@ import WorkoutModal from "../components/WorkoutModal";
  * - Материалы от создателя: контентная Bento-карточка
  * - Магазин и Наш Telegram: мини-карточки 1×1 (половина ширины)
  */
-export default function HomeScreen({ settings, onSettingsChange, onWorkoutComplete, onNavigate }) {
+export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
@@ -66,71 +66,6 @@ export default function HomeScreen({ settings, onSettingsChange, onWorkoutComple
 
   return (
     <section className="screen" id="screen-home">
-      {/* Заголовок с панелью управления */}
-      <header className="screen__header header-premium">
-        <div className="header-premium__left">
-          <h1 className="screen__title premium-title">Мозаика Здоровья</h1>
-          <p className="screen__subtitle premium-subtitle">Методика вашего баланса</p>
-        </div>
-        <div className="header-premium__right">
-          {/* Языковой переключатель */}
-          <div className="lang-tabs" id="lang-tabs">
-            <button
-              className={`lang-tabs__btn ${settings?.language === "RU" ? "lang-tabs__btn--active" : ""
-                }`}
-              onClick={() =>
-                onSettingsChange?.((prev) => ({ ...prev, language: "RU" }))
-              }
-            >
-              RU
-            </button>
-            <button
-              className={`lang-tabs__btn ${settings?.language === "EN" ? "lang-tabs__btn--active" : ""
-                }`}
-              onClick={() =>
-                onSettingsChange?.((prev) => ({ ...prev, language: "EN" }))
-              }
-            >
-              EN
-            </button>
-          </div>
-
-          {/* Иконка колокольчика (Уведомления) */}
-          <button
-            className="notification-bell-btn"
-            onClick={() => alert("У вас нет новых уведомлений")}
-            aria-label="Уведомления"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "36px",
-              height: "36px",
-              borderRadius: "6px",
-              border: "1px solid var(--color-border)",
-              backgroundColor: "var(--color-surface)",
-              cursor: "pointer",
-              transition: "background-color 0.15s ease",
-            }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: "var(--color-accent)" }}
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
       {/* === Bento-сетка === */}
       <div className="bento-grid">
         {/* 1. Баннер — полная ширина */}
