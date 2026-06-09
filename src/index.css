@@ -1,0 +1,1399 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+/*
+ ---break---
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * ============================================================
+ *  Мозаика Здоровья — Wireframe Prototype Styles
+ *  Mobile-First PWA | Прототипный (wireframe) дизайн
+ * ============================================================
+ */
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Цветовая палитра wireframe */
+  --color-bg: #f0f0f0;
+  --color-surface: #ffffff;
+  --color-border: #d9d9d9;
+  --color-text: #333333;
+  --color-text-secondary: #777777;
+  --color-accent: #555555;
+  --color-active: #222222;
+  --color-nav-bg: #ffffff;
+
+  /* Отступы */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Скругления */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Навигация */
+  --nav-height: 64px;
+
+  /* Шрифты — системные */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* --- App Wrapper: центрирование колонки --- */
+.app-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100dvh;
+  background-color: #e0e0e0;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+}
+
+/* На десктопе — имитация экрана смартфона */
+@media (min-width: 480px) {
+  .app-shell {
+    min-height: 100dvh;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+/* --- Прокручиваемый контент --- */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  padding-bottom: calc(var(--nav-height) + var(--spacing-lg));
+}
+
+/* --- Экран --- */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.screen__header {
+  padding: var(--spacing-sm) 0 var(--spacing-xs) 0;
+}
+
+.screen__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.screen__subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* --- Карточка (Card) --- */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card__text {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.card__text--empty {
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+
+/* --- Список тренировок (HomeScreen) --- */
+.workout-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.workout-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.workout-list__item:hover {
+  background-color: #f7f7f7;
+}
+
+.workout-list__thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.workout-list__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workout-list__name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.workout-list__desc {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+/* --- Профиль: поля --- */
+.profile-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.profile-field:last-child {
+  border-bottom: none;
+}
+
+.profile-field__label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.profile-field__value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* --- Достижения --- */
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg) 0;
+  gap: var(--spacing-xs);
+}
+
+.achievement-badge__number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-active);
+  line-height: 1;
+}
+
+.achievement-badge__label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* --- История тренировок --- */
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.history-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.history-list__date {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  min-width: 80px;
+}
+
+.history-list__name {
+  flex: 1;
+  color: var(--color-text);
+}
+
+.history-list__status {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #3a8a3e;
+  font-weight: 500;
+  background-color: #eef7ee;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* --- Bottom Navigation --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: var(--nav-height);
+  background-color: var(--color-nav-bg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.bottom-nav__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  transition: color 0.2s ease, background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav__btn:hover {
+  background-color: #f2f2f2;
+}
+
+.bottom-nav__btn--active {
+  color: var(--color-active);
+}
+
+.bottom-nav__icon {
+  width: 24px;
+  height: 24px;
+}
+
+.bottom-nav__label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+ *  Bento Grid — модульная плиточная сетка
+ * ============================================================ */
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.bento-grid__item--full {
+  grid-column: 1 / -1;
+}
+
+.bento-grid__item--half {
+  grid-column: span 1;
+}
+
+/* --- Баннер-заглушка --- */
+.banner-placeholder {
+  background-color: #d5d5d5;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-placeholder__text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* --- Кнопки тренировок --- */
+.workout-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.workout-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workout-btn:hover {
+  background-color: #e8e8e8;
+  border-color: #bbb;
+}
+
+.workout-btn:active {
+  background-color: #ddd;
+}
+
+.workout-btn__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
+.workout-btn__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workout-btn__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.workout-btn__desc {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+/* --- Мини-карточки (заглушки разделов) --- */
+.mini-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mini-card:hover {
+  background-color: #f7f7f7;
+  border-color: #bbb;
+}
+
+.mini-card:active {
+  background-color: #efefef;
+}
+
+.mini-card__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mini-card__sublabel {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+ *  Modal — модальное окно тренировки
+ * ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--spacing-md);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  animation: slideUp 0.25s ease;
+}
+
+/* --- Заглушка видеоплеера --- */
+.modal__player {
+  background-color: #c8c8c8;
+  border-radius: var(--radius-md);
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+}
+
+.modal__play-icon {
+  opacity: 0.6;
+}
+
+.modal__player-label {
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.modal__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.modal__desc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: calc(-1 * var(--spacing-sm));
+}
+
+/* --- Кнопки модалки --- */
+.modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.modal__btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal__btn--primary {
+  background-color: var(--color-active);
+  color: #ffffff;
+}
+
+.modal__btn--primary:hover {
+  background-color: #333;
+}
+
+.modal__btn--primary:active {
+  background-color: #444;
+}
+
+.modal__btn--secondary {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.modal__btn--secondary:hover {
+  background-color: #e4e4e4;
+}
+
+/* --- Анимации --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+ *  Profile Form — форма профиля
+ * ============================================================ */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.form-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-field__label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.form-field__input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-field__input:focus {
+  border-color: #999;
+}
+
+/* --- Toggle Switch (тумблер) --- */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle__track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 12px;
+  transition: background-color 0.25s ease;
+}
+
+.toggle--on .toggle__track {
+  background-color: #555;
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.toggle--on .toggle__thumb {
+  transform: translateX(20px);
+}
+
+.toggle__label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  min-width: 28px;
+}
+
+/* --- Save Button --- */
+.btn-save {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: var(--spacing-md);
+  background-color: var(--color-active);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-save:hover {
+  background-color: #333;
+}
+
+.btn-save:active {
+  background-color: #444;
+}
+
+/* --- Save Confirmation Message --- */
+.save-message {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #eef7ee;
+  border: 1px solid #c5e1c5;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: #3a8a3e;
+  text-align: center;
+  animation: fadeIn 0.2s ease;
+}
+
+/* --- Achievement Row (горизонтальная карточка) --- */
+.achievement-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.achievement-row__icon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
+.achievement-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.achievement-row__value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-active);
+  line-height: 1;
+}
+
+.achievement-row__label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* --- Settings Row --- */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row__label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  flex: 1;
+  padding-right: var(--spacing-sm);
+}
+
+/* --- Language Tabs --- */
+.lang-tabs {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.lang-tabs__btn {
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lang-tabs__btn:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.lang-tabs__btn--active {
+  background-color: var(--color-active);
+  color: #fff;
+}
+
+.lang-tabs__btn:hover:not(.lang-tabs__btn--active) {
+  background-color: #e4e4e4;
+}
+
+/* ============================================================
+ *  Header with Language Switcher
+ * ============================================================ */
+.header-with-lang {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.header-title-container {
+  flex: 1;
+}
+
+/* ============================================================
+ *  Clickable Bento Cards
+ * ============================================================ */
+.card--clickable {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card--clickable:hover {
+  background-color: #f7f7f7;
+  border-color: #bbb;
+}
+
+.card--clickable:active {
+  background-color: #efefef;
+}
+
+.card--bento-info {
+  font-family: var(--font-family);
+  background: var(--color-surface);
+}
+
+/* ============================================================
+ *  Large Workouts Card-Button
+ * ============================================================ */
+.card-workout-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+}
+
+.card-workout-main__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  width: 100%;
+}
+
+.card-workout-main__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.card-workout-main__badge {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.card-workout-main__content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.card-workout-main__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
+.card-workout-main__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-workout-main__subtitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.card-workout-main__description {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ============================================================
+ *  Activity Selector Modal
+ * ============================================================ */
+.modal--selector {
+  max-width: 380px;
+}
+
+.activity-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.activity-section__title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 4px;
+}
+
+.activity-section__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.activity-select-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.activity-select-btn:hover {
+  background-color: #e8e8e8;
+  border-color: #bbb;
+}
+
+.activity-select-btn:active {
+  background-color: #ddd;
+}
+
+/* ============================================================
+ *  Clickable Bento Info Cards with Buttons
+ * ============================================================ */
+.card-bento-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+}
+
+.card-bento-action__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  width: 100%;
+}
+
+.card-bento-action__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.card-bento-action__badge {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Hover effect on badge when card is hovered */
+.card-bento-action:hover .card-bento-action__badge {
+  background-color: var(--color-active);
+  color: #fff;
+  border-color: var(--color-active);
+}
+
+/* ============================================================
+ *  Onboarding Layouts
+ * ============================================================ */
+.screen--onboarding {
+  justify-content: center;
+  min-height: calc(100dvh - 2 * var(--spacing-md));
+}
+
+.video-player-placeholder {
+  background-color: #c8c8c8;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ============================================================
+ *  Header with Back Button
+ * ============================================================ */
+.header-with-back {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.back-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-btn:hover {
+  background-color: #e8e8e8;
+}
+
+.back-btn:active {
+  background-color: #ddd;
+}
+
+/* ============================================================
+ *  Cart Badge Button
+ * ============================================================ */
+.cart-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.cart-badge-btn:hover {
+  background-color: #f7f7f7;
+}
+
+.cart-badge-btn__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  color: #fff;
+  background-color: var(--color-active);
+  border-radius: 9px;
+  padding: 0 4px;
+}
+
+/* ============================================================
+ *  Hero Workout Card Banner
+ * ============================================================ */
+.hero-workout-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+}
+
+.hero-workout-card__title {
+  font-size: 1.35rem; /* text-2xl/text-3xl style */
+  font-weight: 700;
+  color: var(--color-text);
+  border: none !important;
+  margin-bottom: var(--spacing-xs);
+  padding-bottom: 0 !important;
+}
+
+.hero-workout-card__photo-placeholder {
+  background-color: #e6e6e6;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.hero-workout-card__photo-placeholder:hover {
+  background-color: #dddddd;
+  border-color: #aaa;
+}
+
+.hero-workout-card__photo-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.hero-workout-card__btn {
+  margin-top: var(--spacing-xs);
+}
+
+/* ============================================================
+ *  Premium Header Layout
+ * ============================================================ */
+.header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-premium__left {
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.premium-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.header-premium__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.notification-bell-btn:hover {
+  background-color: #f2f2f2 !important;
+}
+
+.notification-bell-btn:active {
+  background-color: #e6e6e6 !important;
+}
+
+/* ============================================================
+ *  List Tile (Native Mobile Menu Item)
+ * ============================================================ */
+.list-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.list-tile:hover {
+  background-color: #f9f9f9;
+  border-color: #bbb;
+}
+
+.list-tile:active {
+  background-color: #f0f0f0;
+}
+
+.list-tile__icon-placeholder {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px; /* rounded-xl style */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-tile__title {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.list-tile__chevron {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ ---break---
+ */
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ ---break---
+ */
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/*
+ ---break---
+ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

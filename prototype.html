@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Мозаика Здоровья — интерактивный прототип мобильного PWA-приложения" />
+    <meta name="theme-color" content="#f0f0f0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Мозаика Здоровья — Прототип</title>
+
+    <!-- Google Fonts for Premium Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CDN Libraries: React, ReactDOM, Babel & Tailwind CSS -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+          },
+        },
+      }
+    </script>
+
+    <!-- Core App Styles (index.css contents + Inter Font override) -->
+    <style>
+      /*
+       * ============================================================
+       *  Мозаика Здоровья — Wireframe Prototype Styles
+       *  Mobile-First PWA | Прототипный (wireframe) дизайн
+       * ============================================================
+       */
+
+      /* --- Reset & Base --- */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        /* Цветовая палитра wireframe */
+        --color-bg: #f0f0f0;
+        --color-surface: #ffffff;
+        --color-border: #d9d9d9;
+        --color-text: #333333;
+        --color-text-secondary: #777777;
+        --color-accent: #555555;
+        --color-active: #222222;
+        --color-nav-bg: #ffffff;
+
+        /* Отступы */
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --spacing-xl: 32px;
+
+        /* Скругления */
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 16px;
+
+        /* Навигация */
+        --nav-height: 64px;
+
+        /* Шрифты — премиум шрифт Inter */
+        --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+
+      html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.5;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      #root {
+        min-height: 100dvh;
+      }
+
+      /* --- App Wrapper: центрирование колонки --- */
+      .app-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100dvh;
+        background-color: #e0e0e0;
+      }
+
+      .app-shell {
+        position: relative;
+        width: 100%;
+        max-width: 430px;
+        min-height: 100dvh;
+        background-color: var(--color-bg);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+      }
+
+      /* На десктопе — имитация экрана смартфона */
+      @media (min-width: 480px) {
+        .app-shell {
+          min-height: 100dvh;
+          border-left: 1px solid var(--color-border);
+          border-right: 1px solid var(--color-border);
+        }
+      }
+
+      /* --- Прокручиваемый контент --- */
+      .app-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--spacing-md);
+        padding-bottom: calc(var(--nav-height) + var(--spacing-lg));
+      }
+
+      /* --- Экран --- */
+      .screen {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+      }
+
+      .screen__header {
+        padding: var(--spacing-sm) 0 var(--spacing-xs) 0;
+      }
+
+      .screen__title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-text);
+        letter-spacing: -0.02em;
+      }
+
+      .screen__subtitle {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        margin-top: var(--spacing-xs);
+      }
+
+      /* --- Карточка (Card) --- */
+      .card {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+      }
+
+      .card__title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .card__text {
+        font-size: 0.9rem;
+        color: var(--color-text-secondary);
+        line-height: 1.6;
+      }
+
+      .card__text--empty {
+        font-style: italic;
+        text-align: center;
+        padding: var(--spacing-md) 0;
+      }
+
+      /* --- Список тренировок (HomeScreen) --- */
+      .workout-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+      }
+
+      .workout-list__item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        transition: background-color 0.15s ease;
+      }
+
+      .workout-list__item:hover {
+        background-color: #f7f7f7;
+      }
+
+      .workout-list__thumb {
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-text-secondary);
+      }
+
+      .workout-list__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .workout-list__name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
+
+      .workout-list__desc {
+        font-size: 0.8rem;
+        color: var(--color-text-secondary);
+      }
+
+      /* --- Профиль: поля --- */
+      .profile-field {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #ececec;
+      }
+
+      .profile-field:last-child {
+        border-bottom: none;
+      }
+
+      .profile-field__label {
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+      }
+
+      .profile-field__value {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
+
+      /* --- Достижения --- */
+      .achievement-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-lg) 0;
+        gap: var(--spacing-xs);
+      }
+
+      .achievement-badge__number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-active);
+        line-height: 1;
+      }
+
+      .achievement-badge__label {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+      }
+
+      /* --- История тренировок --- */
+      .history-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .history-list__item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+      }
+
+      .history-list__date {
+        flex-shrink: 0;
+        color: var(--color-text-secondary);
+        min-width: 80px;
+      }
+
+      .history-list__name {
+        flex: 1;
+        color: var(--color-text);
+      }
+
+      .history-list__status {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        color: #3a8a3e;
+        font-weight: 500;
+        background-color: #eef7ee;
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+
+      /* --- Bottom Navigation --- */
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 430px;
+        height: var(--nav-height);
+        background-color: var(--color-nav-bg);
+        border-top: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        z-index: 100;
+      }
+
+      .bottom-nav__btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-secondary);
+        transition: color 0.2s ease, background-color 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .bottom-nav__btn:hover {
+        background-color: #f2f2f2;
+      }
+
+      .bottom-nav__btn--active {
+        color: var(--color-active);
+      }
+
+      .bottom-nav__icon {
+        width: 24px;
+        height: 24px;
+      }
+
+      .bottom-nav__label {
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+
+      /* ============================================================
+       *  Bento Grid — модульная плиточная сетка
+       * ============================================================ */
+      .bento-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+      }
+
+      .bento-grid__item--full {
+        grid-column: 1 / -1;
+      }
+
+      .bento-grid__item--half {
+        grid-column: span 1;
+      }
+
+      /* --- Баннер-заглушка --- */
+      .banner-placeholder {
+        background-color: #d5d5d5;
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-md);
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .banner-placeholder__text {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        font-style: italic;
+      }
+
+      /* --- Кнопки тренировок --- */
+      .workout-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+      }
+
+      .workout-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        width: 100%;
+        padding: var(--spacing-sm) var(--spacing-md);
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        text-align: left;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .workout-btn:hover {
+        background-color: #e8e8e8;
+        border-color: #bbb;
+      }
+
+      .workout-btn:active {
+        background-color: #ddd;
+      }
+
+      .workout-btn__icon {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-accent);
+      }
+
+      .workout-btn__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .workout-btn__name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
+
+      .workout-btn__desc {
+        font-size: 0.78rem;
+        color: var(--color-text-secondary);
+      }
+
+      /* --- Мини-карточки (заглушки разделов) --- */
+      .mini-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-xs);
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-sm);
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mini-card:hover {
+        background-color: #f7f7f7;
+        border-color: #bbb;
+      }
+
+      .mini-card:active {
+        background-color: #efefef;
+      }
+
+      .mini-card__label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
+      .mini-card__sublabel {
+        font-size: 0.72rem;
+        color: var(--color-text-secondary);
+      }
+
+      /* ============================================================
+       *  Modal — модальное окно тренировки
+       * ============================================================ */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: var(--spacing-md);
+        animation: fadeIn 0.2s ease;
+      }
+
+      .modal {
+        background-color: var(--color-surface);
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 380px;
+        padding: var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        animation: slideUp 0.25s ease;
+      }
+
+      /* --- Заглушка видеоплеера --- */
+      .modal__player {
+        background-color: #c8c8c8;
+        border-radius: var(--radius-md);
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        color: var(--color-text-secondary);
+      }
+
+      .modal__play-icon {
+        opacity: 0.6;
+      }
+
+      .modal__player-label {
+        font-size: 0.78rem;
+        font-style: italic;
+      }
+
+      .modal__title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
+      .modal__desc {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        margin-top: calc(-1 * var(--spacing-sm));
+      }
+
+      /* --- Кнопки модалки --- */
+      .modal__actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+      }
+
+      .modal__btn {
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .modal__btn--primary {
+        background-color: var(--color-active);
+        color: #ffffff;
+      }
+
+      .modal__btn--primary:hover {
+        background-color: #333;
+      }
+
+      .modal__btn--primary:active {
+        background-color: #444;
+      }
+
+      .modal__btn--secondary {
+        background-color: var(--color-bg);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+      }
+
+      .modal__btn--secondary:hover {
+        background-color: #e4e4e4;
+      }
+
+      /* --- Анимации --- */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ============================================================
+       *  Profile Form — форма профиля
+       * ============================================================ */
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #ececec;
+      }
+
+      .form-field--row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .form-field__label {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+      }
+
+      .form-field__input {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        font-family: var(--font-family);
+        color: var(--color-text);
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        outline: none;
+        transition: border-color 0.2s ease;
+      }
+
+      .form-field__input:focus {
+        border-color: #999;
+      }
+
+      /* --- Toggle Switch (тумблер) --- */
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .toggle__track {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background-color: #ccc;
+        border-radius: 12px;
+        transition: background-color 0.25s ease;
+      }
+
+      .toggle--on .toggle__track {
+        background-color: #555;
+      }
+
+      .toggle__thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: transform 0.25s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+
+      .toggle--on .toggle__thumb {
+        transform: translateX(20px);
+      }
+
+      .toggle__label {
+        font-size: 0.8rem;
+        color: var(--color-text-secondary);
+        min-width: 28px;
+      }
+
+      /* --- Save Button --- */
+      .btn-save {
+        width: 100%;
+        padding: 12px 16px;
+        margin-top: var(--spacing-md);
+        background-color: var(--color-active);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 500;
+        font-family: var(--font-family);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .btn-save:hover {
+        background-color: #333;
+      }
+
+      .btn-save:active {
+        background-color: #444;
+      }
+
+      /* --- Save Confirmation Message --- */
+      .save-message {
+        margin-top: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background-color: #eef7ee;
+        border: 1px solid #c5e1c5;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        color: #3a8a3e;
+        text-align: center;
+        animation: fadeIn 0.2s ease;
+      }
+
+      /* --- Achievement Row (горизонтальная карточка) --- */
+      .achievement-row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) 0;
+      }
+
+      .achievement-row__icon {
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-accent);
+      }
+
+      .achievement-row__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .achievement-row__value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--color-active);
+        line-height: 1;
+      }
+
+      .achievement-row__label {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+      }
+
+      /* --- Settings Row --- */
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #ececec;
+      }
+
+      .settings-row:last-child {
+        border-bottom: none;
+      }
+
+      .settings-row__label {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        flex: 1;
+        padding-right: var(--spacing-sm);
+      }
+
+      /* --- Language Tabs --- */
+      .lang-tabs {
+        display: flex;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+      }
+
+      .lang-tabs__btn {
+        padding: 6px 16px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        font-family: var(--font-family);
+        background-color: var(--color-bg);
+        color: var(--color-text-secondary);
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .lang-tabs__btn:first-child {
+        border-right: 1px solid var(--color-border);
+      }
+
+      .lang-tabs__btn--active {
+        background-color: var(--color-active);
+        color: #fff;
+      }
+
+      .lang-tabs__btn:hover:not(.lang-tabs__btn--active) {
+        background-color: #e4e4e4;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Root Mounting Element -->
+    <div id="root"></div>
+
+    <!-- React App Script (Transpiled by Babel in Browser) -->
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // ============================================================
+      //  Mock Data
+      // ============================================================
+      const initialProfile = {
+        age: "34",
+        country: "Беларусь",
+        passedRehabilitation: true, // true = Да, false = Нет
+      };
+
+      const initialHistory = [
+        { id: 1, date: "05.06.2026", name: "Гиревое дыхание на 7 точек", status: "Выполнено" },
+        { id: 2, date: "06.06.2026", name: "Гиревое дыхание на 10 точек", status: "Выполнено" },
+      ];
+
+      const initialSettings = {
+        workoutReminders: true,
+        articleNotifications: false,
+        language: "RU",
+      };
+
+      const achievements = {
+        daysInRow: 5,
+      };
+
+      const workouts = [
+        {
+          id: 1,
+          title: "Гиревое дыхание на 7 точек",
+          description: "Видео-инструкция по методике",
+        },
+        {
+          id: 2,
+          title: "Гиревое дыхание на 10 точек",
+          description: "Видео-инструкция по методике",
+        },
+        {
+          id: 3,
+          title: "Инструкция шага (3 вида)",
+          description: "Перспектива расширения",
+        },
+      ];
+
+      const methodDescription =
+        "Уникальный подход на стыке прикладной кинезиологии и кинезиотерапии. " +
+        "Поиск истинной причины боли с помощью мануального мышечного тестирования, " +
+        "коррекция состояния с помощью мануальных, дыхательных и физиотерапевтических манипуляций. " +
+        "Наша цель — вернуть вашему телу баланс, правильное движение, здоровье и долголетие.";
+
+      // ============================================================
+      //  Components: Bottom Navigation
+      // ============================================================
+      function BottomNav({ currentScreen, onNavigate }) {
+        return (
+          <nav className="bottom-nav" role="navigation" aria-label="Основная навигация">
+            <button
+              id="nav-home"
+              className={`bottom-nav__btn ${currentScreen === "home" ? "bottom-nav__btn--active" : ""}`}
+              onClick={() => onNavigate("home")}
+              aria-current={currentScreen === "home" ? "page" : undefined}
+            >
+              <svg
+                className="bottom-nav__icon"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12L12 3l9 9" />
+                <path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9" />
+              </svg>
+              <span className="bottom-nav__label">Главная</span>
+            </button>
+
+            <button
+              id="nav-profile"
+              className={`bottom-nav__btn ${currentScreen === "profile" ? "bottom-nav__btn--active" : ""}`}
+              onClick={() => onNavigate("profile")}
+              aria-current={currentScreen === "profile" ? "page" : undefined}
+            >
+              <svg
+                className="bottom-nav__icon"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M20 21c0-4.418-3.582-7-8-7s-8 2.582-8 7" />
+              </svg>
+              <span className="bottom-nav__label">Профиль</span>
+            </button>
+          </nav>
+        );
+      }
+
+      // ============================================================
+      //  Components: Workout Modal
+      // ============================================================
+      function WorkoutModal({ workout, onClose, onComplete }) {
+        if (!workout) return null;
+
+        function handleComplete() {
+          const today = new Date();
+          const dateStr =
+            String(today.getDate()).padStart(2, "0") +
+            "." +
+            String(today.getMonth() + 1).padStart(2, "0") +
+            "." +
+            today.getFullYear();
+
+          onComplete({
+            id: Date.now(),
+            date: dateStr,
+            name: workout.title,
+            status: "Выполнено",
+          });
+          onClose();
+        }
+
+        return (
+          <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              {/* Video Player Placeholder */}
+              <div className="modal__player" id="modal-player">
+                <svg
+                  className="modal__play-icon"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="10,8 16,12 10,16" />
+                </svg>
+                <span className="modal__player-label">[Видеоплеер — заглушка]</span>
+              </div>
+
+              {/* Workout Details */}
+              <h2 className="modal__title">{workout.title}</h2>
+              <p className="modal__desc">{workout.description}</p>
+
+              {/* Actions */}
+              <div className="modal__actions">
+                <button
+                  id="btn-complete-workout"
+                  className="modal__btn modal__btn--primary"
+                  onClick={handleComplete}
+                >
+                  ✓ Отметить выполнение
+                </button>
+                <button
+                  id="btn-close-modal"
+                  className="modal__btn modal__btn--secondary"
+                  onClick={onClose}
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // ============================================================
+      //  Screens: Home Screen
+      // ============================================================
+      function HomeScreen({ onWorkoutComplete }) {
+        const [selectedWorkout, setSelectedWorkout] = useState(null);
+
+        // Mini cards placeholder sections
+        const miniCards = [
+          { id: "shop", label: "Магазин", sublabel: "Купить гирю" },
+          { id: "aroma", label: "Ароматерапия", sublabel: "doTERRA" },
+          { id: "omega", label: "Омега-3", sublabel: "Рекомендации" },
+          { id: "telegram", label: "Наш Telegram", sublabel: "Сообщество" },
+        ];
+
+        function handleMiniCardClick() {
+          alert("Раздел находится в разработке");
+        }
+
+        return (
+          <section className="screen" id="screen-home">
+            <header className="screen__header">
+              <h1 className="screen__title">Мозаика Здоровья</h1>
+              <p className="screen__subtitle">
+                Международная сеть центров восстановительной медицины
+              </p>
+            </header>
+
+            {/* Bento Grid */}
+            <div className="bento-grid">
+              {/* 1. Banner Card */}
+              <div className="bento-grid__item bento-grid__item--full" id="card-banner">
+                <div className="banner-placeholder">
+                  <span className="banner-placeholder__text">
+                    [Заглушка Баннера Мозаика Здоровья]
+                  </span>
+                </div>
+              </div>
+
+              {/* 2. Method Card */}
+              <div className="bento-grid__item bento-grid__item--full" id="card-method">
+                <div className="card">
+                  <h2 className="card__title">О методике</h2>
+                  <p className="card__text">{methodDescription}</p>
+                </div>
+              </div>
+
+              {/* 3. Workouts Card */}
+              <div className="bento-grid__item bento-grid__item--full" id="card-workouts">
+                <div className="card">
+                  <h2 className="card__title">Тренировки</h2>
+                  <div className="workout-buttons">
+                    {workouts
+                      .filter((w) => w.id <= 2) /* Filter active workouts */
+                      .map((workout) => (
+                        <button
+                          key={workout.id}
+                          id={`btn-workout-${workout.id}`}
+                          className="workout-btn"
+                          onClick={() => setSelectedWorkout(workout)}
+                        >
+                          <div className="workout-btn__icon">
+                            <svg
+                              width="28"
+                              height="28"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polygon points="10,8 16,12 10,16" />
+                            </svg>
+                          </div>
+                          <div className="workout-btn__info">
+                            <span className="workout-btn__name">{workout.title}</span>
+                            <span className="workout-btn__desc">{workout.description}</span>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Mini Bento Cards */}
+              {miniCards.map((mc) => (
+                <div
+                  key={mc.id}
+                  className="bento-grid__item bento-grid__item--half"
+                  id={`card-mini-${mc.id}`}
+                >
+                  <button className="mini-card" onClick={handleMiniCardClick}>
+                    <span className="mini-card__label">{mc.label}</span>
+                    <span className="mini-card__sublabel">{mc.sublabel}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Video Player Modal */}
+            {selectedWorkout && (
+              <WorkoutModal
+                workout={selectedWorkout}
+                onClose={() => setSelectedWorkout(null)}
+                onComplete={onWorkoutComplete}
+              />
+            )}
+          </section>
+        );
+      }
+
+      // ============================================================
+      //  Screens: Profile Screen
+      // ============================================================
+      function ProfileScreen({
+        profile,
+        onProfileSave,
+        history,
+        settings,
+        onSettingsChange,
+        achievements,
+      }) {
+        const [formAge, setFormAge] = useState(profile.age);
+        const [formCountry, setFormCountry] = useState(profile.country);
+        const [formRehab, setFormRehab] = useState(profile.passedRehabilitation);
+        const [saveMessage, setSaveMessage] = useState("");
+
+        // Sync local form state if global state changes (e.g. initial loads)
+        useEffect(() => {
+          setFormAge(profile.age);
+          setFormCountry(profile.country);
+          setFormRehab(profile.passedRehabilitation);
+        }, [profile]);
+
+        function handleSaveProfile() {
+          onProfileSave({
+            age: formAge,
+            country: formCountry,
+            passedRehabilitation: formRehab,
+          });
+          setSaveMessage("Данные успешно сохранены");
+          setTimeout(() => setSaveMessage(""), 3000);
+        }
+
+        function toggleReminders() {
+          onSettingsChange((prev) => ({
+            ...prev,
+            workoutReminders: !prev.workoutReminders,
+          }));
+        }
+
+        function toggleArticles() {
+          onSettingsChange((prev) => ({
+            ...prev,
+            articleNotifications: !prev.articleNotifications,
+          }));
+        }
+
+        function setLanguage(lang) {
+          onSettingsChange((prev) => ({ ...prev, language: lang }));
+        }
+
+        return (
+          <section className="screen" id="screen-profile">
+            <header className="screen__header">
+              <h1 className="screen__title">Профиль</h1>
+              <p className="screen__subtitle">Личный кабинет пользователя</p>
+            </header>
+
+            {/* 1. Profile Editing Form */}
+            <div className="card" id="card-profile-form">
+              <h2 className="card__title">Профиль пользователя</h2>
+
+              <div className="form-field">
+                <label className="form-field__label" htmlFor="input-age">
+                  Возраст
+                </label>
+                <input
+                  id="input-age"
+                  className="form-field__input"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={formAge}
+                  onChange={(e) => setFormAge(e.target.value)}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-field__label" htmlFor="input-country">
+                  Страна
+                </label>
+                <input
+                  id="input-country"
+                  className="form-field__input"
+                  type="text"
+                  value={formCountry}
+                  onChange={(e) => setFormCountry(e.target.value)}
+                />
+              </div>
+
+              <div className="form-field form-field--row">
+                <span className="form-field__label">
+                  Проходил реабилитацию в центре
+                </span>
+                <button
+                  id="toggle-rehab"
+                  className={`toggle ${formRehab ? "toggle--on" : ""}`}
+                  onClick={() => setFormRehab(!formRehab)}
+                  role="switch"
+                  aria-checked={formRehab}
+                >
+                  <span className="toggle__track">
+                    <span className="toggle__thumb" />
+                  </span>
+                  <span className="toggle__label">{formRehab ? "Да" : "Нет"}</span>
+                </button>
+              </div>
+
+              <button
+                id="btn-save-profile"
+                className="btn-save"
+                onClick={handleSaveProfile}
+              >
+                Сохранить
+              </button>
+
+              {saveMessage && (
+                <div className="save-message" id="save-message">
+                  {saveMessage}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Achievements Card */}
+            <div className="card" id="card-achievements">
+              <h2 className="card__title">Достижения</h2>
+              <div className="achievement-row">
+                <div className="achievement-row__icon">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 2h12v6a6 6 0 01-12 0V2z" />
+                    <path d="M6 4H3v2a3 3 0 003 3" />
+                    <path d="M18 4h3v2a3 3 0 01-3 3" />
+                    <path d="M12 14v4" />
+                    <path d="M8 22h8" />
+                    <path d="M10 18h4" />
+                  </svg>
+                </div>
+                <div className="achievement-row__info">
+                  <span className="achievement-row__value">
+                    {achievements.daysInRow}
+                  </span>
+                  <span className="achievement-row__label">
+                    дней тренировок подряд
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Workouts History Card */}
+            <div className="card" id="card-history">
+              <h2 className="card__title">История тренировок</h2>
+              {history.length === 0 ? (
+                <p className="card__text card__text--empty">
+                  Пока нет завершённых тренировок
+                </p>
+              ) : (
+                <ul className="history-list">
+                  {history.map((entry) => (
+                    <li key={entry.id} className="history-list__item">
+                      <span className="history-list__date">{entry.date}</span>
+                      <span className="history-list__name">{entry.name}</span>
+                      <span className="history-list__status">{entry.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* 4. Settings Card */}
+            <div className="card" id="card-settings">
+              <h2 className="card__title">Настройки</h2>
+
+              <div className="settings-row">
+                <span className="settings-row__label">
+                  Напоминания о тренировках
+                </span>
+                <button
+                  id="toggle-reminders"
+                  className={`toggle ${settings.workoutReminders ? "toggle--on" : ""}`}
+                  onClick={toggleReminders}
+                  role="switch"
+                  aria-checked={settings.workoutReminders}
+                >
+                  <span className="toggle__track">
+                    <span className="toggle__thumb" />
+                  </span>
+                  <span className="toggle__label">
+                    {settings.workoutReminders ? "Вкл" : "Выкл"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="settings-row">
+                <span className="settings-row__label">
+                  Уведомления о статьях
+                </span>
+                <button
+                  id="toggle-articles"
+                  className={`toggle ${settings.articleNotifications ? "toggle--on" : ""}`}
+                  onClick={toggleArticles}
+                  role="switch"
+                  aria-checked={settings.articleNotifications}
+                >
+                  <span className="toggle__track">
+                    <span className="toggle__thumb" />
+                  </span>
+                  <span className="toggle__label">
+                    {settings.articleNotifications ? "Вкл" : "Выкл"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="settings-row">
+                <span className="settings-row__label">Язык интерфейса</span>
+                <div className="lang-tabs" id="lang-tabs">
+                  <button
+                    className={`lang-tabs__btn ${settings.language === "RU" ? "lang-tabs__btn--active" : ""}`}
+                    onClick={() => setLanguage("RU")}
+                  >
+                    RU
+                  </button>
+                  <button
+                    className={`lang-tabs__btn ${settings.language === "EN" ? "lang-tabs__btn--active" : ""}`}
+                    onClick={() => setLanguage("EN")}
+                  >
+                    EN
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      // ============================================================
+      //  Root Component: App
+      // ============================================================
+      function App() {
+        const [currentScreen, setCurrentScreen] = useState("home");
+
+        // Global state for user data (Single Source of Truth)
+        const [profile, setProfile] = useState(initialProfile);
+        const [history, setHistory] = useState(initialHistory);
+        const [settings, setSettings] = useState(initialSettings);
+
+        // Callback to log new workouts
+        function handleWorkoutComplete(entry) {
+          setHistory((prev) => [entry, ...prev]);
+        }
+
+        function renderScreen() {
+          switch (currentScreen) {
+            case "profile":
+              return (
+                <ProfileScreen
+                  profile={profile}
+                  onProfileSave={setProfile}
+                  history={history}
+                  settings={settings}
+                  onSettingsChange={setSettings}
+                  achievements={achievements}
+                />
+              );
+            case "home":
+            default:
+              return <HomeScreen onWorkoutComplete={handleWorkoutComplete} />;
+          }
+        }
+
+        return (
+          <div className="app-wrapper">
+            <div className="app-shell">
+              <main className="app-content">{renderScreen()}</main>
+              <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+            </div>
+          </div>
+        );
+      }
+
+      // Mount to #root
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
