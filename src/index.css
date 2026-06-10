@@ -1502,3 +1502,13 @@ body {
   font-weight: 600;
   color: var(--color-text);
 }
+
+/* --- Pop-up Workout Card Buttons --- */
+.workout-card-btn:hover {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.workout-card-btn:active {
+  background-color: #f3f4f6 !important;
+}

@@ -31,8 +31,8 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
           ←
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title">Материалы от создателя</h1>
-          <p className="screen__subtitle">Полезные статьи и подкасты</p>
+          <h1 className="screen__title">Полезные статьи и подкасты</h1>
+          <p className="screen__subtitle">Материалы от создателя</p>
         </div>
       </header>
 
