@@ -202,6 +202,16 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+  const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
+
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast({ visible: false, message: "", type: "success" });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
   
   // Выбранный плейлист (массив ID)
   const [customPlaylist, setCustomPlaylist] = useState([]);
@@ -246,7 +256,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   }
 
   function handlePlaceholderClick() {
-    alert("Раздел находится в разработке");
+    setToast({ visible: true, message: "Раздел находится в разработке", type: "info" });
   }
 
   function handleSelectActivity(activity) {
@@ -274,9 +284,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       setPinError("");
       setIsSelectorOpen(false);
       setIsHomeworkModalOpen(true);
-      alert("Доступ открыт!");
+      setToast({ visible: true, message: "Доступ открыт!", type: "success" });
     } else {
       setPinError("Неверный код доступа");
+      setToast({ visible: true, message: "Неверный код доступа", type: "error" });
     }
   }
 
@@ -1036,6 +1047,48 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
           }}
         />
       )}
+
+      {/* Тост-уведомление внизу экрана */}
+      {toast.visible && (
+        <div style={{
+          position: "fixed",
+          bottom: "80px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "rgba(255, 255, 255, 0.96)",
+          border: toast.type === "error" ? "1px solid #fca5a5" : "1px solid var(--color-border)",
+          borderRadius: "14px",
+          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+          padding: "12px 18px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          zIndex: 2000,
+          width: "calc(100% - 32px)",
+          maxWidth: "360px",
+          animation: "fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+        }}>
+          <span style={{ fontSize: "1.1rem" }}>
+            {toast.type === "success" ? "🔓" : toast.type === "error" ? "❌" : "ℹ️"}
+          </span>
+          <span style={{ fontSize: "0.82rem", fontWeight: "600", color: toast.type === "error" ? "#dc2626" : "var(--color-text)" }}>
+            {toast.message}
+          </span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+      `}</style>
     </section>
   );
 }
