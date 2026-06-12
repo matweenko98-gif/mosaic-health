@@ -9,8 +9,9 @@ import CreatorMaterialsScreen from "./screens/CreatorMaterialsScreen";
 import ShopScreen from "./screens/ShopScreen";
 import CartScreen from "./screens/CartScreen";
 import CheckoutScreen from "./screens/CheckoutScreen";
+import LoginScreen from "./screens/LoginScreen";
+import RegisterScreen from "./screens/RegisterScreen";
 import {
-  initialProfile,
   initialHistory,
   initialSettings,
   achievements,
@@ -26,11 +27,56 @@ import "./index.css";
  * - cart: корзина товаров интернет-магазина
  */
 export default function App() {
-  // --- Навигация (по умолчанию видео-онбординг) ---
-  const [currentScreen, setCurrentScreen] = useState("onboarding-video");
+  // --- Навигация (по умолчанию видео-онбординг, с учетом автологина и срока дисклеймера) ---
+  const [currentScreen, setCurrentScreen] = useState(() => {
+    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+    if (loggedIn) {
+      const consentDateStr = localStorage.getItem("consentDate");
+      if (consentDateStr) {
+        const consentDate = new Date(consentDateStr);
+        const daysDiff = (Date.now() - consentDate.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysDiff > 90) {
+          return "onboarding-consent";
+        }
+      } else {
+        return "onboarding-consent";
+      }
+      return "home";
+    }
+    return "onboarding-video";
+  });
+
+  // --- Состояние авторизации ---
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
 
   // --- Данные пользователя ---
-  const [profile, setProfile] = useState(initialProfile);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+      return savedUser ? JSON.parse(savedUser) : {
+        name: "",
+        email: "",
+        phone: "",
+        age: "34",
+        country: "Беларусь",
+        hasRehabilitation: true,
+        avatar: null
+      };
+    } catch (e) {
+      return {
+        name: "",
+        email: "",
+        phone: "",
+        age: "34",
+        country: "Беларусь",
+        hasRehabilitation: true,
+        avatar: null
+      };
+    }
+  });
+
   const [history, setHistory] = useState(initialHistory);
   const [settings, setSettings] = useState(initialSettings);
 
@@ -50,6 +96,20 @@ export default function App() {
     });
   }
 
+  function handleUpdateCartQuantity(productId, newQty) {
+    if (newQty <= 0) {
+      handleRemoveFromCart(productId);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) => (item.id === productId ? { ...item, quantity: newQty } : item))
+    );
+  }
+
+  function handleRemoveFromCart(productId) {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  }
+
   function handleClearCart() {
     setCart([]);
   }
@@ -59,13 +119,78 @@ export default function App() {
     setHistory((prev) => [entry, ...prev]);
   }
 
+  // --- Обработчики входа и регистрации ---
+  function handleLogin(userData) {
+    setUser((prev) => {
+      const updated = { ...prev, ...userData };
+      localStorage.setItem("user", JSON.stringify(updated));
+      localStorage.setItem("isLoggedIn", "true");
+      return updated;
+    });
+    setIsLoggedIn(true);
+    setCurrentScreen("home");
+  }
+
+  function handleRegister(userData) {
+    setUser((prev) => {
+      const updated = { ...prev, ...userData };
+      localStorage.setItem("user", JSON.stringify(updated));
+      localStorage.setItem("isLoggedIn", "true");
+      return updated;
+    });
+    setIsLoggedIn(true);
+    setCurrentScreen("home");
+  }
+
+  function handleUserSave(updatedUser) {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
+    setUser({
+      name: "",
+      email: "",
+      phone: "",
+      age: "34",
+      country: "Беларусь",
+      hasRehabilitation: true,
+      avatar: null
+    });
+    setIsLoggedIn(false);
+    setCurrentScreen("onboarding-video");
+  }
+
   // --- Рендер текущего экрана ---
   function renderScreen() {
     switch (currentScreen) {
       case "onboarding-video":
         return <OnboardingVideoScreen onNavigate={setCurrentScreen} />;
       case "onboarding-consent":
-        return <OnboardingConsentScreen onNavigate={setCurrentScreen} />;
+        return (
+          <OnboardingConsentScreen
+            onNavigate={(next) => {
+              if (next === "login" || next === "home") {
+                const nowStr = new Date().toISOString();
+                localStorage.setItem("consentDate", nowStr);
+                const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+                if (loggedIn) {
+                  setCurrentScreen("home");
+                } else {
+                  setCurrentScreen("login");
+                }
+              } else {
+                setCurrentScreen(next);
+              }
+            }}
+          />
+        );
+      case "login":
+        return <LoginScreen onNavigate={setCurrentScreen} onLogin={handleLogin} />;
+      case "register":
+        return <RegisterScreen onNavigate={setCurrentScreen} onRegister={handleRegister} />;
       case "health-helpers":
         return <HealthHelpersScreen onNavigate={setCurrentScreen} />;
       case "creator-materials":
@@ -83,6 +208,8 @@ export default function App() {
           <CartScreen
             cart={cart}
             onClearCart={handleClearCart}
+            onUpdateQuantity={handleUpdateCartQuantity}
+            onRemoveItem={handleRemoveFromCart}
             onNavigate={setCurrentScreen}
           />
         );
@@ -97,8 +224,9 @@ export default function App() {
       case "profile":
         return (
           <ProfileScreen
-            profile={profile}
-            onProfileSave={setProfile}
+            user={user}
+            onUserSave={handleUserSave}
+            onLogout={handleLogout}
             history={history}
             settings={settings}
             onSettingsChange={setSettings}

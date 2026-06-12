@@ -26,7 +26,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
   return (
     <section className="screen" id="screen-creator-materials-detail">
       {/* Шапка с кнопкой назад */}
-      <header className="screen__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+      <header className="screen__header header-with-back">
         <button className="back-btn" onClick={() => onNavigate("home")}>
           <svg
             width="14"

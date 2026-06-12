@@ -27,7 +27,7 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   return (
     <section className="screen" id="screen-checkout-detail">
       {/* Шапка с кнопкой назад */}
-      <header className="screen__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+      <header className="screen__header header-with-back">
         <button className="back-btn" onClick={() => onNavigate("cart")}>
           <svg
             width="14"

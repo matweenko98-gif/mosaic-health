@@ -17,7 +17,7 @@ export default function HealthHelpersScreen({ onNavigate }) {
   return (
     <section className="screen" id="screen-health-helpers-detail">
       {/* Шапка с кнопкой назад */}
-      <header className="flex flex-col items-start gap-3 py-3 border-b border-gray-100 shrink-0">
+      <header className="screen__header header-with-back" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button className="back-btn" onClick={() => onNavigate("home")}>
           <svg
             width="14"
@@ -34,11 +34,11 @@ export default function HealthHelpersScreen({ onNavigate }) {
           </svg>
           <span>Назад</span>
         </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">
+        <div className="header-title-container">
+          <h1 className="screen__title" style={{ fontSize: "1.2rem", fontWeight: "700", margin: 0 }}>
             Масла и Омега-3
           </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="screen__subtitle" style={{ fontSize: "0.78rem", color: "var(--color-text-secondary)", margin: "2px 0 0 0" }}>
             Рекомендации и проверенные бренды
           </p>
         </div>

@@ -100,7 +100,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             id="btn-start-usage"
             className="btn-save"
             disabled={!agreedAll}
-            onClick={() => onNavigate("home")}
+            onClick={() => onNavigate("login")}
             style={{
               opacity: agreedAll ? 1 : 0.5,
               cursor: agreedAll ? "pointer" : "not-allowed",

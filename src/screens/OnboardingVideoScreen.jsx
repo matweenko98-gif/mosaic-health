@@ -45,6 +45,23 @@ export default function OnboardingVideoScreen({ onNavigate }) {
         >
           Далее
         </button>
+        <div style={{ marginTop: "12px", textAlign: "center" }}>
+          <button
+            type="button"
+            onClick={() => onNavigate("login")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--color-text-secondary)",
+              fontSize: "0.85rem",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontWeight: "500",
+            }}
+          >
+            Уже есть аккаунт? Войти
+          </button>
+        </div>
       </div>
     </section>
   );
