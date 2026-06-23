@@ -247,6 +247,14 @@ export default function App() {
   // Показывать нижнюю навигацию только на экранах «Главная» и «Профиль»
   const showBottomNav = currentScreen === "home" || currentScreen === "profile";
 
+  // Экраны, где контент центрируется по высоте (100dvh)
+  const isOnboardingScreen = [
+    "onboarding-video",
+    "onboarding-consent",
+    "login",
+    "register",
+  ].includes(currentScreen);
+
   return (
     <div className="app-wrapper">
       <div className="app-shell">
@@ -329,7 +337,7 @@ export default function App() {
         </header>
 
         {/* Прокручиваемая область контента */}
-        <main className="app-content">{renderScreen()}</main>
+        <main className={`app-content${isOnboardingScreen ? " app-content--centered" : ""}`}>{renderScreen()}</main>
 
         {/* Фиксированная нижняя навигация */}
         {showBottomNav && (

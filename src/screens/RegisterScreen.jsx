@@ -69,7 +69,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   }
 
   return (
-    <section className="screen screen--onboarding" id="screen-register" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "calc(100vh - 80px)" }}>
+    <section className="screen screen--onboarding" id="screen-register">
       <header className="screen__header text-center" style={{ marginBottom: "20px" }}>
         <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Регистрация</h1>
         <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>

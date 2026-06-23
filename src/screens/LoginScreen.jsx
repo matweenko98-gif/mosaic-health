@@ -54,7 +54,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
   }
 
   return (
-    <section className="screen screen--onboarding" id="screen-login" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "calc(100vh - 120px)" }}>
+    <section className="screen screen--onboarding" id="screen-login">
       <header className="screen__header text-center" style={{ marginBottom: "24px" }}>
         <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Вход</h1>
         <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
