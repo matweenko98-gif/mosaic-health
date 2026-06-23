@@ -813,6 +813,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     setCurrentPlaylistIndex(-1);
     setPlaylistQueue([]);
     if (isHomework) {
+      setIsEditingComplex(false);
       setIsHomeworkModalOpen(true);
     } else {
       setIsSelectorOpen(true);
@@ -825,6 +826,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     setCurrentPlaylistIndex(-1);
     setPlaylistQueue([]);
     if (isHomework) {
+      setIsEditingComplex(false);
       setIsHomeworkModalOpen(true);
     } else {
       setIsSelectorOpen(true);
@@ -844,6 +846,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       if (currentPlaylistIndex === playlistQueue.length - 1) {
         clearSavedHomework();
       }
+      setIsEditingComplex(false);
       setIsHomeworkModalOpen(true);
       return;
     }
@@ -2066,64 +2069,6 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     scrollbarWidth: "none"
                   }}
                 >
-                  {/* Баннер незавершенной тренировки */}
-                  {savedHomeworkQueue.length > 0 && savedHomeworkIndex >= 0 && (
-                    <div style={{
-                      backgroundColor: "var(--color-active-light, #eff6ff)",
-                      border: "1px solid var(--color-active-border, #bfdbfe)",
-                      borderRadius: "12px",
-                      padding: "12px 14px",
-                      marginBottom: "4px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px"
-                    }}>
-                      <div style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--color-active, #2563eb)" }}>
-                        У вас есть незавершенная тренировка!
-                      </div>
-                      <div style={{ fontSize: "0.78rem", color: "var(--color-text-secondary)" }}>
-                        Прогресс: выполнено {savedHomeworkIndex} из {savedHomeworkQueue.length}
-                      </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          onClick={() => {
-                            setPlaylistQueue(savedHomeworkQueue);
-                            setCurrentPlaylistIndex(savedHomeworkIndex);
-                            setSelectedWorkout(savedHomeworkQueue[savedHomeworkIndex]);
-                            setIsHomeworkModalOpen(false);
-                          }}
-                          style={{
-                            flex: 1,
-                            padding: "8px 12px",
-                            backgroundColor: "var(--color-active)",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "8px",
-                            fontSize: "0.78rem",
-                            fontWeight: "600",
-                            cursor: "pointer"
-                          }}
-                        >
-                          Продолжить
-                        </button>
-                        <button
-                          onClick={clearSavedHomework}
-                          style={{
-                            padding: "8px 12px",
-                            backgroundColor: "transparent",
-                            color: "var(--color-text-secondary)",
-                            border: "1px solid var(--color-border)",
-                            borderRadius: "8px",
-                            fontSize: "0.78rem",
-                            fontWeight: "600",
-                            cursor: "pointer"
-                          }}
-                        >
-                          Сбросить
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Описание */}
                   <div style={{ fontSize: "0.82rem", color: "var(--color-text-secondary)", marginBottom: "4px", lineHeight: "1.4" }}>
