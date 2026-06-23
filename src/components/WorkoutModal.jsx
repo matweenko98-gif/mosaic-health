@@ -170,8 +170,9 @@ export default function WorkoutModal({
           style={{
             alignSelf: "flex-start",
             marginBottom: "8px",
-            border: "1px solid var(--color-border)",
+            border: "1.5px solid #a6a6a1",
             backgroundColor: "#fff",
+            color: "var(--color-text)",
             fontFamily: "'Manrope', sans-serif",
             fontWeight: 600,
             borderRadius: "12px"
@@ -281,8 +282,9 @@ export default function WorkoutModal({
                 cursor: currentIndex === 0 ? "not-allowed" : "pointer",
                 justifyContent: "center",
                 borderRadius: "12px",
-                border: "1px solid var(--color-border)",
-                backgroundColor: "#fff"
+                border: "1.5px solid #a6a6a1",
+                backgroundColor: "#fff",
+                color: "var(--color-text)"
               }}
             >
               ← Назад
@@ -301,13 +303,29 @@ export default function WorkoutModal({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: "6px",
                 border: "none",
                 borderRadius: "12px",
                 cursor: "pointer",
                 boxShadow: isPlaying ? "none" : "0 4px 12px -3px rgba(27,171,124,.5)"
               }}
             >
-              {isPlaying ? "⏸ Пауза" : "▶ Старт"}
+              {isPlaying ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                  </svg>
+                  <span>Пауза</span>
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  <span>Старт</span>
+                </>
+              )}
             </button>
             
             <button
@@ -321,8 +339,9 @@ export default function WorkoutModal({
                 cursor: currentIndex === playlist.length - 1 ? "not-allowed" : "pointer",
                 justifyContent: "center",
                 borderRadius: "12px",
-                border: "1px solid var(--color-border)",
-                backgroundColor: "#fff"
+                border: "1.5px solid #a6a6a1",
+                backgroundColor: "#fff",
+                color: "var(--color-text)"
               }}
             >
               Вперед →
@@ -418,10 +437,10 @@ export default function WorkoutModal({
             style={{
               display: "flex",
               width: "100%",
-              border: "1px solid var(--color-border)",
+              border: "1.5px solid #a6a6a1",
               cursor: "pointer",
               background: "transparent",
-              color: "var(--color-text-secondary)",
+              color: "var(--color-text)",
               fontFamily: "'Manrope', sans-serif",
               fontWeight: 700,
               fontSize: "15px",

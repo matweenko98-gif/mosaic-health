@@ -70,15 +70,15 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
   return (
     <section className="screen screen--onboarding" id="screen-register">
-      <header className="screen__header text-center" style={{ marginBottom: "20px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Регистрация</h1>
-        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
+      <header className="screen__header text-center" style={{ marginBottom: "12px" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Регистрация</h1>
+        <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Шаг {step} из 2: {step === 1 ? "Основные данные" : "Дополнительные сведения"}
         </p>
       </header>
 
-      <div className="card" style={{ padding: "24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
-        <form onSubmit={step === 1 ? handleNextStep : handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <div className="card" style={{ padding: "20px 24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+        <form onSubmit={step === 1 ? handleNextStep : handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
           
           {error && (
             <div className="error-message" style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "12px 14px", borderRadius: "14px", border: "1px solid #fad2cf" }}>
@@ -88,7 +88,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
           {step === 1 ? (
             /* --- Шаг 1 --- */
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-name" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Имя
@@ -169,7 +169,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
             </div>
           ) : (
             /* --- Шаг 2 (плавное появление) --- */
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px", animation: "slideUp 0.3s ease-out" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "11px", animation: "slideUp 0.3s ease-out" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-age" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Возраст
@@ -242,10 +242,10 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 style={{
                   display: "flex",
                   width: "100%",
-                  border: "1px solid var(--color-border)",
+                  border: "1.5px solid #a6a6a1",
                   cursor: "pointer",
                   background: "transparent",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-text)",
                   fontFamily: "'Manrope', sans-serif",
                   fontWeight: 700,
                   fontSize: "15px",
@@ -264,7 +264,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
         </form>
 
         {step === 1 && (
-          <div className="text-center" style={{ marginTop: "20px" }}>
+          <div className="text-center" style={{ marginTop: "14px" }}>
             <button
               type="button"
               onClick={() => onNavigate("login")}

@@ -6,24 +6,24 @@ import React from "react";
 export default function OnboardingVideoScreen({ onNavigate }) {
   return (
     <section className="screen screen--onboarding" id="screen-onboarding-video">
-      <header className="screen__header text-center" style={{ margin: "24px 0 12px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
+      <header className="screen__header text-center" style={{ margin: "12px 0 8px" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
           Мозаика Здоровья
         </h1>
-        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
+        <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Знакомство с методикой центра
         </p>
       </header>
 
-      <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "14px", lineHeight: "1.6", color: "#4a4a4a", fontWeight: 300, marginBottom: "20px" }}>
+      <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "13.5px", lineHeight: "1.5", color: "#4a4a4a", fontWeight: 300, marginBottom: "14px" }}>
           Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и
           восстановления баланса тела.
         </p>
 
         {/* Заглушка видеоплеера */}
         <div className="video-player-placeholder" style={{
-          height: "200px",
+          height: "165px",
           position: "relative",
           borderRadius: "20px",
           overflow: "hidden",
@@ -34,7 +34,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
           justifyContent: "center",
           border: "1px solid rgba(0,127,99,.08)",
           boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
-          marginBottom: "24px"
+          marginBottom: "16px"
         }}>
           <div style={{
             width: "54px",

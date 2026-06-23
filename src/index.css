@@ -117,6 +117,7 @@ body {
   align-items: stretch;
   padding-bottom: var(--spacing-md);
   min-height: 0;
+  overflow: hidden; /* Prevent scrolling on onboarding/login/register screens */
 }
 
 /* --- Экран --- */
@@ -633,13 +634,14 @@ body {
 }
 
 .modal__btn--secondary {
-  background-color: var(--color-bg);
+  background-color: transparent;
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid #a6a6a1;
 }
 
 .modal__btn--secondary:hover {
-  background-color: #e4e4e4;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--color-text);
 }
 
 /* --- Анимации --- */
@@ -1110,7 +1112,7 @@ body {
  * ============================================================ */
 .screen--onboarding {
   justify-content: center;
-  min-height: calc(100dvh - 2 * var(--spacing-md));
+  margin-top: -35px; /* Lift the content slightly higher on screens */
 }
 
 .video-player-placeholder {
@@ -1146,20 +1148,21 @@ body {
   gap: 4px;
   height: 34px;
   padding: 0 12px;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background-color: #fff;
+  border: 1.5px solid #a6a6a1;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   outline: none;
 }
 
 .back-btn:hover {
-  opacity: 0.75;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--color-text);
 }
 
 .back-btn:active {
@@ -1265,16 +1268,18 @@ body {
 
 .premium-title {
   font-family: var(--font-family-title);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #1d2321;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 
 .premium-subtitle {
-  font-size: 10.5px;
+  font-size: 10px;
   color: #6E6E6E;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .header-premium__right {

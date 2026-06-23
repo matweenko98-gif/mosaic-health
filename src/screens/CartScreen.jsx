@@ -15,8 +15,9 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
           className="back-btn"
           onClick={() => onNavigate("shop")}
           style={{
-            border: "1px solid var(--color-border)",
+            border: "1.5px solid #a6a6a1",
             backgroundColor: "#fff",
+            color: "var(--color-text)",
             fontFamily: "'Manrope', sans-serif",
             fontWeight: 600,
             borderRadius: "12px"
@@ -220,7 +221,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
               style={{
                 display: "flex",
                 width: "100%",
-                border: "1px solid var(--color-border)",
+                border: "1.5px solid #d93025",
                 cursor: "pointer",
                 background: "transparent",
                 color: "#d93025",

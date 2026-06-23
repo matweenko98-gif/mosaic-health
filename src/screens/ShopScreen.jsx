@@ -67,8 +67,9 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
             className="back-btn"
             onClick={() => onNavigate("home")}
             style={{
-              border: "1px solid var(--color-border)",
+              border: "1.5px solid #a6a6a1",
               backgroundColor: "#fff",
+              color: "var(--color-text)",
               fontFamily: "'Manrope', sans-serif",
               fontWeight: 600,
               borderRadius: "12px"
@@ -99,7 +100,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
               position: "relative",
               padding: "0 14px",
               height: "34px",
-              border: "1px solid var(--color-border)",
+              border: "1.5px solid #a6a6a1",
               borderRadius: "12px",
               backgroundColor: "#fff",
               cursor: "pointer",

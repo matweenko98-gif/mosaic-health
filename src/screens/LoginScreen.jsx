@@ -55,15 +55,15 @@ export default function LoginScreen({ onNavigate, onLogin }) {
 
   return (
     <section className="screen screen--onboarding" id="screen-login">
-      <header className="screen__header text-center" style={{ marginBottom: "24px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Вход</h1>
-        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
+      <header className="screen__header text-center" style={{ marginBottom: "12px" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Вход</h1>
+        <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Добро пожаловать в Мозаику Здоровья
         </p>
       </header>
 
-      <div className="card" style={{ padding: "24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className="card" style={{ padding: "20px 24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           
           {error && (
             <div className="error-message" style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "12px 14px", borderRadius: "14px", border: "1px solid #fad2cf" }}>
@@ -116,7 +116,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
           </button>
         </form>
 
-        <div className="text-center" style={{ marginTop: "20px" }}>
+        <div className="text-center" style={{ marginTop: "14px" }}>
           <button
             type="button"
             onClick={() => onNavigate("register")}

@@ -11,28 +11,28 @@ export default function OnboardingConsentScreen({ onNavigate }) {
 
   return (
     <section className="screen screen--onboarding" id="screen-onboarding-consent">
-      <header className="screen__header text-center" style={{ margin: "24px 0 12px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
+      <header className="screen__header text-center" style={{ margin: "12px 0 8px" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
           Согласие с методикой
         </h1>
-        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
+        <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Правила безопасных тренировок
         </p>
       </header>
 
-      <div className="card" style={{ background: "#fff", borderRadius: "24px", padding: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
+      <div className="card" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
         <div
           className="consent-terms"
           style={{
-            maxHeight: "180px",
+            maxHeight: "115px",
             overflowY: "auto",
             border: "1px solid var(--color-border)",
-            padding: "16px",
+            padding: "12px 16px",
             borderRadius: "16px",
-            marginBottom: "20px",
+            marginBottom: "14px",
             backgroundColor: "#F7F7F5",
-            fontSize: "13px",
-            lineHeight: "1.6",
+            fontSize: "12.5px",
+            lineHeight: "1.5",
             color: "var(--color-text-secondary)",
           }}
         >
@@ -59,8 +59,8 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             alignItems: "flex-start",
             gap: "12px",
             cursor: "pointer",
-            marginBottom: "14px",
-            fontSize: "13.5px",
+            marginBottom: "10px",
+            fontSize: "13px",
             lineHeight: "1.4",
             color: "var(--color-text)",
             userSelect: "none",
@@ -84,8 +84,8 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             alignItems: "flex-start",
             gap: "12px",
             cursor: "pointer",
-            marginBottom: "24px",
-            fontSize: "13.5px",
+            marginBottom: "18px",
+            fontSize: "13px",
             lineHeight: "1.4",
             color: "var(--color-text)",
             userSelect: "none",
@@ -123,10 +123,10 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             style={{
               display: "flex",
               width: "100%",
-              border: "1px solid var(--color-border)",
+              border: "1.5px solid #a6a6a1",
               cursor: "pointer",
               background: "transparent",
-              color: "var(--color-text-secondary)",
+              color: "var(--color-text)",
               fontFamily: "'Manrope', sans-serif",
               fontWeight: 700,
               fontSize: "15px",

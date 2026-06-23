@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import BottomNav from "./components/BottomNav";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -27,6 +27,8 @@ import "./index.css";
  * - cart: корзина товаров интернет-магазина
  */
 export default function App() {
+  const mainContentRef = useRef(null);
+
   // --- Навигация (по умолчанию видео-онбординг, с учетом автологина и срока дисклеймера) ---
   const [currentScreen, setCurrentScreen] = useState(() => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -45,6 +47,13 @@ export default function App() {
     }
     return "onboarding-video";
   });
+
+  // Сброс скролла при смене экранов
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [currentScreen]);
 
   // --- Состояние авторизации ---
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -260,29 +269,23 @@ export default function App() {
       <div className="app-shell">
         {/* Фиксированная верхняя шапка (общая для всех экранов) */}
         <header className="app-header header-premium">
-          <div className="header-premium__left" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "11px" }}>
+          <div className="header-premium__left" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "11px", minWidth: 0 }}>
             {!(currentScreen === "onboarding-video" || currentScreen === "onboarding-consent" || currentScreen === "login" || currentScreen === "register") && (
               <>
-                {/* Logo placeholder stub */}
-                <div style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #1BAB7C, #0094B8)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: "800",
-                  fontSize: "20px",
-                  fontFamily: "'Manrope', sans-serif",
-                  flexShrink: 0
-                }}>
-                  М
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15" }}>
-                  <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "16px", color: "#1d2321", letterSpacing: "-.2px" }}>Мозаика Здоровья</span>
-                  <span style={{ fontSize: "10.5px", color: "#6E6E6E", marginTop: "2px" }}>Методика вашего баланса</span>
+                <img
+                  src="/logo_mozaika.svg"
+                  alt="Логотип Мозаика Здоровья"
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "12px",
+                    objectFit: "contain",
+                    flexShrink: 0
+                  }}
+                />
+                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15", minWidth: 0 }}>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "15px", color: "#1d2321", letterSpacing: "-.3px", whiteSpace: "nowrap" }}>Мозаика Здоровья</span>
+                  <span style={{ fontSize: "10px", color: "#6E6E6E", marginTop: "2px", whiteSpace: "nowrap" }}>Методика вашего баланса</span>
                 </div>
               </>
             )}
@@ -337,7 +340,7 @@ export default function App() {
         </header>
 
         {/* Прокручиваемая область контента */}
-        <main className={`app-content${isOnboardingScreen ? " app-content--centered" : ""}`}>{renderScreen()}</main>
+        <main ref={mainContentRef} className={`app-content${isOnboardingScreen ? " app-content--centered" : ""}`}>{renderScreen()}</main>
 
         {/* Фиксированная нижняя навигация */}
         {showBottomNav && (

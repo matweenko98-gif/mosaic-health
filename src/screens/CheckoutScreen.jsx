@@ -32,8 +32,9 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
           className="back-btn"
           onClick={() => onNavigate("cart")}
           style={{
-            border: "1px solid var(--color-border)",
+            border: "1.5px solid #a6a6a1",
             backgroundColor: "#fff",
+            color: "var(--color-text)",
             fontFamily: "'Manrope', sans-serif",
             fontWeight: 600,
             borderRadius: "12px"

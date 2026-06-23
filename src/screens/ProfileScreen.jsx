@@ -468,10 +468,10 @@ export default function ProfileScreen({
                       flex: 1,
                       margin: 0,
                       display: "flex",
-                      border: "1px solid var(--color-border)",
+                      border: "1.5px solid #a6a6a1",
                       cursor: "pointer",
                       background: "transparent",
-                      color: "var(--color-text-secondary)",
+                      color: "var(--color-text)",
                       fontFamily: "'Manrope', sans-serif",
                       fontWeight: 700,
                       fontSize: "15px",
@@ -551,7 +551,7 @@ export default function ProfileScreen({
                 type="button"
                 onClick={handlePrevMonth}
                 style={{
-                  border: "1px solid var(--color-border)",
+                  border: "1.5px solid #a6a6a1",
                   backgroundColor: "#fff",
                   borderRadius: "8px",
                   width: "32px",
@@ -562,7 +562,7 @@ export default function ProfileScreen({
                   justifyContent: "center",
                   fontSize: "1.1rem",
                   fontWeight: "bold",
-                  color: "var(--color-text-secondary)"
+                  color: "var(--color-text)"
                 }}
               >
                 ‹
@@ -574,7 +574,7 @@ export default function ProfileScreen({
                 type="button"
                 onClick={handleNextMonth}
                 style={{
-                  border: "1px solid var(--color-border)",
+                  border: "1.5px solid #a6a6a1",
                   backgroundColor: "#fff",
                   borderRadius: "8px",
                   width: "32px",
@@ -585,7 +585,7 @@ export default function ProfileScreen({
                   justifyContent: "center",
                   fontSize: "1.1rem",
                   fontWeight: "bold",
-                  color: "var(--color-text-secondary)"
+                  color: "var(--color-text)"
                 }}
               >
                 ›
