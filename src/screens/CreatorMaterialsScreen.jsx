@@ -70,7 +70,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             key={item.id}
             className="card card--clickable"
             onClick={() => alert(`Открытие статьи: "${item.title}"`)}
-            style={{ padding: "16px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}
+            style={{ padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "11px" }}>
               <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>СТАТЬЯ</span>
@@ -92,7 +92,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
           Эксклюзивные подкасты
         </h3>
 
-        <div className="card" style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+        <div className="card" style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
           {/* Кнопка Play */}
           <button
             className="podcast-play-btn"

@@ -614,7 +614,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   ];
 
   // Состояние активного таба для домашних тренировок
-  const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Дыхание");
+  const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
 
   // Состояния для Домашнего задания
   const [isHomeworkUnlocked, setIsHomeworkUnlocked] = useState(
@@ -633,7 +633,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       return () => clearTimeout(timer);
     }
   }, [toast.visible]);
-  
+
   // Выбранный плейлист (массив ID) с автосохранением в localStorage
   const [customPlaylist, setCustomPlaylist] = useState(() => {
     try {
@@ -722,6 +722,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   useEffect(() => {
     if (!isHomeworkModalOpen) {
       setHomeworkSearch("");
+      setSelectedHomeworkTab("Все");
     }
   }, [isHomeworkModalOpen]);
 
@@ -881,26 +882,23 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       <div className="bento-grid" style={{ gap: "16px" }}>
         {/* 1. Баннер — полная ширина */}
         <div className="bento-grid__item bento-grid__item--full" style={{ position: "relative", height: "316px", borderRadius: "24px", overflow: "hidden", boxShadow: "0 12px 32px -8px rgba(27,171,124,.32)" }}>
-          {/* photo placeholder (image goes here) */}
-          <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(125deg,#C9D3D0,#C9D3D0 13px,#D5DDDA 13px,#D5DDDA 26px)" }}></div>
-          {/* placeholder hint */}
-          <div style={{ position: "absolute", top: "14px", left: "14px", display: "flex", alignItems: "center", gap: "6px", background: "rgba(13,30,26,.32)", padding: "5px 10px", borderRadius: "8px", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.6-3.6a2 2 0 0 0-2.8 0L6 20"></path></svg>
-            <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: "10px", letterSpacing: ".5px", color: "#fff" }}>ФОТО · тренировка</span>
-          </div>
+          {/* Main banner image */}
+          <img
+            src="/banner_home.jpg"
+            alt="Верните телу баланс и движение"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover"
+            }}
+          />
           {/* brand gradient wash + bottom scrim */}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(150deg, rgba(0,148,184,.42), rgba(27,171,124,.30) 40%, rgba(235,96,116,.0) 70%), linear-gradient(to top, rgba(0,46,36,.86) 2%, rgba(0,46,36,.30) 38%, rgba(0,46,36,0) 62%)" }}></div>
-          {/* mosaic facet overlay */}
-          <svg style={{ position: "absolute", inset: 0, opacity: .6 }} width="100%" height="100%" viewBox="0 0 350 316" preserveAspectRatio="none">
-            <g stroke="rgba(247,247,245,.4)" stroke-width="2" fill="none">
-              <path d="M0 90 L130 40 L230 110 L120 170 Z"></path>
-              <path d="M130 40 L280 10 L350 80 L230 110 Z"></path>
-              <path d="M0 90 L120 170 L70 240 L0 200 Z"></path>
-            </g>
-          </svg>
           {/* content */}
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyParagraph: "flex-end", justifySelf: "stretch", justifyContent: "flex-end", gap: "13px", padding: "22px" }}>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "25px", lineHeight: 1.12, color: "#fff", letterSpacing: "-.4px", textShadow: "0 2px 14px rgba(0,30,22,.5)", maxWidth: "250px" }}>Верните телу баланс и движение</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "34px", lineHeight: 1.1, color: "#fff", letterSpacing: "-.6px", textShadow: "0 2px 14px rgba(0,30,22,.5)", maxWidth: "320px" }}>Верните телу<br />баланс и движение</span>
             <button onClick={() => setIsSelectorOpen(true)} style={{ display: "flex", border: "none", cursor: "pointer", alignItems: "center", gap: "8px", alignSelf: "flex-start", backgroundColor: "#fff", padding: "11px 18px", borderRadius: "999px", boxShadow: "0 8px 20px -6px rgba(0,30,22,.5)" }}>
               <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13px", color: "#007F63" }}>Начать тренировку</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
@@ -909,7 +907,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         </div>
 
         {/* 2. О методике — полная ширина */}
-        <section className="bento-grid__item bento-grid__item--full" style={{ minHeight: "240px", display: "flex", flexDirection: "column", justifyContent: "center", background: "#fff", borderRadius: "20px", padding: "24px 20px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+        <section className="bento-grid__item bento-grid__item--full" style={{ minHeight: "240px", display: "flex", flexDirection: "column", justifyContent: "center", background: "#fff", borderRadius: "20px", padding: "24px 20px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#1BAB7C" }}></span>
             <h2 style={{ margin: 0, fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "20px", color: "#1d2321" }}>О методике</h2>
@@ -925,16 +923,16 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         {/* 3. Тренировки — Главный Hero-баннер */}
         <section className="bento-grid__item bento-grid__item--full">
           <h2 style={{ margin: "0 2px 12px", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "22px", color: "#1d2321", letterSpacing: "-.4px" }}>Тренировки</h2>
-          <div 
+          <div
             onClick={() => setIsSelectorOpen(true)}
-            style={{ position: "relative", height: "182px", borderRadius: "22px", overflow: "hidden", background: "repeating-linear-gradient(135deg,#E9EBEA,#E9EBEA 11px,#F1F3F2 11px,#F1F3F2 22px)", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", border: "1px solid rgba(0,127,99,.08)", cursor: "pointer", justifyContent: "center" }}
+            style={{ position: "relative", height: "182px", borderRadius: "22px", overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", cursor: "pointer", justifyContent: "center", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}
           >
             <div style={{ width: "54px", height: "54px", borderRadius: "16px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>
             </div>
             <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "12.5px", color: "#6E6E6E", letterSpacing: ".3px" }}>Процесс тренировки</span>
           </div>
-          <button 
+          <button
             onClick={() => setIsSelectorOpen(true)}
             style={{ marginTop: "13px", width: "100%", border: "none", cursor: "pointer", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", padding: "15px", borderRadius: "16px", boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)", display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}
           >
@@ -945,21 +943,20 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
         {/* 4. Домашние задания */}
         <section className="bento-grid__item bento-grid__item--full">
-          <div 
+          <div
             onClick={handleHomeworkClick}
             className="homework-bento-card"
-            style={{ 
-              position: "relative", 
-              background: "#fff", 
-              borderRadius: "20px", 
-              padding: "18px 18px 0", 
-              boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", 
-              border: "1px solid rgba(0,127,99,.12)", 
+            style={{
+              position: "relative",
+              background: "#fff",
+              borderRadius: "20px",
+              padding: "18px 18px 0",
+              boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
               overflow: "hidden",
               cursor: "pointer"
             }}
           >
-            <div 
+            <div
               style={{ position: "absolute", top: "16px", right: "16px", width: "38px", height: "38px", borderRadius: "11px", background: "rgba(0,127,99,.1)", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               {isHomeworkUnlocked ? (
@@ -973,7 +970,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             </span>
             <h3 style={{ margin: "13px 0 0", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "19px", color: "#1d2321", letterSpacing: "-.3px" }}>Домашние задания</h3>
             <p style={{ margin: "9px 0 0", fontSize: "13px", lineHeight: "1.6", color: "#6E6E6E", fontWeight: 300, maxWidth: "255px" }}>Для тех, кто проходит реабилитацию в центре.</p>
-            <div 
+            <div
               style={{ marginTop: "16px", borderTop: "1px solid rgba(0,127,99,.12)", padding: "14px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}
             >
               <span style={{ display: "flex", gap: "9px", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#007F63", alignItems: "center" }}>
@@ -996,10 +993,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
         {/* 5. Масла и Омега-3 */}
         <div className="bento-grid__item bento-grid__item--full">
-          <button 
-            className="list-tile" 
+          <button
+            className="list-tile"
             onClick={() => onNavigate("health-helpers")}
-            style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 4px 16px -8px rgba(20,30,40,.1)", border: "1px solid rgba(0,148,184,.0)", transition: "transform .18s ease, box-shadow .18s ease" }}
+            style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,148,184,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
@@ -1014,10 +1011,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
         {/* 6. Статьи и подкасты */}
         <div className="bento-grid__item bento-grid__item--full">
-          <button 
-            className="list-tile" 
+          <button
+            className="list-tile"
             onClick={() => onNavigate("creator-materials")}
-            style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 4px 16px -8px rgba(20,30,40,.1)", border: "1px solid rgba(0,127,99,.0)", transition: "transform .18s ease, box-shadow .18s ease" }}
+            style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,127,99,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
@@ -1032,10 +1029,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
         {/* 7. Магазин & Наш Telegram */}
         <section className="bento-grid__item bento-grid__item--full" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "0" }}>
-          <button 
-            className="mini-card" 
+          <button
+            className="mini-card"
             onClick={() => onNavigate("shop")}
-            style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "10px", background: "#fff", borderRadius: "18px", padding: "15px 14px", boxShadow: "0 4px 16px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", transition: "transform .18s ease, box-shadow .18s ease" }}
+            style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "10px", background: "#fff", borderRadius: "18px", padding: "15px 14px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(235,96,116,.12)", display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "flex-start" }}>
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#EB6074" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
@@ -1046,10 +1043,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             </div>
           </button>
 
-          <button 
-            className="mini-card" 
+          <button
+            className="mini-card"
             onClick={handlePlaceholderClick}
-            style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "10px", background: "#fff", borderRadius: "18px", padding: "15px 14px", boxShadow: "0 4px 16px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", transition: "transform .18s ease, box-shadow .18s ease" }}
+            style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "10px", background: "#fff", borderRadius: "18px", padding: "15px 14px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(0,148,184,.12)", display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "flex-start" }}>
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
@@ -1077,7 +1074,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
           <div
             className="modal modal--selector"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "400px", maxHeight: "90vh", overflowY: "auto", padding: "20px 0" }}
+            style={{ width: "calc(100% - 24px)", maxWidth: "440px", maxHeight: "90vh", overflowY: "auto", padding: "20px 0" }}
           >
             <div className="modal__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", marginBottom: "8px", padding: "0 20px" }}>
               <button className="back-btn" onClick={(e) => {
@@ -1126,7 +1123,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     fontSize: "0.85rem",
                     fontFamily: "'Manrope', sans-serif",
                     outline: "none",
-                    backgroundColor: "var(--color-bg)",
+                    backgroundColor: "#fff",
                     color: "var(--color-text)"
                   }}
                 />
@@ -1159,11 +1156,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             </div>
 
             {/* Вкладки категорий общих тренировок в формате карточек с иконками */}
-            <div 
-              style={{ 
-                margin: "4px 20px 12px 20px", 
-                display: "flex", 
-                gap: "10px", 
+            <div
+              style={{
+                margin: "4px 20px 12px 20px",
+                display: "flex",
+                gap: "10px",
                 overflowX: "auto",
                 width: "calc(100% - 40px)",
                 padding: "4px 0",
@@ -1174,27 +1171,33 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               className="no-scrollbar"
             >
               {[
-                { id: "Все", label: "Все", icon: (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
-                )},
-                { id: "Дыхание", label: "Дыхание", icon: (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
-                  </svg>
-                )},
-                { id: "Шаг", label: "Шаг", icon: (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="13" cy="4" r="2" />
-                    <path d="M13 18l-3-5-1-4-2 2v6" />
-                    <path d="M6 20h3l1-4" />
-                    <path d="M17 20l-1-4-3-1" />
-                  </svg>
-                )}
+                {
+                  id: "Все", label: "Все", icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                  )
+                },
+                {
+                  id: "Дыхание", label: "Дыхание", icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+                    </svg>
+                  )
+                },
+                {
+                  id: "Шаг", label: "Шаг", icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="13" cy="4" r="2" />
+                      <path d="M13 18l-3-5-1-4-2 2v6" />
+                      <path d="M6 20h3l1-4" />
+                      <path d="M17 20l-1-4-3-1" />
+                    </svg>
+                  )
+                }
               ].map((tab) => {
                 const isActive = selectedSelectorTab === tab.id;
                 return (
@@ -1234,9 +1237,9 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             {(selectedSelectorTab === "Все" || selectedSelectorTab === "Дыхание") && (
               <div className="activity-section" style={{ padding: "0 20px" }}>
                 <h3 className="activity-section__title">Гиревое дыхание</h3>
-                <div className="activity-section__grid" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                   {filteredBreathingGroup.length === 0 ? (
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0" }}>Ничего не найдено</span>
+                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0", gridColumn: "span 2" }}>Ничего не найдено</span>
                   ) : (
                     filteredBreathingGroup.map((item) => (
                       <button
@@ -1245,52 +1248,67 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                         onClick={() => handleSelectActivity(item)}
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
+                          flexDirection: "column",
+                          alignItems: "stretch",
                           width: "100%",
                           padding: "10px",
-                          backgroundColor: "var(--color-surface)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "12px",
+                          backgroundColor: "#fff",
+                          border: "none",
+                          borderRadius: "18px",
                           cursor: "pointer",
                           textAlign: "left",
+                          boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
                           transition: "all 0.15s ease",
                         }}
                       >
+                        {/* Large photo placeholder (video preview) */}
                         <div
-                          className="workout-card-btn__img"
                           style={{
-                            flexShrink: 0,
-                            width: "48px",
-                            height: "48px",
+                            position: "relative",
+                            width: "100%",
+                            height: "100px",
                             backgroundColor: "rgba(27, 171, 124, 0.08)",
                             borderRadius: "12px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: "1px solid rgba(27, 171, 124, 0.15)",
+                            overflow: "hidden",
+                            background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+                            border: "1px solid rgba(27, 171, 124, 0.06)"
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
-                          </svg>
+                          <div style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "50%",
+                            backgroundColor: "rgba(255, 255, 255, 0.9)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                            backdropFilter: "blur(4px)"
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
+                            </svg>
+                          </div>
                         </div>
 
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                          <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+                          <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
                             {item.label}
                           </span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                               {item.duration}
                             </span>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                               {item.level}
                             </span>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                               {item.equipment}
                             </span>
                           </div>
@@ -1306,9 +1324,9 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             {(selectedSelectorTab === "Все" || selectedSelectorTab === "Шаг") && (
               <div className="activity-section" style={{ marginTop: selectedSelectorTab === "Все" ? "14px" : "0px", padding: "0 20px" }}>
                 <h3 className="activity-section__title">Методика шага</h3>
-                <div className="activity-section__grid" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                   {filteredStepGroup.length === 0 ? (
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0" }}>Ничего не найдено</span>
+                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0", gridColumn: "span 2" }}>Ничего не найдено</span>
                   ) : (
                     filteredStepGroup.map((item) => (
                       <button
@@ -1317,52 +1335,67 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                         onClick={() => handleSelectActivity(item)}
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
+                          flexDirection: "column",
+                          alignItems: "stretch",
                           width: "100%",
                           padding: "10px",
-                          backgroundColor: "var(--color-surface)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "12px",
+                          backgroundColor: "#fff",
+                          border: "none",
+                          borderRadius: "18px",
                           cursor: "pointer",
                           textAlign: "left",
+                          boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
                           transition: "all 0.15s ease",
                         }}
                       >
+                        {/* Large photo placeholder (video preview) */}
                         <div
-                          className="workout-card-btn__img"
                           style={{
-                            flexShrink: 0,
-                            width: "48px",
-                            height: "48px",
+                            position: "relative",
+                            width: "100%",
+                            height: "100px",
                             backgroundColor: "rgba(0, 148, 184, 0.08)",
                             borderRadius: "12px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: "1px solid rgba(0, 148, 184, 0.15)",
+                            overflow: "hidden",
+                            background: "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)",
+                            border: "1px solid rgba(0, 148, 184, 0.06)"
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 20v-4a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v4M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-                          </svg>
+                          <div style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "50%",
+                            backgroundColor: "rgba(255, 255, 255, 0.9)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                            backdropFilter: "blur(4px)"
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="5 3 19 12 5 21 5 3" fill="#0094B8" />
+                            </svg>
+                          </div>
                         </div>
 
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                          <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+                          <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
                             {item.label}
                           </span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                               {item.duration}
                             </span>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                               {item.level}
                             </span>
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "0.72rem", color: "#6b7280" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                               {item.equipment}
                             </span>
                           </div>
@@ -1385,16 +1418,16 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   gap: "14px",
                   width: "100%",
                   padding: "16px",
-                  backgroundColor: "rgba(0, 127, 99, 0.05)",
-                  border: "1px solid rgba(0, 127, 99, 0.15)",
+                  backgroundColor: "#fff",
                   borderRadius: "14px",
                   cursor: "pointer",
                   textAlign: "left",
+                  boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
                   transition: "all 0.2s ease",
                 }}
               >
                 <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "rgba(0, 127, 99, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
                 </div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                   <span style={{ fontSize: "0.9rem", fontWeight: "800", color: "#007F63" }}>
@@ -1404,7 +1437,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     Индивидуальная программа реабилитации
                   </span>
                 </div>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
               </button>
             </div>
 
@@ -1460,7 +1493,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   textAlign: "center",
                   letterSpacing: "8px",
                   fontWeight: "600",
-                  outline: "none"
+                  outline: "none",
+                  backgroundColor: "#fff"
                 }}
               />
               {pinError && (
@@ -1511,7 +1545,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             className="modal modal--homework"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: "400px",
+              width: "calc(100% - 24px)",
+              maxWidth: "440px",
               maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
@@ -1554,13 +1589,13 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             {customPlaylist.length > 0 && !isEditingComplex ? (
               <>
                 {/* Прокручиваемое содержимое со списком выбранных упражнений */}
-                <div 
-                  style={{ 
-                    flex: 1, 
-                    overflowY: "auto", 
-                    padding: "0 20px 20px 20px", 
-                    display: "flex", 
-                    flexDirection: "column", 
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    padding: "0 20px 20px 20px",
+                    display: "flex",
+                    flexDirection: "column",
                     gap: "12px",
                     msOverflowStyle: "none",
                     scrollbarWidth: "none"
@@ -1682,111 +1717,168 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                           onDrop={(e) => handleDrop(e, idx)}
                           style={{
                             display: "flex",
-                            alignItems: "center",
+                            flexDirection: "column",
+                            alignItems: "stretch",
                             width: "100%",
                             padding: "12px",
                             backgroundColor: dragOverIndex === idx 
                               ? "rgba(27, 171, 124, 0.05)" 
-                              : "var(--color-surface)",
+                              : "#fff",
                             border: dragOverIndex === idx 
-                              ? "1px dashed var(--color-active)" 
-                              : "1px solid var(--color-border)",
-                            borderRadius: "8px",
+                              ? "1.5px dashed var(--color-active)" 
+                              : "none",
+                            borderRadius: "18px",
                             textAlign: "left",
                             gap: "10px",
                             opacity: draggedIndex === idx ? 0.4 : 1,
+                            boxShadow: dragOverIndex === idx ? "none" : "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
                             transition: "all 0.15s ease",
                             cursor: draggedIndex === idx ? "grabbing" : "default"
                           }}
                         >
-                          {/* Иконка перетаскивания (Drag Handle) */}
-                          <div 
-                            style={{ 
-                              cursor: "grab", 
-                              padding: "4px 2px", 
-                              display: "flex", 
-                              alignItems: "center", 
-                              color: "var(--color-text-secondary)",
-                              opacity: 0.6
-                            }}
-                            title="Перетащить упражнение"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="9" cy="5" r="1.5" />
-                              <circle cx="9" cy="12" r="1.5" />
-                              <circle cx="9" cy="19" r="1.5" />
-                              <circle cx="15" cy="5" r="1.5" />
-                              <circle cx="15" cy="12" r="1.5" />
-                              <circle cx="15" cy="19" r="1.5" />
-                            </svg>
+                          {/* Top Row: drag handle, index + move buttons */}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              {/* Drag Handle */}
+                              <div 
+                                style={{ 
+                                  cursor: "grab", 
+                                  padding: "4px 2px", 
+                                  display: "flex", 
+                                  alignItems: "center", 
+                                  color: "var(--color-text-secondary)",
+                                  opacity: 0.6
+                                }}
+                                title="Перетащить упражнение"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="9" cy="5" r="1.5" />
+                                  <circle cx="9" cy="12" r="1.5" />
+                                  <circle cx="9" cy="19" r="1.5" />
+                                  <circle cx="15" cy="5" r="1.5" />
+                                  <circle cx="15" cy="12" r="1.5" />
+                                  <circle cx="15" cy="19" r="1.5" />
+                                </svg>
+                              </div>
+
+                              <span style={{
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                minWidth: "22px", height: "22px", borderRadius: "50%",
+                                backgroundColor: "var(--color-active)", color: "#fff",
+                                fontSize: "0.75rem", fontWeight: "700", flexShrink: 0
+                              }}>
+                                {idx + 1}
+                              </span>
+                            </div>
+
+                            {/* Up/Down buttons */}
+                            <div style={{ display: "flex", gap: "4px" }}>
+                              <button
+                                onClick={() => handleMoveUp(idx)}
+                                disabled={idx === 0}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: idx === 0 ? "var(--color-border)" : "var(--color-text-secondary)",
+                                  cursor: idx === 0 ? "not-allowed" : "pointer",
+                                  padding: "4px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderRadius: "4px",
+                                  backgroundColor: idx === 0 ? "transparent" : "rgba(0,0,0,0.03)",
+                                  transition: "all 0.2s ease"
+                                }}
+                                title="Переместить вверх"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleMoveDown(idx)}
+                                disabled={idx === customPlaylist.length - 1}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: idx === customPlaylist.length - 1 ? "var(--color-border)" : "var(--color-text-secondary)",
+                                  cursor: idx === customPlaylist.length - 1 ? "not-allowed" : "pointer",
+                                  padding: "4px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderRadius: "4px",
+                                  backgroundColor: idx === customPlaylist.length - 1 ? "transparent" : "rgba(0,0,0,0.03)",
+                                  transition: "all 0.2s ease"
+                                }}
+                                title="Переместить вниз"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              </button>
+                            </div>
                           </div>
 
-                          <span style={{
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            minWidth: "22px", height: "22px", borderRadius: "50%",
-                            backgroundColor: "var(--color-active)", color: "#fff",
-                            fontSize: "0.75rem", fontWeight: "700", flexShrink: 0
-                          }}>
-                            {idx + 1}
-                          </span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
-                            <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)" }}>
+                          {/* Large photo placeholder (video preview) */}
+                          <div
+                            style={{
+                              position: "relative",
+                              width: "100%",
+                              height: "120px",
+                              backgroundColor: item.category === "Дыхание" ? "rgba(27, 171, 124, 0.08)" : item.category === "Упражнение" ? "rgba(0, 148, 184, 0.08)" : item.category === "Расслабление" ? "rgba(235, 96, 116, 0.08)" : "rgba(0, 148, 184, 0.08)",
+                              borderRadius: "12px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              overflow: "hidden",
+                              background: item.category === "Дыхание" 
+                                ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
+                                : item.category === "Упражнение"
+                                  ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
+                                  : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)",
+                              border: item.category === "Дыхание" 
+                                ? "1px solid rgba(0, 127, 99, 0.06)" 
+                                : item.category === "Упражнение"
+                                  ? "1px solid rgba(0, 148, 184, 0.06)"
+                                  : "1px solid rgba(235, 96, 116, 0.06)"
+                            }}
+                          >
+                            <div style={{
+                              width: "40px",
+                              height: "40px",
+                              borderRadius: "50%",
+                              backgroundColor: "rgba(255, 255, 255, 0.9)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                              backdropFilter: "blur(4px)"
+                            }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={item.category === "Дыхание" ? "#1BAB7C" : item.category === "Упражнение" ? "#0094B8" : item.category === "Расслабление" ? "#EB6074" : "#0094B8"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3" fill={item.category === "Дыхание" ? "#1BAB7C" : item.category === "Упражнение" ? "#0094B8" : item.category === "Расслабление" ? "#EB6074" : "#0094B8"} />
+                              </svg>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            <span style={{ fontSize: "0.95rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
                               {item.title}
                             </span>
-                            <span style={{ fontSize: "0.72rem", color: "var(--color-text-secondary)" }}>
-                              {item.duration} • {item.level} • {item.equipment}
-                            </span>
-                            <span style={{ fontSize: "0.72rem", color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: "2px", fontWeight: "300" }}>
-                              {item.description}
-                            </span>
-                          </div>
-
-                          {/* Кнопки перемещения вверх/вниз для мобильных и доступности */}
-                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <button
-                              onClick={() => handleMoveUp(idx)}
-                              disabled={idx === 0}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: idx === 0 ? "var(--color-border)" : "var(--color-text-secondary)",
-                                cursor: idx === 0 ? "not-allowed" : "pointer",
-                                padding: "6px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: "4px",
-                                backgroundColor: idx === 0 ? "transparent" : "rgba(0,0,0,0.03)",
-                                transition: "all 0.2s ease"
-                              }}
-                              title="Переместить вверх"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="18 15 12 9 6 15"></polyline>
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleMoveDown(idx)}
-                              disabled={idx === customPlaylist.length - 1}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: idx === customPlaylist.length - 1 ? "var(--color-border)" : "var(--color-text-secondary)",
-                                cursor: idx === customPlaylist.length - 1 ? "not-allowed" : "pointer",
-                                padding: "6px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: "4px",
-                                backgroundColor: idx === customPlaylist.length - 1 ? "transparent" : "rgba(0,0,0,0.03)",
-                                transition: "all 0.2s ease"
-                              }}
-                              title="Переместить вниз"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                              </svg>
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.72rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "4px 8px", borderRadius: "8px", fontWeight: "600" }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                {item.duration}
+                              </span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.72rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "4px 8px", borderRadius: "8px", fontWeight: "600" }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                {item.level}
+                              </span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.72rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "4px 8px", borderRadius: "8px", fontWeight: "600" }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                                {item.equipment}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1794,11 +1886,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </div>
 
                 {/* Липкий подвал для управления собранным комплексом */}
-                <div 
-                  style={{ 
-                    padding: "16px 20px", 
-                    borderTop: "1px solid var(--color-border)", 
-                    backgroundColor: "var(--color-surface)", 
+                <div
+                  style={{
+                    padding: "16px 20px",
+                    borderTop: "1px solid var(--color-border)",
+                    backgroundColor: "var(--color-surface)",
                     borderRadius: "0 0 var(--radius-lg) var(--radius-lg)",
                     boxShadow: "0 -4px 12px rgba(0,0,0,0.03)",
                     display: "flex",
@@ -1946,7 +2038,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                         fontSize: "0.85rem",
                         fontFamily: "'Manrope', sans-serif",
                         outline: "none",
-                        backgroundColor: "var(--color-bg)",
+                        backgroundColor: "#fff",
                         color: "var(--color-text)"
                       }}
                     />
@@ -1979,11 +2071,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </div>
 
                 {/* Вкладки категорий домашних тренировок в формате карточек с иконками */}
-                <div 
-                  style={{ 
-                    margin: "4px 20px 12px 20px", 
-                    display: "flex", 
-                    gap: "10px", 
+                <div
+                  style={{
+                    margin: "4px 20px 12px 20px",
+                    display: "flex",
+                    gap: "10px",
                     overflowX: "auto",
                     width: "calc(100% - 40px)",
                     padding: "4px 0",
@@ -1994,33 +2086,51 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   className="no-scrollbar"
                 >
                   {[
-                    { id: "Дыхание", label: "Дыхание", icon: (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
-                      </svg>
-                    )},
-                    { id: "Упражнение", label: "Упражнения", icon: (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
-                        <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
-                        <path d="M6 12h12" />
-                        <path d="M6.5 4.5v15" />
-                        <path d="M17.5 4.5v15" />
-                      </svg>
-                    )},
-                    { id: "Расслабление", label: "Расслабление", icon: (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                      </svg>
-                    )},
-                    { id: "Ходьба", label: "Ходьба", icon: (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="13" cy="4" r="2" />
-                        <path d="M13 18l-3-5-1-4-2 2v6" />
-                        <path d="M6 20h3l1-4" />
-                        <path d="M17 20l-1-4-3-1" />
-                      </svg>
-                    )}
+                    {
+                      id: "Все", label: "Все", icon: (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                      )
+                    },
+                    {
+                      id: "Дыхание", label: "Дыхание", icon: (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+                        </svg>
+                      )
+                    },
+                    {
+                      id: "Упражнение", label: "Упражнения", icon: (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
+                          <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
+                          <path d="M6 12h12" />
+                          <path d="M6.5 4.5v15" />
+                          <path d="M17.5 4.5v15" />
+                        </svg>
+                      )
+                    },
+                    {
+                      id: "Расслабление", label: "Расслабление", icon: (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                        </svg>
+                      )
+                    },
+                    {
+                      id: "Ходьба", label: "Ходьба", icon: (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="13" cy="4" r="2" />
+                          <path d="M13 18l-3-5-1-4-2 2v6" />
+                          <path d="M6 20h3l1-4" />
+                          <path d="M17 20l-1-4-3-1" />
+                        </svg>
+                      )
+                    }
                   ].map((tab) => {
                     const isActive = selectedHomeworkTab === tab.id;
                     return (
@@ -2057,13 +2167,13 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </div>
 
                 {/* Прокручиваемое содержимое со списком 48 упражнений */}
-                <div 
-                  style={{ 
-                    flex: 1, 
-                    overflowY: "auto", 
-                    padding: "0 20px 20px 20px", 
-                    display: "flex", 
-                    flexDirection: "column", 
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    padding: "0 20px 20px 20px",
+                    display: "flex",
+                    flexDirection: "column",
                     gap: "10px",
                     msOverflowStyle: "none",
                     scrollbarWidth: "none"
@@ -2076,10 +2186,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   </div>
 
                   {/* Список тренировок с галочками/порядковыми номерами */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                     {homeworkExercises
-                      .filter((item) => item.category === selectedHomeworkTab)
-                      .filter((item) => 
+                      .filter((item) => selectedHomeworkTab === "Все" || item.category === selectedHomeworkTab)
+                      .filter((item) =>
                         item.title.toLowerCase().includes(homeworkSearch.toLowerCase()) ||
                         (item.description && item.description.toLowerCase().includes(homeworkSearch.toLowerCase()))
                       )
@@ -2088,6 +2198,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                         return (
                           <button
                             key={item.id}
+                            type="button"
                             onClick={() => {
                               if (customPlaylist.includes(item.id)) {
                                 setCustomPlaylist(customPlaylist.filter((id) => id !== item.id));
@@ -2097,62 +2208,114 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                             }}
                             style={{
                               display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
+                              flexDirection: "column",
+                              alignItems: "stretch",
                               width: "100%",
-                              padding: "12px",
-                              backgroundColor: "var(--color-surface)",
-                              border: "1px solid var(--color-border)",
-                              borderRadius: "8px",
+                              padding: "10px",
+                              backgroundColor: "#fff",
+                              border: "none",
+                              borderRadius: "18px",
                               cursor: "pointer",
                               textAlign: "left",
-                              transition: "background-color 0.15s ease, border-color 0.15s ease",
+                              boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
+                              transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                               gap: "10px"
                             }}
                             className="workout-card-btn"
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-                              <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text-secondary)", minWidth: "18px" }}>
+                            {/* Top Row: list index & selection indicator */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                              <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text-secondary)" }}>
                                 {idx + 1}.
                               </span>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                                <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)" }}>
-                                  {item.title}
-                                </span>
-                                <span style={{ fontSize: "0.72rem", color: "var(--color-text-secondary)" }}>
-                                  {item.duration} • {item.level} • {item.equipment}
-                                </span>
-                                <span style={{ fontSize: "0.72rem", color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: "2px", fontWeight: "300" }}>
-                                  {item.description}
-                                </span>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                {playlistIndex >= 0 ? (
+                                  <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "22px",
+                                    height: "22px",
+                                    borderRadius: "50%",
+                                    backgroundColor: "var(--color-active)",
+                                    color: "#fff",
+                                    fontSize: "0.75rem",
+                                    fontWeight: "700"
+                                  }}>
+                                    {playlistIndex + 1}
+                                  </div>
+                                ) : (
+                                  <div style={{
+                                    width: "22px",
+                                    height: "22px",
+                                    borderRadius: "50%",
+                                    border: "2px solid var(--color-border)",
+                                    backgroundColor: "transparent"
+                                  }} />
+                                )}
                               </div>
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {playlistIndex >= 0 ? (
-                                <div style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  width: "22px",
-                                  height: "22px",
-                                  borderRadius: "50%",
-                                  backgroundColor: "var(--color-active)",
-                                  color: "#fff",
-                                  fontSize: "0.75rem",
-                                  fontWeight: "700"
-                                }}>
-                                  {playlistIndex + 1}
-                                </div>
-                              ) : (
-                                <div style={{
-                                  width: "22px",
-                                  height: "22px",
-                                  borderRadius: "50%",
-                                  border: "2px solid var(--color-border)",
-                                  backgroundColor: "transparent"
-                                }} />
-                              )}
+                            {/* Middle Row: Large photo preview placeholder */}
+                            <div
+                              style={{
+                                position: "relative",
+                                width: "100%",
+                                height: "100px",
+                                backgroundColor: item.category === "Дыхание" ? "rgba(27, 171, 124, 0.08)" : item.category === "Упражнение" ? "rgba(0, 148, 184, 0.08)" : item.category === "Расслабление" ? "rgba(235, 96, 116, 0.08)" : "rgba(0, 148, 184, 0.08)",
+                                borderRadius: "12px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                                background: item.category === "Дыхание" 
+                                  ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
+                                  : item.category === "Упражнение"
+                                    ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
+                                    : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)",
+                                border: item.category === "Дыхание" 
+                                  ? "1px solid rgba(0, 127, 99, 0.06)" 
+                                  : item.category === "Упражнение"
+                                    ? "1px solid rgba(0, 148, 184, 0.06)"
+                                    : "1px solid rgba(235, 96, 116, 0.06)"
+                              }}
+                            >
+                              <div style={{
+                                width: "36px",
+                                height: "36px",
+                                borderRadius: "50%",
+                                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                                backdropFilter: "blur(4px)"
+                              }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={item.category === "Дыхание" ? "#1BAB7C" : item.category === "Упражнение" ? "#0094B8" : item.category === "Расслабление" ? "#EB6074" : "#0094B8"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polygon points="5 3 19 12 5 21 5 3" fill={item.category === "Дыхание" ? "#1BAB7C" : item.category === "Упражнение" ? "#0094B8" : item.category === "Расслабление" ? "#EB6074" : "#0094B8"} />
+                                </svg>
+                              </div>
+                            </div>
+
+                            {/* Bottom Row: title and badges */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+                              <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
+                                {item.title}
+                              </span>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                  {item.duration}
+                                </span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                  {item.level}
+                                </span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                                  {item.equipment}
+                                </span>
+                              </div>
                             </div>
                           </button>
                         );
@@ -2161,11 +2324,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </div>
 
                 {/* Подвал с кнопками сохранения и начала тренировки */}
-                <div 
-                  style={{ 
-                    padding: "16px 20px", 
-                    borderTop: "1px solid var(--color-border)", 
-                    backgroundColor: "var(--color-surface)", 
+                <div
+                  style={{
+                    padding: "16px 20px",
+                    borderTop: "1px solid var(--color-border)",
+                    backgroundColor: "var(--color-surface)",
                     borderRadius: "0 0 var(--radius-lg) var(--radius-lg)",
                     boxShadow: "0 -4px 12px rgba(0,0,0,0.03)",
                     display: "flex",

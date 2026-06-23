@@ -45,7 +45,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
       </header>
 
       {cart.length === 0 ? (
-        <div className="card text-center" style={{ padding: "32px 16px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+        <div className="card text-center" style={{ padding: "32px 16px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
           <p style={{ fontFamily: "'Manrope', sans-serif", marginBottom: "20px", fontStyle: "italic", fontSize: "14px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
             Ваша корзина пуста
           </p>
@@ -56,7 +56,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Список выбранных товаров */}
-          <div className="card" style={{ padding: "20px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+          <div className="card" style={{ padding: "20px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
             <h2 className="card__title" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "12px", marginBottom: "16px", fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>Состав заказа</h2>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
               {cart.map((item) => (

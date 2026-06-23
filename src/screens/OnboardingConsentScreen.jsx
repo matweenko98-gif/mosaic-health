@@ -20,7 +20,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
         </p>
       </header>
 
-      <div className="card" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
+      <div className="card" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
         <div
           className="consent-terms"
           style={{

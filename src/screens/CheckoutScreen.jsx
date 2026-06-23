@@ -63,7 +63,7 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Форма доставки */}
-        <form onSubmit={handleOrderSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+        <form onSubmit={handleOrderSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
           <h2 className="card__title" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "12px", marginBottom: "16px", fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>Данные получателя</h2>
 
           <div className="form-field" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>

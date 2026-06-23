@@ -151,7 +151,7 @@ export default function HealthHelpersScreen({ onNavigate }) {
           </div>
 
           {/* Вовлекающий баннер (белая просторная карточка) */}
-          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
               Почему мы используем масла в методике
             </h3>
@@ -251,7 +251,7 @@ export default function HealthHelpersScreen({ onNavigate }) {
           </div>
 
           {/* Описание пользы (белая просторная карточка) */}
-          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
               Описание
             </h3>

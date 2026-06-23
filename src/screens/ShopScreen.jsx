@@ -268,8 +268,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
               margin: 0,
               borderRadius: "20px",
               background: "#fff",
-              border: "1px solid var(--color-border)",
-              boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)"
+              boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)"
             }}
           >
             <div>

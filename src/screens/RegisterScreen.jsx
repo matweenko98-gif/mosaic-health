@@ -77,7 +77,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
         </p>
       </header>
 
-      <div className="card" style={{ padding: "20px 24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+      <div className="card" style={{ padding: "20px 24px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
         <form onSubmit={step === 1 ? handleNextStep : handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
           
           {error && (

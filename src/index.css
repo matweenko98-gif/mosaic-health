@@ -24,7 +24,7 @@
 
 :root {
   /* Цветовая палитра */
-  --color-bg: #F7F7F5;
+  --color-bg: #FAF9F6;
   --color-surface: #ffffff;
   --color-border: #ECECE9;
   --color-text: #1d2321;
@@ -117,7 +117,8 @@ body {
   align-items: stretch;
   padding-bottom: var(--spacing-md);
   min-height: 0;
-  overflow: hidden; /* Prevent scrolling on onboarding/login/register screens */
+  overflow: hidden;
+  /* Prevent scrolling on onboarding/login/register screens */
 }
 
 /* --- Экран --- */
@@ -156,10 +157,11 @@ body {
 
 /* --- Карточка (Card) --- */
 .card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  border: none;
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
+  box-shadow: 0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03);
 }
 
 .card__title {
@@ -196,13 +198,17 @@ body {
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-sm);
-  border: 1px solid var(--color-border);
+  border: none;
+  background-color: #ffffff;
   border-radius: var(--radius-sm);
-  transition: background-color 0.15s ease;
+  box-shadow: 0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .workout-list__item:hover {
-  background-color: #f7f7f7;
+  background-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 48px rgba(0, 127, 99, 0.08), 0 12px 36px rgba(0, 0, 0, 0.04);
 }
 
 .workout-list__thumb {
@@ -498,21 +504,24 @@ body {
   gap: var(--spacing-xs);
   width: 100%;
   padding: var(--spacing-md) var(--spacing-sm);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
 .mini-card:hover {
-  background-color: #f7f7f7;
-  border-color: #bbb;
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 127, 99, 0.08), 0 12px 36px rgba(0, 0, 0, 0.04);
 }
 
 .mini-card:active {
-  background-color: #efefef;
+  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(0, 127, 99, 0.04), 0 6px 18px rgba(0, 0, 0, 0.03);
 }
 
 .mini-card__label {
@@ -545,7 +554,9 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -555,7 +566,7 @@ body {
 }
 
 .modal {
-  background-color: var(--color-surface);
+  background-color: var(--color-bg);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 380px;
@@ -886,11 +897,11 @@ body {
 .lang-tabs__btn--active {
   background-color: #1BAB7C;
   color: #fff;
-  box-shadow: 0 1px 3px rgba(27,171,124,.4);
+  box-shadow: 0 1px 3px rgba(27, 171, 124, .4);
 }
 
 .lang-tabs__btn:hover:not(.lang-tabs__btn--active) {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* ============================================================
@@ -913,20 +924,24 @@ body {
 .card--clickable {
   width: 100%;
   text-align: left;
-  border: 1px solid var(--color-border);
+  border: none;
+  background-color: #ffffff;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
 .card--clickable:hover {
-  background-color: #f7f7f7;
-  border-color: #bbb;
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 127, 99, 0.08), 0 12px 36px rgba(0, 0, 0, 0.04);
 }
 
 .card--clickable:active {
-  background-color: #efefef;
+  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(0, 127, 99, 0.04), 0 6px 18px rgba(0, 0, 0, 0.03);
 }
 
 .card--bento-info {
@@ -1112,7 +1127,8 @@ body {
  * ============================================================ */
 .screen--onboarding {
   justify-content: center;
-  margin-top: -35px; /* Lift the content slightly higher on screens */
+  margin-top: -35px;
+  /* Lift the content slightly higher on screens */
 }
 
 .video-player-placeholder {
@@ -1298,7 +1314,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(20,30,40,.07);
+  box-shadow: 0 2px 8px rgba(20, 30, 40, .07);
   cursor: pointer;
   position: relative;
   transition: transform 0.15s ease, background-color 0.15s ease;
@@ -1323,23 +1339,26 @@ body {
   gap: var(--spacing-md);
   width: 100%;
   padding: 12px 16px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
   text-align: left;
   font-family: var(--font-family);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
 .list-tile:hover {
-  background-color: #f9f9f9;
-  border-color: #bbb;
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 127, 99, 0.08), 0 12px 36px rgba(0, 0, 0, 0.04);
 }
 
 .list-tile:active {
-  background-color: #f0f0f0;
+  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(0, 127, 99, 0.04), 0 6px 18px rgba(0, 0, 0, 0.03);
 }
 
 .list-tile__icon-placeholder {
@@ -1504,7 +1523,7 @@ body {
 .profile-tabs__btn--active {
   background-color: #fff;
   color: #1BAB7C !important;
-  box-shadow: 0 4px 12px -4px rgba(20,30,40,.12);
+  box-shadow: 0 4px 12px -4px rgba(20, 30, 40, .12);
 }
 
 .profile-tabs__btn--active::after {
@@ -1513,7 +1532,7 @@ body {
 
 .profile-tabs__btn:hover:not(.profile-tabs__btn--active) {
   color: var(--color-text);
-  background-color: rgba(0,0,0,0.02);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Profile View Screen Mode */
@@ -1585,7 +1604,10 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
 * {
-  -ms-overflow-style: none; /* IE/Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

@@ -15,7 +15,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
         </p>
       </header>
 
-      <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
+      <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
         <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "13.5px", lineHeight: "1.5", color: "#4a4a4a", fontWeight: 300, marginBottom: "14px" }}>
           Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и
           восстановления баланса тела.
