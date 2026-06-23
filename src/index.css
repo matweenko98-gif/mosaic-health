@@ -23,15 +23,15 @@
 }
 
 :root {
-  /* Цветовая палитра wireframe */
-  --color-bg: #f0f0f0;
+  /* Цветовая палитра */
+  --color-bg: #F7F7F5;
   --color-surface: #ffffff;
-  --color-border: #d9d9d9;
-  --color-text: #333333;
-  --color-text-secondary: #777777;
-  --color-accent: #555555;
-  --color-active: #222222;
-  --color-nav-bg: #ffffff;
+  --color-border: #ECECE9;
+  --color-text: #1d2321;
+  --color-text-secondary: #6E6E6E;
+  --color-accent: #1BAB7C;
+  --color-active: #007F63;
+  --color-nav-bg: rgba(255, 255, 255, 0.82);
 
   /* Отступы */
   --spacing-xs: 4px;
@@ -41,48 +41,16 @@
   --spacing-xl: 32px;
 
   /* Скругления */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-sm: 18px;
+  --radius-md: 20px;
+  --radius-lg: 24px;
 
   /* Навигация */
-  --nav-height: 64px;
+  --nav-height: 82px;
 
-  /* Шрифты — системные */
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Шрифты */
+  --font-family: 'Geologica', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-title: 'Manrope', sans-serif;
 }
 
 html {
@@ -339,48 +307,70 @@ body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  height: var(--nav-height);
-  background-color: var(--color-nav-bg);
-  border-top: 1px solid var(--color-border);
+  height: auto;
+  background-color: transparent;
+  border-top: none;
+  display: flex;
+  justify-content: center;
+  padding: 10px 18px 26px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.bottom-nav__container {
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  z-index: 100;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(20, 30, 40, 0.06);
+  border-radius: 999px;
+  padding: 7px;
+  box-shadow: 0 12px 30px -10px rgba(0, 46, 36, 0.28);
 }
 
 .bottom-nav__btn {
+  border: none;
+  background: none;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  transition: color 0.2s ease, background-color 0.2s ease;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  transition: background 0.18s ease, color 0.18s ease;
+  color: #8a8f8d;
+  padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
-.bottom-nav__btn:hover {
-  background-color: #f2f2f2;
+.bottom-nav__btn:hover:not(.bottom-nav__btn--active) {
+  background-color: rgba(0, 127, 99, 0.08);
 }
 
 .bottom-nav__btn--active {
-  color: var(--color-active);
+  background-color: #1BAB7C !important;
+  color: #fff !important;
+  padding: 11px 20px;
+  width: auto;
+  height: auto;
+  gap: 8px;
+  box-shadow: 0 6px 16px -5px rgba(27, 171, 124, 0.7);
 }
 
 .bottom-nav__icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .bottom-nav__label {
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-family: var(--font-family-title);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
 }
 
 /* ============================================================
@@ -513,6 +503,19 @@ body {
 .mini-card__sublabel {
   font-size: 0.72rem;
   color: var(--color-text-secondary);
+}
+
+.homework-bento-card {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.homework-bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -10px rgba(0, 127, 99, 0.18) !important;
+}
+
+.homework-bento-card:active {
+  transform: translateY(0);
 }
 
 /* ============================================================
@@ -666,19 +669,21 @@ body {
 
 .form-field__input {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 0.9rem;
+  padding: 12px 16px;
+  font-size: 0.92rem;
   font-family: var(--font-family);
   color: var(--color-text);
   background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .form-field__input:focus {
-  border-color: #999;
+  border-color: #1BAB7C;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(27, 171, 124, 0.12);
 }
 
 /* --- Toggle Switch (тумблер) --- */
@@ -704,7 +709,7 @@ body {
 }
 
 .toggle--on .toggle__track {
-  background-color: #555;
+  background-color: #1BAB7C;
 }
 
 .toggle__thumb {
@@ -732,26 +737,28 @@ body {
 /* --- Save Button --- */
 .btn-save {
   width: 100%;
-  padding: 12px 16px;
-  margin-top: var(--spacing-md);
-  background-color: var(--color-active);
+  padding: 14px 18px;
+  background-color: #1BAB7C;
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 500;
-  font-family: var(--font-family);
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-family-title);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px -8px rgba(27, 171, 124, 0.6);
   -webkit-tap-highlight-color: transparent;
 }
 
 .btn-save:hover {
-  background-color: #333;
+  background-color: #159b70;
+  transform: translateY(-1px);
 }
 
 .btn-save:active {
-  background-color: #444;
+  background-color: var(--color-active);
+  transform: translateY(0);
 }
 
 /* --- Save Confirmation Message --- */
@@ -829,35 +836,39 @@ body {
 /* --- Language Tabs --- */
 .lang-tabs {
   display: flex;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  background: #ECECE9;
+  border-radius: 999px;
+  padding: 4px;
+  font-family: var(--font-family-title);
+  font-weight: 700;
+  font-size: 13px;
 }
 
 .lang-tabs__btn {
-  padding: 6px 16px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  font-family: var(--font-family);
-  background-color: var(--color-bg);
-  color: var(--color-text-secondary);
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: #6E6E6E;
+  background: transparent;
   border: none;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .lang-tabs__btn:first-child {
-  border-right: 1px solid var(--color-border);
+  border-right: none;
 }
 
 .lang-tabs__btn--active {
-  background-color: var(--color-active);
+  background-color: #1BAB7C;
   color: #fff;
+  box-shadow: 0 1px 3px rgba(27,171,124,.4);
 }
 
 .lang-tabs__btn:hover:not(.lang-tabs__btn--active) {
-  background-color: #e4e4e4;
+  background-color: rgba(0,0,0,0.05);
 }
 
 /* ============================================================
@@ -1213,9 +1224,9 @@ body {
  *  Premium Header Layout & App Header Container
  * ============================================================ */
 .app-header {
-  background-color: var(--color-surface);
-  padding: 12px var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  background-color: transparent;
+  padding: 14px 20px 12px;
+  border-bottom: none;
   flex-shrink: 0;
   z-index: 110;
 }
@@ -1233,29 +1244,49 @@ body {
 }
 
 .premium-title {
-  font-size: 1.4rem;
+  font-family: var(--font-family-title);
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  color: #1d2321;
+  letter-spacing: -0.2px;
 }
 
 .premium-subtitle {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  color: #6E6E6E;
   margin-top: 2px;
 }
 
 .header-premium__right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
+}
+
+.notification-bell-btn {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: none;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(20,30,40,.07);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .notification-bell-btn:hover {
-  background-color: #f2f2f2 !important;
+  background-color: #f7f7f7 !important;
+  transform: scale(1.05);
 }
 
 .notification-bell-btn:active {
-  background-color: #e6e6e6 !important;
+  background-color: #f0f0f0 !important;
+  transform: scale(0.95);
 }
 
 /* ============================================================
@@ -1420,43 +1451,44 @@ body {
  * ============================================================ */
 .profile-tabs {
   display: flex;
-  gap: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  background-color: #ECECE9;
+  border-radius: 999px;
+  padding: 3px;
   width: 100%;
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: 2px;
+  margin-bottom: var(--spacing-md);
+  gap: 0;
+  border: none;
 }
 
 .profile-tabs__btn {
-  padding: 8px 4px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  background: none;
+  flex: 1;
+  padding: 9px 16px;
+  font-family: var(--font-family-title);
+  font-size: 13.5px;
+  font-weight: 700;
+  background: transparent;
   border: none;
   color: var(--color-text-secondary);
   cursor: pointer;
+  border-radius: 999px;
+  text-align: center;
+  transition: all 0.2s ease;
   position: relative;
-  transition: color 0.15s ease;
-  font-family: var(--font-family);
 }
 
 .profile-tabs__btn--active {
-  color: var(--color-active);
+  background-color: #fff;
+  color: #1BAB7C !important;
+  box-shadow: 0 4px 12px -4px rgba(20,30,40,.12);
 }
 
 .profile-tabs__btn--active::after {
-  content: "";
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background-color: var(--color-active);
-  border-radius: 2px;
+  display: none;
 }
 
 .profile-tabs__btn:hover:not(.profile-tabs__btn--active) {
   color: var(--color-text);
+  background-color: rgba(0,0,0,0.02);
 }
 
 /* Profile View Screen Mode */
@@ -1522,4 +1554,13 @@ body {
 
 .workout-card-btn:active {
   background-color: #f3f4f6 !important;
+}
+
+/* Скрытие полосы прокрутки для всех элементов */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
 }

@@ -17,8 +17,18 @@ export default function HealthHelpersScreen({ onNavigate }) {
   return (
     <section className="screen" id="screen-health-helpers-detail">
       {/* Шапка с кнопкой назад */}
-      <header className="flex flex-col items-start gap-3 py-3 border-b border-gray-100 shrink-0">
-        <button className="back-btn" onClick={() => onNavigate("home")}>
+      <header className="screen__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+        <button
+          className="back-btn"
+          onClick={() => onNavigate("home")}
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "#fff",
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 600,
+            borderRadius: "12px"
+          }}
+        >
           <svg
             width="14"
             height="14"
@@ -34,64 +44,166 @@ export default function HealthHelpersScreen({ onNavigate }) {
           </svg>
           <span>Назад</span>
         </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">
+        <div style={{ marginTop: "4px" }}>
+          <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>
             Масла и Омега-3
           </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>
             Рекомендации и проверенные бренды
           </p>
         </div>
       </header>
 
-      {/* Переключатель табов на серой подложке (Segmented Control) */}
-      <div className="bg-gray-100 rounded-2xl p-1.5 flex w-full gap-1.5" style={{ marginTop: "16px", marginBottom: "16px" }}>
-        <button
-          type="button"
-          onClick={() => setActiveTab("aromatherapy")}
-          className={`flex-1 px-4 py-3.5 min-h-[48px] text-sm font-semibold rounded-xl flex items-center justify-center text-center transition-all ${activeTab === "aromatherapy"
-              ? "bg-white text-gray-800 shadow-sm"
-              : "text-gray-500 hover:text-gray-700 bg-transparent"
-            }`}
-        >
-          Ароматерапия
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("omega3")}
-          className={`flex-1 px-4 py-3.5 min-h-[48px] text-sm font-semibold rounded-xl flex items-center justify-center text-center transition-all ${activeTab === "omega3"
-              ? "bg-white text-gray-800 shadow-sm"
-              : "text-gray-500 hover:text-gray-700 bg-transparent"
-            }`}
-        >
-          Омега-3
-        </button>
+      {/* Переключатель табов на карточках */}
+      <div style={{
+        display: "flex",
+        gap: "10px",
+        overflowX: "auto",
+        width: "100%",
+        padding: "4px 0",
+        margin: "12px 0 6px 0",
+        msOverflowStyle: "none",
+        scrollbarWidth: "none",
+        flexShrink: 0
+      }} className="no-scrollbar">
+        {[
+          { id: "aromatherapy", label: "Ароматерапия", icon: (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+          )},
+          { id: "omega3", label: "Омега-3", icon: (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>
+            </svg>
+          )}
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 16px",
+                borderRadius: "14px",
+                fontSize: "13px",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: "700",
+                cursor: "pointer",
+                border: "1px solid",
+                borderColor: isActive ? "var(--color-accent)" : "var(--color-border)",
+                backgroundColor: isActive ? "rgba(27, 171, 124, 0.08)" : "#fff",
+                color: isActive ? "var(--color-active)" : "var(--color-text-secondary)",
+                boxShadow: isActive ? "0 4px 12px rgba(27, 171, 124, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+                flex: 1
+              }}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Контент таба: Ароматерапия */}
       {activeTab === "aromatherapy" && (
-        <div className="flex flex-col gap-6" style={{ marginTop: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Фото-заглушка Ароматерапия */}
+          <div style={{
+            width: "100%",
+            borderRadius: "20px",
+            height: "192px",
+            position: "relative",
+            overflow: "hidden",
+            background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid rgba(0,127,99,.08)",
+            boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
+            gap: "10px"
+          }}>
+            <div style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "14px",
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 6px 14px -6px rgba(27,171,124,.35)"
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              </svg>
+            </div>
+            <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", letterSpacing: ".3px" }}>
+              [Фотография эфирных масел doTERRA]
+            </span>
+          </div>
+
           {/* Вовлекающий баннер (белая просторная карточка) */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-3" style={{ padding: "24px" }}>
-            <h3 className="text-base font-bold text-gray-800">
+          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
               Почему мы используем масла в методике
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p style={{ fontSize: "13.5px", lineHeight: "1.68", color: "#4a4a4a", margin: 0, fontWeight: 300 }}>
               Эфирные масла терапевтического класса помогают подготовить дыхательную систему к тренировкам, улучшают экскурсию легких, способствуют глубокому фокусу и помогают быстрее восстановить мышцы после нагрузок.
             </p>
           </div>
 
           {/* Действия (полноценные кнопки) */}
-          <div className="flex flex-col gap-2.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <button
               onClick={() => handleBuyClick("Эфирные масла doTERRA")}
-              className="w-full bg-[#222222] hover:bg-black text-white text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl flex items-center justify-center gap-1.5 transition-colors duration-150 shrink-0"
+              style={{
+                display: "flex",
+                width: "100%",
+                border: "none",
+                cursor: "pointer",
+                background: "#1BAB7C",
+                color: "#fff",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "14px",
+                borderRadius: "16px",
+                boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
             >
               Купить масло
             </button>
             <button
               onClick={() => handleTelegramClick("@AromaSpecialist")}
-              className="w-full bg-transparent hover:bg-gray-50 text-gray-700 text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl border border-gray-200 flex items-center justify-center gap-1.5 transition-colors duration-150 shrink-0"
+              style={{
+                display: "flex",
+                width: "100%",
+                border: "1px solid var(--color-border)",
+                cursor: "pointer",
+                background: "transparent",
+                color: "var(--color-text-secondary)",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "14px",
+                borderRadius: "16px",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
             >
               Telegram эксперта
             </button>
@@ -101,46 +213,98 @@ export default function HealthHelpersScreen({ onNavigate }) {
 
       {/* Контент таба: Омега-3 */}
       {activeTab === "omega3" && (
-        <div className="flex flex-col gap-6" style={{ marginTop: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Фото-заглушка баночки Омега-3 */}
-          <div className="w-full bg-gray-100 border border-dashed border-gray-300 rounded-xl h-48 flex flex-col items-center justify-center gap-2 text-gray-400 shrink-0">
-            <svg
-              className="w-10 h-10 opacity-60"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
-              <path d="M17 2H7v5h10V2z" />
-            </svg>
-            <span className="text-xs italic">[Фотография баночки Омега-3]</span>
+          <div style={{
+            width: "100%",
+            borderRadius: "20px",
+            height: "192px",
+            position: "relative",
+            overflow: "hidden",
+            background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid rgba(0,127,99,.08)",
+            boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
+            gap: "10px"
+          }}>
+            <div style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "14px",
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 6px 14px -6px rgba(27,171,124,.35)"
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+                <path d="M17 2H7v5h10V2z" />
+              </svg>
+            </div>
+            <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", letterSpacing: ".3px" }}>
+              [Фотография баночки Омега-3]
+            </span>
           </div>
 
           {/* Описание пользы (белая просторная карточка) */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-3" style={{ padding: "24px" }}>
-            <h3 className="text-base font-bold text-gray-800">
+          <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", border: "1px solid var(--color-border)", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)" }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
               Описание
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p style={{ fontSize: "13.5px", lineHeight: "1.68", color: "#4a4a4a", margin: 0, fontWeight: 300 }}>
               Незаменимые жирные кислоты снижают системное воспаление, ускоряют восстановление связок и поддерживают эластичность сосудистой стенки при интенсивном гиревом дыхании. Омега-3 способствует укреплению клеточных мембран, поддерживает здоровье сердечно-сосудистой системы и повышает общую выносливость организма при регулярных физических нагрузках.
             </p>
           </div>
 
           {/* Действия (полноценные кнопки) */}
-          <div className="flex flex-col gap-2.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <button
               onClick={() => handleBuyClick("Омега-3")}
-              className="w-full bg-[#222222] hover:bg-black text-white text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl flex items-center justify-center gap-1.5 transition-colors duration-150 shrink-0"
+              style={{
+                display: "flex",
+                width: "100%",
+                border: "none",
+                cursor: "pointer",
+                background: "#1BAB7C",
+                color: "#fff",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "14px",
+                borderRadius: "16px",
+                boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
             >
               Купить Омега-3
             </button>
 
             <button
               onClick={() => handleTelegramClick("@OmegaSpecialist")}
-              className="w-full bg-transparent hover:bg-gray-50 text-gray-700 text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl border border-gray-200 flex items-center justify-center gap-1.5 transition-colors duration-150 shrink-0"
+              style={{
+                display: "flex",
+                width: "100%",
+                border: "1px solid var(--color-border)",
+                cursor: "pointer",
+                background: "transparent",
+                color: "var(--color-text-secondary)",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "14px",
+                borderRadius: "16px",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
             >
               Telegram эксперта
             </button>

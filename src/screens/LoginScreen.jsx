@@ -56,23 +56,23 @@ export default function LoginScreen({ onNavigate, onLogin }) {
   return (
     <section className="screen screen--onboarding" id="screen-login" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "calc(100vh - 120px)" }}>
       <header className="screen__header text-center" style={{ marginBottom: "24px" }}>
-        <h1 className="screen__title" style={{ fontSize: "1.8rem", fontWeight: "700", letterSpacing: "-0.03em" }}>Вход</h1>
-        <p className="screen__subtitle" style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Вход</h1>
+        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Добро пожаловать в Мозаику Здоровья
         </p>
       </header>
 
-      <div className="card" style={{ padding: "24px", borderRadius: "18px", boxShadow: "0 4px 20px rgba(0,0,0,0.04)", border: "1px solid var(--color-border)" }}>
+      <div className="card" style={{ padding: "24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           
           {error && (
-            <div className="error-message" style={{ color: "#d93025", fontSize: "0.85rem", backgroundColor: "#fce8e6", padding: "10px 12px", borderRadius: "10px", border: "1px solid #fad2cf" }}>
+            <div className="error-message" style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "12px 14px", borderRadius: "14px", border: "1px solid #fad2cf" }}>
               {error}
             </div>
           )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label htmlFor="login-id" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+            <label htmlFor="login-id" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               Email или Телефон
             </label>
             <input
@@ -83,19 +83,13 @@ export default function LoginScreen({ onNavigate, onLogin }) {
               onChange={(e) => setIdentifier(e.target.value)}
               className="form-field__input"
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid var(--color-border)",
-                fontSize: "0.95rem",
-                transition: "all 0.2s ease-in-out",
-                backgroundColor: "var(--color-bg)",
-                outline: "none"
+                borderRadius: "16px"
               }}
             />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label htmlFor="login-password" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+            <label htmlFor="login-password" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               Пароль
             </label>
             <input
@@ -106,13 +100,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               className="form-field__input"
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid var(--color-border)",
-                fontSize: "0.95rem",
-                transition: "all 0.2s ease-in-out",
-                backgroundColor: "var(--color-bg)",
-                outline: "none"
+                borderRadius: "16px"
               }}
             />
           </div>
@@ -121,12 +109,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
             type="submit"
             className="btn-save"
             style={{
-              padding: "14px 16px",
-              borderRadius: "12px",
-              fontSize: "0.95rem",
-              fontWeight: "600",
               marginTop: "8px",
-              cursor: "pointer"
             }}
           >
             Войти
@@ -140,11 +123,12 @@ export default function LoginScreen({ onNavigate, onLogin }) {
             style={{
               background: "none",
               border: "none",
-              color: "var(--color-accent)",
-              fontSize: "0.85rem",
+              color: "#1BAB7C",
+              fontSize: "13px",
               cursor: "pointer",
               textDecoration: "underline",
-              fontWeight: "500"
+              fontWeight: "600",
+              fontFamily: "'Manrope', sans-serif"
             }}
           >
             Нет аккаунта? Зарегистрироваться

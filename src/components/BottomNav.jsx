@@ -5,55 +5,60 @@ import React from "react";
  * Переключает экраны: «Главная» и «Профиль».
  */
 export default function BottomNav({ currentScreen, onNavigate }) {
+  const isHome = currentScreen === "home";
+  const isProfile = currentScreen === "profile";
+
   return (
     <nav className="bottom-nav" role="navigation" aria-label="Основная навигация">
-      <button
-        id="nav-home"
-        className={`bottom-nav__btn ${currentScreen === "home" ? "bottom-nav__btn--active" : ""}`}
-        onClick={() => onNavigate("home")}
-        aria-current={currentScreen === "home" ? "page" : undefined}
-      >
-        {/* Иконка «Домик» — простой SVG wireframe */}
-        <svg
-          className="bottom-nav__icon"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div className="bottom-nav__container">
+        {/* Главная */}
+        <button
+          id="nav-home"
+          className={`bottom-nav__btn ${isHome ? "bottom-nav__btn--active" : ""}`}
+          onClick={() => onNavigate("home")}
+          aria-current={isHome ? "page" : undefined}
         >
-          <path d="M3 12L12 3l9 9" />
-          <path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9" />
-        </svg>
-        <span className="bottom-nav__label">Главная</span>
-      </button>
+          <svg
+            className="bottom-nav__icon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill={isHome ? "rgba(255,255,255,.22)" : "none"}
+            stroke={isHome ? "#fff" : "#8a8f8d"}
+            strokeWidth="2.1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m3 9.5 9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <path d="M9 22V13a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v9" />
+          </svg>
+          {isHome && <span className="bottom-nav__label">Главная</span>}
+        </button>
 
-      <button
-        id="nav-profile"
-        className={`bottom-nav__btn ${currentScreen === "profile" ? "bottom-nav__btn--active" : ""}`}
-        onClick={() => onNavigate("profile")}
-        aria-current={currentScreen === "profile" ? "page" : undefined}
-      >
-        {/* Иконка «Профиль» — простой SVG wireframe */}
-        <svg
-          className="bottom-nav__icon"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        {/* Профиль */}
+        <button
+          id="nav-profile"
+          className={`bottom-nav__btn ${isProfile ? "bottom-nav__btn--active" : ""}`}
+          onClick={() => onNavigate("profile")}
+          aria-current={isProfile ? "page" : undefined}
         >
-          <circle cx="12" cy="8" r="4" />
-          <path d="M20 21c0-4.418-3.582-7-8-7s-8 2.582-8 7" />
-        </svg>
-        <span className="bottom-nav__label">Профиль</span>
-      </button>
+          <svg
+            className="bottom-nav__icon"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={isProfile ? "#fff" : "#8a8f8d"}
+            strokeWidth="2.1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M5.5 21a7 7 0 0 1 13 0" />
+          </svg>
+          {isProfile && <span className="bottom-nav__label">Профиль</span>}
+        </button>
+      </div>
     </nav>
   );
 }

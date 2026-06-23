@@ -28,7 +28,17 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
     <section className="screen" id="screen-checkout-detail">
       {/* Шапка с кнопкой назад */}
       <header className="screen__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
-        <button className="back-btn" onClick={() => onNavigate("cart")}>
+        <button
+          className="back-btn"
+          onClick={() => onNavigate("cart")}
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "#fff",
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 600,
+            borderRadius: "12px"
+          }}
+        >
           <svg
             width="14"
             height="14"
@@ -45,18 +55,18 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
           <span>Назад</span>
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title">Оформление заказа</h1>
-          <p className="screen__subtitle">Заполнение данных доставки</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Оформление заказа</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Заполнение данных доставки</p>
         </div>
       </header>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Форма доставки */}
-        <form onSubmit={handleOrderSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h2 className="card__title">Данные получателя</h2>
+        <form onSubmit={handleOrderSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
+          <h2 className="card__title" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "12px", marginBottom: "16px", fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>Данные получателя</h2>
 
-          <div className="form-field">
-            <label className="form-field__label" htmlFor="checkout-name">
+          <div className="form-field" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label htmlFor="checkout-name" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               ФИО
             </label>
             <input
@@ -66,12 +76,13 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
               placeholder="Иванов Иван Иванович"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              style={{ borderRadius: "16px" }}
               required
             />
           </div>
 
-          <div className="form-field">
-            <label className="form-field__label" htmlFor="checkout-phone">
+          <div className="form-field" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label htmlFor="checkout-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               Телефон
             </label>
             <input
@@ -81,18 +92,19 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
               placeholder="+7 (999) 999-99-99"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              style={{ borderRadius: "16px" }}
               required
             />
           </div>
 
-          <div className="form-field">
-            <label className="form-field__label" htmlFor="checkout-address">
+          <div className="form-field" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label htmlFor="checkout-address" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               Адрес доставки
             </label>
             <textarea
               id="checkout-address"
               className="form-field__input"
-              style={{ minHeight: "80px", resize: "vertical" }}
+              style={{ minHeight: "80px", resize: "vertical", borderRadius: "16px" }}
               placeholder="Город, улица, дом, квартира"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
@@ -101,9 +113,9 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
           </div>
 
           {/* Итоговый суммарь */}
-          <div style={{ borderTop: "1px solid #eee", paddingTop: "12px", marginTop: "4px", fontSize: "0.9rem" }}>
-            <span style={{ fontWeight: "600" }}>Сумма к оплате: </span>
-            <span style={{ fontWeight: "700", float: "right", color: "var(--color-active)" }}>{totalPrice} ₽</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--color-border)", paddingTop: "14px", marginTop: "4px" }}>
+            <span style={{ fontWeight: "700", fontSize: "14px", fontFamily: "'Manrope', sans-serif" }}>Сумма к оплате: </span>
+            <span style={{ fontWeight: "800", fontSize: "18px", color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>{totalPrice} ₽</span>
           </div>
 
           <button

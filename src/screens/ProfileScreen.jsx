@@ -25,6 +25,42 @@ export default function ProfileScreen({
   const [formAvatar, setFormAvatar] = useState(user.avatar || null);
   const [saveMessage, setSaveMessage] = useState("");
 
+  // Состояния для календаря активности
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
+  const [selectedFilterDate, setSelectedFilterDate] = useState(null);
+
+  const monthsRu = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ];
+
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const tempFirstDay = new Date(year, month, 1).getDay();
+  const firstDayIndex = tempFirstDay === 0 ? 6 : tempFirstDay - 1;
+
+  function handlePrevMonth() {
+    setCalendarDate(new Date(year, month - 1, 1));
+  }
+
+  function handleNextMonth() {
+    setCalendarDate(new Date(year, month + 1, 1));
+  }
+
+  function handleDayClick(day) {
+    const formattedDay = String(day).padStart(2, "0");
+    const formattedMonth = String(month + 1).padStart(2, "0");
+    const dateStr = `${formattedDay}.${formattedMonth}.${year}`;
+
+    if (selectedFilterDate === dateStr) {
+      setSelectedFilterDate(null);
+    } else {
+      setSelectedFilterDate(dateStr);
+    }
+  }
+
   // Синхронизация формы при изменении внешнего пользователя
   useEffect(() => {
     setFormName(user.name || "");
@@ -90,6 +126,14 @@ export default function ProfileScreen({
     }));
   }
 
+  const filteredMainHistory = history
+    .filter((entry) => !entry.isIndividual)
+    .filter((entry) => !selectedFilterDate || entry.date === selectedFilterDate);
+
+  const filteredIndividualHistory = history
+    .filter((entry) => entry.isIndividual)
+    .filter((entry) => !selectedFilterDate || entry.date === selectedFilterDate);
+
   return (
     <section className="screen" id="screen-profile">
       <header className="screen__header">
@@ -97,26 +141,64 @@ export default function ProfileScreen({
         <p className="screen__subtitle">Личный кабинет пользователя</p>
       </header>
 
-      {/* Полноценные мобильные табы */}
-      <div className="profile-tabs">
-        <button
-          type="button"
-          onClick={() => setActiveTab("main")}
-          className={`profile-tabs__btn ${
-            activeTab === "main" ? "profile-tabs__btn--active" : ""
-          }`}
-        >
-          Основное
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("activity")}
-          className={`profile-tabs__btn ${
-            activeTab === "activity" ? "profile-tabs__btn--active" : ""
-          }`}
-        >
-          Активность
-        </button>
+      {/* Горизонтальная лента категорий для профиля */}
+      <div style={{
+        display: "flex",
+        gap: "10px",
+        overflowX: "auto",
+        width: "100%",
+        padding: "4px 0",
+        margin: "4px 0 0 0",
+        msOverflowStyle: "none",
+        scrollbarWidth: "none",
+        flexShrink: 0
+      }} className="no-scrollbar">
+        {[
+          { id: "main", label: "Основное", icon: (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          )},
+          { id: "activity", label: "Активность", icon: (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          )}
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "10px 16px",
+                borderRadius: "14px",
+                fontSize: "13px",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: "700",
+                cursor: "pointer",
+                border: "1px solid",
+                borderColor: isActive ? "var(--color-accent)" : "var(--color-border)",
+                backgroundColor: isActive ? "rgba(27, 171, 124, 0.08)" : "#fff",
+                color: isActive ? "var(--color-active)" : "var(--color-text-secondary)",
+                boxShadow: isActive ? "0 4px 12px rgba(27, 171, 124, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+                flex: 1
+              }}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Сообщение об успешном сохранении */}
@@ -382,8 +464,24 @@ export default function ProfileScreen({
                   </button>
                   <button
                     id="btn-cancel-profile"
-                    className="modal__btn modal__btn--secondary"
-                    style={{ flex: 1, margin: 0 }}
+                    style={{
+                      flex: 1,
+                      margin: 0,
+                      display: "flex",
+                      border: "1px solid var(--color-border)",
+                      cursor: "pointer",
+                      background: "transparent",
+                      color: "var(--color-text-secondary)",
+                      fontFamily: "'Manrope', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "15px",
+                      padding: "14px",
+                      borderRadius: "16px",
+                      alignItems: "center",
+                      gap: "8px",
+                      justifyContent: "center",
+                      transition: "background-color 0.15s ease"
+                    }}
                     onClick={handleCancelProfile}
                   >
                     Отмена
@@ -443,8 +541,166 @@ export default function ProfileScreen({
       {/* Вкладка «Активность» */}
       {activeTab === "activity" && (
         <>
+          {/* Календарь активности */}
+          <div className="card" id="card-activity-calendar" style={{ padding: "18px" }}>
+            <h2 className="card__title" style={{ marginBottom: "12px", fontSize: "1.05rem", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>Календарь активности</h2>
+            
+            {/* Панель переключения месяцев */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <button 
+                type="button"
+                onClick={handlePrevMonth}
+                style={{
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.1rem",
+                  fontWeight: "bold",
+                  color: "var(--color-text-secondary)"
+                }}
+              >
+                ‹
+              </button>
+              <span style={{ fontSize: "0.95rem", fontWeight: "800", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
+                {monthsRu[month]} {year}
+              </span>
+              <button 
+                type="button"
+                onClick={handleNextMonth}
+                style={{
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.1rem",
+                  fontWeight: "bold",
+                  color: "var(--color-text-secondary)"
+                }}
+              >
+                ›
+              </button>
+            </div>
+
+            {/* Сетка дней недели */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "6px", textAlign: "center", marginBottom: "8px" }}>
+              {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((wDay) => (
+                <span key={wDay} style={{ fontSize: "0.7rem", fontWeight: "700", color: "var(--color-text-secondary)", textTransform: "uppercase" }}>
+                  {wDay}
+                </span>
+              ))}
+            </div>
+
+            {/* Сетка дней месяца */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "6px" }}>
+              {/* Пустые ячейки в начале месяца */}
+              {Array.from({ length: firstDayIndex }).map((_, idx) => (
+                <div key={`empty-${idx}`} />
+              ))}
+              
+              {/* Дни месяца */}
+              {Array.from({ length: daysInMonth }).map((_, idx) => {
+                const day = idx + 1;
+                const formattedDay = String(day).padStart(2, "0");
+                const formattedMonth = String(month + 1).padStart(2, "0");
+                const dateStr = `${formattedDay}.${formattedMonth}.${year}`;
+
+                // Проверяем, есть ли тренировки в истории за этот день
+                const dayHasWorkout = history.some((entry) => entry.date === dateStr);
+                const isSelected = selectedFilterDate === dateStr;
+
+                // Цветовые стили в зависимости от состояния
+                let bgColor = "#fff";
+                let color = "var(--color-text)";
+                let borderColor = "var(--color-border)";
+                let fontWeight = "600";
+                let shadow = "none";
+
+                if (dayHasWorkout) {
+                  bgColor = "var(--color-active, #1BAB7C)";
+                  color = "#fff";
+                  borderColor = "var(--color-active, #1BAB7C)";
+                  fontWeight = "700";
+                  shadow = "0 3px 8px rgba(27, 171, 124, 0.15)";
+                }
+
+                return (
+                  <button
+                    key={`day-${day}`}
+                    type="button"
+                    onClick={() => handleDayClick(day)}
+                    style={{
+                      height: "34px",
+                      borderRadius: "10px",
+                      border: isSelected ? "2px solid #000" : "1px solid " + borderColor,
+                      backgroundColor: bgColor,
+                      color: color,
+                      fontSize: "0.8rem",
+                      fontWeight: fontWeight,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: shadow,
+                      transition: "all 0.15s ease",
+                      fontFamily: "'Manrope', sans-serif"
+                    }}
+                    title={dayHasWorkout ? "Есть тренировки. Нажмите для фильтрации." : "Нет тренировок."}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Фильтр по дате */}
+          {selectedFilterDate && (
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              backgroundColor: "rgba(27, 171, 124, 0.08)",
+              border: "1px solid var(--color-accent)",
+              borderRadius: "14px",
+              padding: "10px 14px",
+              marginBottom: "16px",
+              fontSize: "0.82rem",
+              color: "var(--color-active)",
+              fontFamily: "'Manrope', sans-serif",
+              fontWeight: "700"
+            }}>
+              <span>Показаны тренировки за {selectedFilterDate}</span>
+              <button 
+                type="button"
+                onClick={() => setSelectedFilterDate(null)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  color: "#ef4444",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  fontSize: "0.82rem",
+                  textDecoration: "underline"
+                }}
+              >
+                Сбросить
+              </button>
+            </div>
+          )}
+
           {/* Достижения */}
-          <div className="card" id="card-achievements">
+          <div className="card" id="card-achievements" style={{ marginBottom: "16px" }}>
             <h2 className="card__title">Достижения</h2>
             <div className="achievement-row">
               <div className="achievement-row__icon">
@@ -478,15 +734,15 @@ export default function ProfileScreen({
           </div>
 
           {/* История основных тренировок */}
-          <div className="card" id="card-main-history">
+          <div className="card" id="card-main-history" style={{ marginBottom: "16px" }}>
             <h2 className="card__title">История основных тренировок</h2>
-            {history.filter((entry) => !entry.isIndividual).length === 0 ? (
+            {filteredMainHistory.length === 0 ? (
               <p className="card__text card__text--empty">
-                Пока нет завершённых основных тренировок
+                {selectedFilterDate ? "В этот день не было основных тренировок" : "Пока нет завершённых основных тренировок"}
               </p>
             ) : (
               <ul className="history-list">
-                {history.filter((entry) => !entry.isIndividual).map((entry) => (
+                {filteredMainHistory.map((entry) => (
                   <li key={entry.id} className="history-list__item">
                     <span className="history-list__date">{entry.date}</span>
                     <span className="history-list__name">{entry.name}</span>
@@ -498,20 +754,20 @@ export default function ProfileScreen({
           </div>
 
           {/* История индивидуальных тренировок */}
-          <div className="card" id="card-individual-history" style={{ marginTop: "16px" }}>
+          <div className="card" id="card-individual-history">
             <h2 className="card__title">История индивидуальных тренировок</h2>
-            {history.filter((entry) => entry.isIndividual).length === 0 ? (
+            {filteredIndividualHistory.length === 0 ? (
               <p className="card__text card__text--empty">
-                Пока нет завершённых индивидуальных тренировок
+                {selectedFilterDate ? "В этот день не было индивидуальных тренировок" : "Пока нет завершённых индивидуальных тренировок"}
               </p>
             ) : (
               <ul className="history-list">
-                {history.filter((entry) => entry.isIndividual).map((entry) => {
+                {filteredIndividualHistory.map((entry) => {
                   const isFullyCompleted = entry.status === "Завершено" || entry.status === "Выполнено полностью" || entry.completedCount === entry.totalCount;
                   const progressText = isFullyCompleted ? "Завершено" : entry.status;
                   
                   return (
-                    <li key={entry.id} className="history-list__item" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px", padding: "12px 14px", height: "auto" }}>
+                     <li key={entry.id} className="history-list__item" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px", padding: "12px 14px", height: "auto" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
                         <span className="history-list__date" style={{ margin: 0 }}>{entry.date}</span>
                         <span 
@@ -577,7 +833,7 @@ export default function ProfileScreen({
       )}
 
       {/* Кнопка Выхода */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px", marginBottom: "12px" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "4px", marginBottom: "4px" }}>
         <button
           onClick={onLogout}
           style={{

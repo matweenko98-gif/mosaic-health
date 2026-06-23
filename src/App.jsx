@@ -252,9 +252,32 @@ export default function App() {
       <div className="app-shell">
         {/* Фиксированная верхняя шапка (общая для всех экранов) */}
         <header className="app-header header-premium">
-          <div className="header-premium__left">
-            <h1 className="screen__title premium-title">Мозаика Здоровья</h1>
-            <p className="screen__subtitle premium-subtitle">Методика вашего баланса</p>
+          <div className="header-premium__left" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "11px" }}>
+            {!(currentScreen === "onboarding-video" || currentScreen === "onboarding-consent" || currentScreen === "login" || currentScreen === "register") && (
+              <>
+                {/* Logo placeholder stub */}
+                <div style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #1BAB7C, #0094B8)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  fontWeight: "800",
+                  fontSize: "20px",
+                  fontFamily: "'Manrope', sans-serif",
+                  flexShrink: 0
+                }}>
+                  М
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15" }}>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "16px", color: "#1d2321", letterSpacing: "-.2px" }}>Мозаика Здоровья</span>
+                  <span style={{ fontSize: "10.5px", color: "#6E6E6E", marginTop: "2px" }}>Методика вашего баланса</span>
+                </div>
+              </>
+            )}
           </div>
           <div className="header-premium__right">
             {/* Языковой переключатель */}
@@ -286,33 +309,21 @@ export default function App() {
               className="notification-bell-btn"
               onClick={() => alert("У вас нет новых уведомлений")}
               aria-label="Уведомления"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                borderRadius: "6px",
-                border: "1px solid var(--color-border)",
-                backgroundColor: "var(--color-surface)",
-                cursor: "pointer",
-                transition: "background-color 0.15s ease",
-              }}
             >
               <svg
-                width="18"
-                height="18"
+                width="19"
+                height="19"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="currentColor"
+                stroke="#1d2321"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{ color: "var(--color-accent)" }}
               >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
+              <span style={{ position: "absolute", margin: "-16px 0 0 16px", width: "7px", height: "7px", background: "#EB6074", borderRadius: "50%", border: "1.5px solid #fff" }}></span>
             </button>
           </div>
         </header>

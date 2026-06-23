@@ -6,34 +6,51 @@ import React from "react";
 export default function OnboardingVideoScreen({ onNavigate }) {
   return (
     <section className="screen screen--onboarding" id="screen-onboarding-video">
-      <header className="screen__header text-center">
-        <h1 className="screen__title">Мозаика Здоровья</h1>
-        <p className="screen__subtitle">Знакомство с методикой центра</p>
+      <header className="screen__header text-center" style={{ margin: "24px 0 12px" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
+          Мозаика Здоровья
+        </h1>
+        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
+          Знакомство с методикой центра
+        </p>
       </header>
 
-      <div className="card text-center">
-        <p className="card__text" style={{ marginBottom: "16px" }}>
+      <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)" }}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "14px", lineHeight: "1.6", color: "#4a4a4a", fontWeight: 300, marginBottom: "20px" }}>
           Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и
           восстановления баланса тела.
         </p>
 
         {/* Заглушка видеоплеера */}
-        <div className="video-player-placeholder" style={{ marginBottom: "24px" }}>
-          <svg
-            width="56"
-            height="56"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ opacity: 0.6 }}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="10,8 16,12 10,16" />
-          </svg>
-          <span className="video-player-placeholder__label" style={{ marginTop: "8px", fontStyle: "italic", fontSize: "0.8rem" }}>
+        <div className="video-player-placeholder" style={{
+          height: "200px",
+          position: "relative",
+          borderRadius: "20px",
+          overflow: "hidden",
+          background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid rgba(0,127,99,.08)",
+          boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
+          marginBottom: "24px"
+        }}>
+          <div style={{
+            width: "54px",
+            height: "54px",
+            borderRadius: "16px",
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)"
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
+            </svg>
+          </div>
+          <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", marginTop: "12px", letterSpacing: ".3px" }}>
             [Презентационный ролик — Заглушка]
           </span>
         </div>
@@ -45,7 +62,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
         >
           Далее
         </button>
-        <div style={{ marginTop: "12px", textAlign: "center" }}>
+        <div style={{ marginTop: "16px", textAlign: "center" }}>
           <button
             type="button"
             onClick={() => onNavigate("login")}
@@ -53,10 +70,11 @@ export default function OnboardingVideoScreen({ onNavigate }) {
               background: "none",
               border: "none",
               color: "var(--color-text-secondary)",
-              fontSize: "0.85rem",
+              fontSize: "13px",
               cursor: "pointer",
               textDecoration: "underline",
-              fontWeight: "500",
+              fontWeight: "600",
+              fontFamily: "'Manrope', sans-serif"
             }}
           >
             Уже есть аккаунт? Войти

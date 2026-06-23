@@ -122,7 +122,7 @@ export default function WorkoutModal({
         {playlist.length > 0 && currentIndex >= 0 && (
           <div style={{
             display: "flex",
-            gap: "4px",
+            gap: "6px",
             paddingBottom: "12px",
             marginBottom: "12px",
             borderBottom: "1px solid var(--color-border)",
@@ -132,11 +132,11 @@ export default function WorkoutModal({
               const isCurrent = idx === currentIndex;
               const isPassed = idx < currentIndex;
               
-              let bgColor = "#e5e7eb"; // Предстоящие этапы
+              let bgColor = "#ECECE9"; // Предстоящие этапы
               if (isPassed) {
-                bgColor = "#222222"; // Пройденный этап
+                bgColor = "#007F63"; // Пройденный этап
               } else if (isCurrent) {
-                bgColor = "#007aff"; // Активный этап
+                bgColor = "#1BAB7C"; // Активный этап
               }
 
               return (
@@ -149,7 +149,8 @@ export default function WorkoutModal({
                     borderRadius: "3px",
                     backgroundColor: bgColor,
                     cursor: "pointer",
-                    transition: "all 0.2s ease"
+                    transition: "all 0.2s ease",
+                    boxShadow: isCurrent ? "0 0 6px rgba(27, 171, 124, 0.4)" : "none"
                   }}
                   title={item.title || item.label}
                 />
@@ -168,7 +169,12 @@ export default function WorkoutModal({
           className="back-btn"
           style={{
             alignSelf: "flex-start",
-            marginBottom: "8px"
+            marginBottom: "8px",
+            border: "1px solid var(--color-border)",
+            backgroundColor: "#fff",
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 600,
+            borderRadius: "12px"
           }}
         >
           <svg
@@ -188,35 +194,48 @@ export default function WorkoutModal({
         </button>
 
         {/* Заглушка видеоплеера */}
-        <div className="modal__player shrink-0" id="modal-player" style={{ height: "160px", position: "relative" }}>
+        <div className="modal__player shrink-0" id="modal-player" style={{
+          height: "180px",
+          position: "relative",
+          borderRadius: "20px",
+          overflow: "hidden",
+          background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid rgba(0,127,99,.08)",
+          boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)"
+        }}>
           {!isPlaying ? (
             <div style={{
               position: "absolute",
               inset: 0,
-              backgroundColor: "rgba(255, 255, 255, 0.93)",
+              backgroundColor: "rgba(255, 255, 255, 0.94)",
               borderRadius: "inherit",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: "8px",
+              gap: "12px",
               color: "var(--color-text-secondary)"
             }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)" }}>
+              <span style={{ fontSize: "14px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)" }}>
                 Тренировка приостановлена
               </span>
               <button
                 onClick={() => setIsPlaying(true)}
-                className="back-btn"
                 style={{
-                  padding: "0 16px",
-                  height: "34px",
-                  backgroundColor: "var(--color-active)",
-                  color: "#fff",
-                  borderRadius: "17px",
-                  fontSize: "0.8rem",
-                  fontWeight: "600",
                   border: "none",
+                  cursor: "pointer",
+                  background: "#1BAB7C",
+                  color: "#fff",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  padding: "8px 18px",
+                  borderRadius: "999px",
+                  boxShadow: "0 6px 14px -4px rgba(27,171,124,.5)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center"
@@ -227,38 +246,43 @@ export default function WorkoutModal({
             </div>
           ) : (
             <>
-              <svg
-                className="modal__play-icon"
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="10,8 16,12 10,16" />
-              </svg>
-              <span className="modal__player-label">[Видеоплеер — воспроизведение]</span>
+              <div style={{
+                width: "54px",
+                height: "54px",
+                borderRadius: "16px",
+                background: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)"
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
+                </svg>
+              </div>
+              <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", marginTop: "12px", letterSpacing: ".3px" }}>
+                [Видеоплеер — воспроизведение]
+              </span>
             </>
           )}
         </div>
 
         {/* Элементы управления воспроизведением плейлиста */}
         {playlist.length > 0 && currentIndex >= 0 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", width: "100%", marginTop: "2px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", width: "100%", marginTop: "2px" }}>
             <button
               onClick={() => onIndexChange && onIndexChange(currentIndex - 1)}
               disabled={currentIndex === 0}
               className="back-btn"
               style={{
                 flex: 1,
-                height: "36px",
+                height: "38px",
                 opacity: currentIndex === 0 ? 0.4 : 1,
                 cursor: currentIndex === 0 ? "not-allowed" : "pointer",
-                justifyContent: "center"
+                justifyContent: "center",
+                borderRadius: "12px",
+                border: "1px solid var(--color-border)",
+                backgroundColor: "#fff"
               }}
             >
               ← Назад
@@ -266,15 +290,21 @@ export default function WorkoutModal({
             
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="back-btn"
               style={{
                 flex: 1.2,
-                height: "36px",
-                backgroundColor: isPlaying ? "var(--color-bg)" : "var(--color-active)",
+                height: "38px",
+                backgroundColor: isPlaying ? "#ECECE9" : "#1BAB7C",
                 color: isPlaying ? "var(--color-text)" : "#fff",
-                fontWeight: "600",
+                fontWeight: "700",
+                fontFamily: "'Manrope', sans-serif",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
-                border: isPlaying ? "1px solid var(--color-border)" : "none"
+                border: "none",
+                borderRadius: "12px",
+                cursor: "pointer",
+                boxShadow: isPlaying ? "none" : "0 4px 12px -3px rgba(27,171,124,.5)"
               }}
             >
               {isPlaying ? "⏸ Пауза" : "▶ Старт"}
@@ -286,10 +316,13 @@ export default function WorkoutModal({
               className="back-btn"
               style={{
                 flex: 1,
-                height: "36px",
+                height: "38px",
                 opacity: currentIndex === playlist.length - 1 ? 0.4 : 1,
                 cursor: currentIndex === playlist.length - 1 ? "not-allowed" : "pointer",
-                justifyContent: "center"
+                justifyContent: "center",
+                borderRadius: "12px",
+                border: "1px solid var(--color-border)",
+                backgroundColor: "#fff"
               }}
             >
               Вперед →
@@ -299,61 +332,80 @@ export default function WorkoutModal({
 
         {/* Название тренировки */}
         <div style={{ marginTop: "6px", marginBottom: "2px" }} className="shrink-0">
-          <h2 className="text-base font-bold text-gray-800" style={{ margin: 0 }}>
+          <h2 style={{ margin: 0, fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "18px", color: "var(--color-text)" }}>
             {workout.title}
           </h2>
           {nextWorkout && (
-            <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: "2px" }}>
+            <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: "4px", fontWeight: 300 }}>
               Далее: {nextWorkout.title}
             </div>
           )}
         </div>
 
         {/* Панель времени (Время упражнения и Общее время всей тренировки) */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "12px",
-          borderTop: "1px solid var(--color-border)",
-          borderBottom: "1px solid var(--color-border)",
-          padding: "12px 0",
-          margin: "12px 0",
-          textAlign: "center"
-        }} className="shrink-0">
-          <div style={{ borderRight: "1px solid var(--color-border)" }}>
-            <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "600", marginBottom: "4px" }}>
-              Время упражнения
+        {playlist.length > 0 && playlist[0].id >= 101 && (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+            borderTop: "1px solid var(--color-border)",
+            borderBottom: "1px solid var(--color-border)",
+            padding: "12px 0",
+            margin: "12px 0",
+            textAlign: "center"
+          }} className="shrink-0">
+            <div style={{ borderRight: "1px solid var(--color-border)" }}>
+              <div style={{ fontSize: "10px", fontFamily: "'Manrope', sans-serif", letterSpacing: ".5px", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "700", marginBottom: "4px" }}>
+                Время упражнения
+              </div>
+              <div style={{ fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)" }}>
+                {workout.duration || "15 мин"}
+              </div>
             </div>
-            <div style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--color-text)" }}>
-              {workout.duration || "15 мин"}
+            <div>
+              <div style={{ fontSize: "10px", fontFamily: "'Manrope', sans-serif", letterSpacing: ".5px", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "700", marginBottom: "4px" }}>
+                Общее время
+              </div>
+              <div style={{ fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)" }}>
+                {totalDurationMin ? `${totalDurationMin} мин` : (workout.duration || "15 мин")}
+              </div>
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "600", marginBottom: "4px" }}>
-              Общее время
-            </div>
-            <div style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--color-text)" }}>
-              {totalDurationMin ? `${totalDurationMin} мин` : (workout.duration || "15 мин")}
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Блок: О методике */}
-        <div className="flex flex-col gap-1.5 my-2">
-          <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider mb-0.5">
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", margin: "8px 0" }}>
+          <h4 style={{ margin: 0, fontSize: "10px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", textTransform: "uppercase", color: "var(--color-text-secondary)", letterSpacing: ".8px" }}>
             О методике
           </h4>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p style={{ margin: 0, fontSize: "13.5px", lineHeight: "1.6", color: "#4a4a4a", fontWeight: 300 }}>
             {aboutText}
           </p>
         </div>
 
         {/* Действия */}
-        <div className="modal__actions">
+        <div className="modal__actions" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {isLastExercise && (
             <button
               id="btn-complete-workout"
-              className="w-full bg-[#222222] hover:bg-black text-white text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl transition-colors duration-150 flex items-center justify-center gap-1.5 shrink-0"
+              style={{
+                display: "flex",
+                width: "100%",
+                border: "none",
+                cursor: "pointer",
+                background: "#1BAB7C",
+                color: "#fff",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "14px",
+                borderRadius: "16px",
+                boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
               onClick={handleComplete}
             >
               ✓ Завершить тренировку
@@ -363,7 +415,23 @@ export default function WorkoutModal({
           <button
             id="btn-close-modal"
             onClick={handleClosePlayer}
-            className="w-full bg-transparent hover:bg-gray-50 text-gray-500 hover:text-gray-700 text-sm font-semibold py-3.5 px-4 min-h-[48px] rounded-xl border border-gray-200 transition-colors duration-150 flex items-center justify-center shrink-0"
+            style={{
+              display: "flex",
+              width: "100%",
+              border: "1px solid var(--color-border)",
+              cursor: "pointer",
+              background: "transparent",
+              color: "var(--color-text-secondary)",
+              fontFamily: "'Manrope', sans-serif",
+              fontWeight: 700,
+              fontSize: "15px",
+              padding: "14px",
+              borderRadius: "16px",
+              alignItems: "center",
+              gap: "8px",
+              justifyContent: "center",
+              transition: "background-color 0.15s ease"
+            }}
           >
             Закрыть
           </button>

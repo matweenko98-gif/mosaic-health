@@ -71,17 +71,17 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   return (
     <section className="screen screen--onboarding" id="screen-register" style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "calc(100vh - 80px)" }}>
       <header className="screen__header text-center" style={{ marginBottom: "20px" }}>
-        <h1 className="screen__title" style={{ fontSize: "1.8rem", fontWeight: "700", letterSpacing: "-0.03em" }}>Регистрация</h1>
-        <p className="screen__subtitle" style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "28px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Регистрация</h1>
+        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
           Шаг {step} из 2: {step === 1 ? "Основные данные" : "Дополнительные сведения"}
         </p>
       </header>
 
-      <div className="card" style={{ padding: "24px", borderRadius: "18px", boxShadow: "0 4px 20px rgba(0,0,0,0.04)", border: "1px solid var(--color-border)" }}>
+      <div className="card" style={{ padding: "24px", borderRadius: "24px", boxShadow: "0 4px 18px -8px rgba(20,30,40,.1)", border: "1px solid var(--color-border)", background: "#fff" }}>
         <form onSubmit={step === 1 ? handleNextStep : handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           
           {error && (
-            <div className="error-message" style={{ color: "#d93025", fontSize: "0.85rem", backgroundColor: "#fce8e6", padding: "10px 12px", borderRadius: "10px", border: "1px solid #fad2cf" }}>
+            <div className="error-message" style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "12px 14px", borderRadius: "14px", border: "1px solid #fad2cf" }}>
               {error}
             </div>
           )}
@@ -90,7 +90,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
             /* --- Шаг 1 --- */
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-name" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-name" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Имя
                 </label>
                 <input
@@ -101,19 +101,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setName(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-email" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-email" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Email
                 </label>
                 <input
@@ -124,19 +118,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setEmail(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-phone" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Телефон
                 </label>
                 <input
@@ -147,19 +135,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setPhone(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-password" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-password" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Пароль
                 </label>
                 <input
@@ -170,13 +152,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setPassword(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
@@ -185,12 +161,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 type="submit"
                 className="btn-save"
                 style={{
-                  padding: "14px 16px",
-                  borderRadius: "12px",
-                  fontSize: "0.95rem",
-                  fontWeight: "600",
-                  marginTop: "8px",
-                  cursor: "pointer"
+                  marginTop: "8px"
                 }}
               >
                 Далее
@@ -200,7 +171,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
             /* --- Шаг 2 (плавное появление) --- */
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", animation: "slideUp 0.3s ease-out" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-age" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-age" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Возраст
                 </label>
                 <input
@@ -213,19 +184,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setAge(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <label htmlFor="reg-country" style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--color-text)", paddingLeft: "4px" }}>
+                <label htmlFor="reg-country" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Страна
                 </label>
                 <input
@@ -236,19 +201,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onChange={(e) => setCountry(e.target.value)}
                   className="form-field__input"
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s ease-in-out",
-                    backgroundColor: "var(--color-bg)",
-                    outline: "none"
+                    borderRadius: "16px"
                   }}
                 />
               </div>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", borderBottom: "1px solid #ececec", marginBottom: "8px" }}>
-                <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
+                <span style={{ fontSize: "13.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)" }}>
                   Проходили реабилитацию в центре?
                 </span>
                 <button
@@ -257,38 +216,11 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   onClick={() => setRehab(!rehab)}
                   role="switch"
                   aria-checked={rehab}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0
-                  }}
                 >
-                  <span className="toggle__track" style={{
-                    position: "relative",
-                    width: "44px",
-                    height: "24px",
-                    backgroundColor: rehab ? "var(--color-accent)" : "#ccc",
-                    borderRadius: "12px",
-                    transition: "background-color 0.25s ease"
-                  }}>
-                    <span className="toggle__thumb" style={{
-                      position: "absolute",
-                      top: "2px",
-                      left: "2px",
-                      width: "20px",
-                      height: "20px",
-                      backgroundColor: "#fff",
-                      borderRadius: "50%",
-                      transition: "transform 0.25s ease",
-                      transform: rehab ? "translateX(20px)" : "translateX(0)",
-                      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.15)"
-                    }} />
+                  <span className="toggle__track">
+                    <span className="toggle__thumb" />
                   </span>
-                  <span className="toggle__label" style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", minWidth: "28px" }}>
+                  <span className="toggle__label">
                     {rehab ? "Да" : "Нет"}
                   </span>
                 </button>
@@ -298,12 +230,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 type="submit"
                 className="btn-save"
                 style={{
-                  padding: "14px 16px",
-                  borderRadius: "12px",
-                  fontSize: "0.95rem",
-                  fontWeight: "600",
                   marginTop: "8px",
-                  cursor: "pointer"
                 }}
               >
                 Зарегистрироваться
@@ -312,14 +239,22 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
               <button
                 type="button"
                 onClick={() => { setError(""); setStep(1); }}
-                className="modal__btn modal__btn--secondary"
                 style={{
-                  padding: "12px 16px",
-                  borderRadius: "12px",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
+                  display: "flex",
                   width: "100%",
-                  textAlign: "center"
+                  border: "1px solid var(--color-border)",
+                  cursor: "pointer",
+                  background: "transparent",
+                  color: "var(--color-text-secondary)",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  padding: "14px",
+                  borderRadius: "16px",
+                  alignItems: "center",
+                  gap: "8px",
+                  justifyContent: "center",
+                  transition: "background-color 0.15s ease"
                 }}
               >
                 Назад
@@ -336,11 +271,12 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
               style={{
                 background: "none",
                 border: "none",
-                color: "var(--color-accent)",
-                fontSize: "0.85rem",
+                color: "#1BAB7C",
+                fontSize: "13px",
                 cursor: "pointer",
                 textDecoration: "underline",
-                fontWeight: "500"
+                fontWeight: "600",
+                fontFamily: "'Manrope', sans-serif"
               }}
             >
               Уже есть аккаунт? Войти
