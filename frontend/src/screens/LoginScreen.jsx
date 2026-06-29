@@ -8,49 +8,33 @@ export default function LoginScreen({ onNavigate, onLogin }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const trimmed = identifier.trim();
+    const trimmed = identifier.trim().toLowerCase();
     if (!trimmed) {
-      setError("Пожалуйста, введите Email или Номер телефона");
+      setError("Пожалуйста, введите Email");
+      return;
+    }
+    if (!trimmed.includes("@") || !trimmed.includes(".")) {
+      setError("Вход выполняется по Email");
       return;
     }
     if (!password.trim()) {
       setError("Пожалуйста, введите пароль");
       return;
     }
-    if (password.length < 4) {
-      setError("Пароль должен быть не менее 4 символов");
-      return;
-    }
-
-    const isEmail = trimmed.includes("@");
-    
-    // Валидация структуры входных данных
-    if (isEmail) {
-      if (!trimmed.includes(".") || trimmed.length < 5) {
-        setError("Пожалуйста, введите корректный Email");
-        return;
-      }
-    } else {
-      // Номер телефона должен состоять из цифр и разрешенных знаков (+, -, скобки, пробелы)
-      const phoneRegex = /^[0-9+\s()\-]+$/;
-      if (!phoneRegex.test(trimmed) || trimmed.replace(/\D/g, "").length < 5) {
-        setError("Пожалуйста, введите корректный Номер телефона");
-        return;
-      }
-    }
 
     setError("");
-    
-    const userData = {
-      name: "", // По умолчанию имя пустое при логине
-      email: isEmail ? trimmed : "",
-      phone: !isEmail ? trimmed : "",
-    };
-
-    onLogin(userData);
+    setIsSubmitting(true);
+    try {
+      await onLogin(trimmed, password);
+    } catch (err) {
+      setError(err?.message || "Не удалось войти. Проверьте данные.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -108,11 +92,13 @@ export default function LoginScreen({ onNavigate, onLogin }) {
           <button
             type="submit"
             className="btn-save"
+            disabled={isSubmitting}
             style={{
               marginTop: "8px",
+              opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            Войти
+            {isSubmitting ? "Вход…" : "Войти"}
           </button>
         </form>
 

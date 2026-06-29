@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { countries, dialCodes } from "../data/countries";
 
 /**
  * RegisterScreen — Экран Регистрации в приложении с двухшаговой формой.
@@ -8,15 +9,17 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+375"); // код страны (Беларусь по умолчанию)
+  const [phoneNumber, setPhoneNumber] = useState(""); // номер без кода
   const [password, setPassword] = useState("");
-  
+
   // Поля шага 2
   const [age, setAge] = useState("");
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState("Беларусь");
   const [rehab, setRehab] = useState(false);
   
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleNextStep(e) {
     e.preventDefault();
@@ -28,12 +31,12 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
       setError("Пожалуйста, введите корректный Email");
       return;
     }
-    if (!phone.trim()) {
-      setError("Пожалуйста, введите номер телефона");
+    if (!phoneNumber.trim() || phoneNumber.replace(/\D/g, "").length < 5) {
+      setError("Пожалуйста, введите корректный номер телефона");
       return;
     }
-    if (!password.trim() || password.length < 4) {
-      setError("Пароль должен состоять минимум из 4 символов");
+    if (!password.trim() || password.length < 6) {
+      setError("Пароль должен состоять минимум из 6 символов");
       return;
     }
 
@@ -41,7 +44,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
     setStep(2);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!age.trim()) {
       setError("Пожалуйста, укажите ваш возраст");
@@ -58,14 +61,23 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
     }
 
     setError("");
-    onRegister({
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      age: age.trim(),
-      country: country.trim(),
-      hasRehabilitation: rehab,
-    });
+    setIsSubmitting(true);
+    try {
+      await onRegister({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: `${dialCode} ${phoneNumber.trim()}`,
+        age: age.trim(),
+        country: country.trim(),
+        hasRehabilitation: rehab,
+        password,
+      });
+    } catch (err) {
+      setError(err?.message || "Не удалось зарегистрироваться");
+      setStep(1);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -127,17 +139,38 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 <label htmlFor="reg-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Телефон
                 </label>
-                <input
-                  id="reg-phone"
-                  type="tel"
-                  placeholder="+7 (999) 000-00-00"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="form-field__input"
-                  style={{
-                    borderRadius: "16px"
-                  }}
-                />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <select
+                    aria-label="Код страны"
+                    value={dialCode}
+                    onChange={(e) => setDialCode(e.target.value)}
+                    className="form-field__input"
+                    style={{
+                      borderRadius: "16px",
+                      flex: "0 0 96px",
+                      cursor: "pointer",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    {dialCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    id="reg-phone"
+                    type="tel"
+                    placeholder="(29) 000-00-00"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="form-field__input"
+                    style={{
+                      borderRadius: "16px",
+                      flex: 1,
+                    }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -193,17 +226,23 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 <label htmlFor="reg-country" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Страна
                 </label>
-                <input
+                <select
                   id="reg-country"
-                  type="text"
-                  placeholder="Беларусь"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className="form-field__input"
                   style={{
-                    borderRadius: "16px"
+                    borderRadius: "16px",
+                    cursor: "pointer",
+                    backgroundColor: "#fff",
                   }}
-                />
+                >
+                  {countries.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", borderBottom: "1px solid #ececec", marginBottom: "8px" }}>
@@ -229,11 +268,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
               <button
                 type="submit"
                 className="btn-save"
+                disabled={isSubmitting}
                 style={{
                   marginTop: "8px",
+                  opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                Зарегистрироваться
+                {isSubmitting ? "Регистрация…" : "Зарегистрироваться"}
               </button>
 
               <button

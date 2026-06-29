@@ -1,0 +1,204 @@
+// Схема базы данных «Мозаика Здоровья»
+// Документация: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================== Пользователи и доступы ======================
+
+enum Role {
+  PATIENT // пациент (по умолчанию)
+  SPECIALIST // врач/специалист — назначает программы
+  ADMIN // администратор — управляет контентом и магазином
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  role             Role      @default(PATIENT)
+  name             String    @default("")
+  phone            String    @default("")
+  age              String    @default("")
+  country          String    @default("")
+  hasRehabilitation Boolean  @default(false)
+  avatarKey        String? // ключ файла аватара в хранилище
+  emailVerifiedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  settings          UserSettings?
+  workoutLogs       WorkoutLog[]
+  programsAsPatient Program[]         @relation("PatientPrograms")
+  programsAsSpecialist Program[]      @relation("SpecialistPrograms")
+  programProgress   ProgramProgress[]
+  orders            Order[]
+  emailTokens       EmailToken[]
+  authoredArticles  Article[]
+}
+
+model UserSettings {
+  id                   String  @id @default(cuid())
+  userId               String  @unique
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutReminders     Boolean @default(true)
+  articleNotifications Boolean @default(false)
+  language             String  @default("RU")
+}
+
+model EmailToken {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      EmailTokenType
+  token     String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+}
+
+enum EmailTokenType {
+  VERIFY
+  RESET
+}
+
+// ====================== Тренировки и программы ======================
+
+model Exercise {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String   @default("")
+  durationMin  Int      @default(0)
+  category     String   @default("Общее")
+  videoKey     String? // ключ видеофайла в хранилище
+  isIndividual Boolean  @default(false) // упражнение для индивидуальных программ (бывшие id >= 101)
+  createdAt    DateTime @default(now())
+
+  programItems ProgramItem[]
+}
+
+model Program {
+  id           String        @id @default(cuid())
+  title        String        @default("Индивидуальная программа")
+  patientId    String
+  patient      User          @relation("PatientPrograms", fields: [patientId], references: [id], onDelete: Cascade)
+  specialistId String
+  specialist   User          @relation("SpecialistPrograms", fields: [specialistId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  items    ProgramItem[]
+  progress ProgramProgress?
+}
+
+model ProgramItem {
+  id         String   @id @default(cuid())
+  programId  String
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exerciseId Int
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  order      Int      @default(0)
+
+  @@unique([programId, exerciseId])
+}
+
+model ProgramProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId    String   @unique
+  program      Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  currentIndex Int      @default(-1)
+  queue        Json     @default("[]")
+  updatedAt    DateTime @updatedAt
+}
+
+model WorkoutLog {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId     Int?
+  programId      String?
+  name           String
+  status         String   @default("Выполнено")
+  isIndividual   Boolean  @default(false)
+  completedCount Int      @default(0)
+  totalCount     Int      @default(0)
+  exercises      Json     @default("[]")
+  completedAt    DateTime @default(now())
+}
+
+// ====================== Контент от создателя ======================
+
+model Article {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @default("")
+  body        String    @default("")
+  readTime    String    @default("")
+  authorId    String?
+  author      User?     @relation(fields: [authorId], references: [id])
+  publishedAt DateTime  @default(now())
+}
+
+model Podcast {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @default("")
+  durationMin Int      @default(0)
+  audioKey    String? // ключ аудиофайла в хранилище
+  publishedAt DateTime @default(now())
+}
+
+// ====================== Магазин ======================
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int // в минимальных единицах валюты (целое)
+  description String   @default("")
+  category    String   @default("Общее")
+  imageKey    String?
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orderItems OrderItem[]
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  SHIPPED
+  CANCELLED
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  recipientName String
+  phone         String
+  address       String
+  total         Int
+  status        OrderStatus @default(NEW)
+  createdAt     DateTime    @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Int
+  quantity  Int
+}

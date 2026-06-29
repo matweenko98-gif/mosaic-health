@@ -16,6 +16,7 @@ import {
   initialSettings,
   achievements,
 } from "./data/mockData";
+import { useAuth } from "./context/AuthContext";
 import "./index.css";
 
 /**
@@ -29,24 +30,27 @@ import "./index.css";
 export default function App() {
   const mainContentRef = useRef(null);
 
-  // --- Навигация (по умолчанию видео-онбординг, с учетом автологина и срока дисклеймера) ---
-  const [currentScreen, setCurrentScreen] = useState(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (loggedIn) {
+  // --- Сессия (вход) приходит из общего хранителя AuthContext ---
+  const { user: authUser, isLoggedIn, loading: authLoading, login, register, logout } = useAuth();
+
+  // --- Навигация. Стартовый экран определяется после проверки сессии. ---
+  const [currentScreen, setCurrentScreen] = useState(null);
+
+  // Когда статус входа определён — выбираем первый экран
+  useEffect(() => {
+    if (authLoading || currentScreen !== null) return;
+    if (isLoggedIn) {
       const consentDateStr = localStorage.getItem("consentDate");
+      let needConsent = !consentDateStr;
       if (consentDateStr) {
-        const consentDate = new Date(consentDateStr);
-        const daysDiff = (Date.now() - consentDate.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysDiff > 90) {
-          return "onboarding-consent";
-        }
-      } else {
-        return "onboarding-consent";
+        const daysDiff = (Date.now() - new Date(consentDateStr).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysDiff > 90) needConsent = true;
       }
-      return "home";
+      setCurrentScreen(needConsent ? "onboarding-consent" : "home");
+    } else {
+      setCurrentScreen("onboarding-video");
     }
-    return "onboarding-video";
-  });
+  }, [authLoading, isLoggedIn, currentScreen]);
 
   // Сброс скролла при смене экранов
   useEffect(() => {
@@ -55,36 +59,26 @@ export default function App() {
     }
   }, [currentScreen]);
 
-  // --- Состояние авторизации ---
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem("isLoggedIn") === "true";
+  // --- Данные профиля для экранов (берём из сессии, дополняем значениями по умолчанию) ---
+  const [user, setUser] = useState({
+    name: "", email: "", phone: "", age: "34", country: "Беларусь",
+    hasRehabilitation: true, avatar: null,
   });
 
-  // --- Данные пользователя ---
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem("user");
-      return savedUser ? JSON.parse(savedUser) : {
-        name: "",
-        email: "",
-        phone: "",
-        age: "34",
-        country: "Беларусь",
-        hasRehabilitation: true,
-        avatar: null
-      };
-    } catch (e) {
-      return {
-        name: "",
-        email: "",
-        phone: "",
-        age: "34",
-        country: "Беларусь",
-        hasRehabilitation: true,
-        avatar: null
-      };
+  // Подтягиваем профиль вошедшего пользователя
+  useEffect(() => {
+    if (authUser) {
+      setUser((prev) => ({
+        ...prev,
+        name: authUser.name ?? prev.name,
+        email: authUser.email ?? prev.email,
+        phone: authUser.phone ?? prev.phone,
+        age: authUser.age || prev.age,
+        country: authUser.country || prev.country,
+        hasRehabilitation: authUser.hasRehabilitation ?? prev.hasRehabilitation,
+      }));
     }
-  });
+  }, [authUser]);
 
   const [history, setHistory] = useState(initialHistory);
   const [settings, setSettings] = useState(initialSettings);
@@ -128,47 +122,29 @@ export default function App() {
     setHistory((prev) => [entry, ...prev]);
   }
 
-  // --- Обработчики входа и регистрации ---
-  function handleLogin(userData) {
-    setUser((prev) => {
-      const updated = { ...prev, ...userData };
-      localStorage.setItem("user", JSON.stringify(updated));
-      localStorage.setItem("isLoggedIn", "true");
-      return updated;
-    });
-    setIsLoggedIn(true);
+  // --- Обработчики входа и регистрации (через сервер) ---
+  // Возвращают промис, чтобы экраны входа/регистрации могли показать ошибку.
+  async function handleLogin(email, password) {
+    await login(email, password);
     setCurrentScreen("home");
   }
 
-  function handleRegister(userData) {
-    setUser((prev) => {
-      const updated = { ...prev, ...userData };
-      localStorage.setItem("user", JSON.stringify(updated));
-      localStorage.setItem("isLoggedIn", "true");
-      return updated;
-    });
-    setIsLoggedIn(true);
+  async function handleRegister(userData) {
+    await register(userData);
     setCurrentScreen("home");
   }
 
   function handleUserSave(updatedUser) {
+    // На этом этапе профиль сохраняется локально; подключение к серверу — в следующем шаге.
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
   }
 
-  function handleLogout() {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
+  async function handleLogout() {
+    await logout();
     setUser({
-      name: "",
-      email: "",
-      phone: "",
-      age: "34",
-      country: "Беларусь",
-      hasRehabilitation: true,
-      avatar: null
+      name: "", email: "", phone: "", age: "34", country: "Беларусь",
+      hasRehabilitation: true, avatar: null,
     });
-    setIsLoggedIn(false);
     setCurrentScreen("onboarding-video");
   }
 
@@ -184,8 +160,7 @@ export default function App() {
               if (next === "login" || next === "home") {
                 const nowStr = new Date().toISOString();
                 localStorage.setItem("consentDate", nowStr);
-                const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-                if (loggedIn) {
+                if (isLoggedIn) {
                   setCurrentScreen("home");
                 } else {
                   setCurrentScreen("login");
@@ -251,6 +226,22 @@ export default function App() {
           />
         );
     }
+  }
+
+  // Пока проверяется сессия — показываем заставку загрузки
+  if (authLoading || currentScreen === null) {
+    return (
+      <div className="app-wrapper">
+        <div
+          className="app-shell"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh" }}
+        >
+          <span style={{ fontFamily: "'Manrope', sans-serif", color: "#6E6E6E", fontSize: "14px" }}>
+            Загрузка…
+          </span>
+        </div>
+      </div>
+    );
   }
 
   // Показывать нижнюю навигацию только на экранах «Главная» и «Профиль»

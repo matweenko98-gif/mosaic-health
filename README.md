@@ -1,17 +1,59 @@
-# React + Vite
+# Мозаика Здоровья
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение (PWA) центра восстановительной медицины. Состоит из двух частей:
 
-Currently, two official plugins are available:
+- **`frontend/`** — интерфейс (то, что видит пользователь). React + Vite.
+- **`backend/`** — «двигатель»: хранит данные, проверяет входы, выдаёт видео/аудио. NestJS + PostgreSQL.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Что нужно для запуска (один раз)
 
-## React Compiler
+На компьютере должны работать две фоновые программы:
+- **PostgreSQL** — база данных (склад данных).
+- **MinIO** — хранилище файлов (видео/аудио).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Они уже установлены через Homebrew. Команды управления:
 
-## Expanding the ESLint configuration
+```bash
+# База данных
+brew services start postgresql@16     # запустить
+brew services stop postgresql@16      # остановить
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-"# mosaic-health" 
+# Хранилище файлов (запускается вручную)
+minio server "$HOME/.mosaic-minio/data" --address :9000 --console-address :9001
+# Панель MinIO: http://localhost:9001  (логин/пароль: minioadmin / minioadmin)
+```
+
+## Запуск приложения для разработки
+
+В двух отдельных окнах терминала:
+
+```bash
+# 1. Двигатель (backend) — http://localhost:4000/api
+cd backend
+npm install            # только в первый раз
+npm run start:dev
+
+# 2. Интерфейс (frontend) — http://localhost:5173
+cd frontend
+npm install            # только в первый раз
+npm run dev
+```
+
+Проверка, что двигатель жив: открыть http://localhost:4000/api/health — должно показать `{"status":"ok"}`.
+
+## База данных
+
+```bash
+cd backend
+npm run prisma:migrate   # применить изменения структуры базы
+npm run db:seed          # заполнить начальными данными
+npm run prisma:studio    # визуальный просмотр данных в браузере
+```
+
+### Демо-аккаунты (после `db:seed`)
+
+| Роль       | Email                  | Пароль     |
+|------------|------------------------|------------|
+| Админ      | admin@mosaic.health    | Demo12345  |
+| Врач       | doctor@mosaic.health   | Demo12345  |
+| Пациент    | patient@mosaic.health  | Demo12345  |
