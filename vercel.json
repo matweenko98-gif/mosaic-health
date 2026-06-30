@@ -4,6 +4,10 @@
   "buildCommand": "npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://mosaic-health-backend.onrender.com/api/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
