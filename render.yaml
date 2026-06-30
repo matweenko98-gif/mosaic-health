@@ -1,0 +1,31 @@
+# Инструкция для Render по запуску «двигателя» (backend) в интернете.
+# Render → New → Blueprint → выбрать этот репозиторий → заполнить секреты (DATABASE_URL, DIRECT_URL, FRONTEND_URL).
+services:
+  - type: web
+    name: mosaic-health-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    # --include=dev нужен, чтобы при сборке были доступны инструменты (nest, prisma, tsx).
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy && npm run db:seed
+    startCommand: node dist/main.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      # Секреты для токенов генерируются автоматически.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Заполняются вручную в панели Render:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

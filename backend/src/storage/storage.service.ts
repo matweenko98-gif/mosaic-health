@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -20,9 +20,12 @@ export class StorageService implements OnModuleInit {
   private readonly logger = new Logger('StorageService');
   private readonly s3: S3Client;
   private readonly ttl: number;
+  // Хранилище файлов включается только если задан адрес (S3_ENDPOINT).
+  private readonly enabled: boolean;
 
   constructor(private readonly config: ConfigService) {
     this.ttl = Number(this.config.get('SIGNED_URL_TTL') ?? 3600);
+    this.enabled = !!this.config.get('S3_ENDPOINT');
     this.s3 = new S3Client({
       endpoint: this.config.get('S3_ENDPOINT'),
       region: this.config.get('S3_REGION') ?? 'us-east-1',
@@ -42,6 +45,10 @@ export class StorageService implements OnModuleInit {
 
   // При старте убеждаемся, что нужные «корзины» (бакеты) существуют.
   async onModuleInit() {
+    if (!this.enabled) {
+      this.logger.warn('Хранилище файлов не настроено (нет S3_ENDPOINT) — медиа отключено.');
+      return;
+    }
     for (const kind of ['media', 'avatars'] as BucketKind[]) {
       const Bucket = this.bucketName(kind);
       try {
@@ -57,7 +64,14 @@ export class StorageService implements OnModuleInit {
     }
   }
 
+  private assertEnabled() {
+    if (!this.enabled) {
+      throw new ServiceUnavailableException('Хранилище файлов пока не настроено');
+    }
+  }
+
   async getDownloadUrl(kind: BucketKind, key: string): Promise<string> {
+    this.assertEnabled();
     const command = new GetObjectCommand({ Bucket: this.bucketName(kind), Key: key });
     return getSignedUrl(this.s3, command, { expiresIn: this.ttl });
   }
@@ -67,6 +81,7 @@ export class StorageService implements OnModuleInit {
     key: string,
     contentType: string,
   ): Promise<string> {
+    this.assertEnabled();
     const command = new PutObjectCommand({
       Bucket: this.bucketName(kind),
       Key: key,
