@@ -83,6 +83,18 @@ export default function ProfileScreen({
     }
   }
 
+  // Смена фото прямо на странице профиля (без входа в режим редактирования)
+  function handleAvatarChangeDirect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormAvatar(reader.result);
+      if (onUserSave) onUserSave({ ...user, avatar: reader.result });
+    };
+    reader.readAsDataURL(file);
+  }
+
   function handleSaveProfile() {
     if (onUserSave) {
       onUserSave({
@@ -133,6 +145,38 @@ export default function ProfileScreen({
   const filteredIndividualHistory = history
     .filter((entry) => entry.isIndividual)
     .filter((entry) => !selectedFilterDate || entry.date === selectedFilterDate);
+
+  // --- Достижения: считаем серию дней подряд и общее число тренировок ---
+  const totalWorkouts = history.length;
+
+  function computeStreak(items) {
+    const fmt = (d) =>
+      String(d.getDate()).padStart(2, "0") + "." +
+      String(d.getMonth() + 1).padStart(2, "0") + "." +
+      d.getFullYear();
+    const days = new Set(items.map((e) => e.date));
+    let streak = 0;
+    const cur = new Date();
+    if (!days.has(fmt(cur))) {
+      cur.setDate(cur.getDate() - 1);
+      if (!days.has(fmt(cur))) return 0;
+    }
+    while (days.has(fmt(cur))) {
+      streak += 1;
+      cur.setDate(cur.getDate() - 1);
+    }
+    return streak;
+  }
+  const streak = computeStreak(history);
+
+  const achievementDefs = [
+    { id: "first", icon: "🎯", title: "Первый шаг", desc: "Завершите первую тренировку", done: totalWorkouts >= 1, progress: `${Math.min(totalWorkouts, 1)}/1` },
+    { id: "streak3", icon: "🔥", title: "В ритме", desc: "3 дня тренировок подряд", done: streak >= 3, progress: `${Math.min(streak, 3)}/3` },
+    { id: "ten", icon: "💪", title: "Постоянство", desc: "10 завершённых тренировок", done: totalWorkouts >= 10, progress: `${Math.min(totalWorkouts, 10)}/10` },
+    { id: "streak7", icon: "⭐", title: "Неделя силы", desc: "7 дней тренировок подряд", done: streak >= 7, progress: `${Math.min(streak, 7)}/7` },
+    { id: "streak30", icon: "🏆", title: "Мастер баланса", desc: "30 дней тренировок подряд", done: streak >= 30, progress: `${Math.min(streak, 30)}/30` },
+  ];
+  const unlockedCount = achievementDefs.filter((a) => a.done).length;
 
   return (
     <section className="screen" id="screen-profile">
@@ -219,7 +263,12 @@ export default function ProfileScreen({
               /* Режим просмотра информации с фото-заглушкой */
               <div className="profile-view">
                 <div className="profile-view__avatar-section">
-                  <div className="profile-view__avatar-placeholder" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div
+                    className="profile-view__avatar-placeholder"
+                    onClick={() => document.getElementById("avatar-file-input-view").click()}
+                    title="Изменить фото"
+                    style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "pointer" }}
+                  >
                     {user.avatar ? (
                       <img
                         src={user.avatar}
@@ -242,13 +291,33 @@ export default function ProfileScreen({
                         <circle cx="12" cy="7" r="4" />
                       </svg>
                     )}
+                    {/* Значок камеры */}
+                    <span style={{ position: "absolute", right: "-2px", bottom: "-2px", width: "24px", height: "24px", borderRadius: "50%", background: "#1BAB7C", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--color-text)" }}>
                       {user.name || "Пользователь"}
                     </span>
-                    <span className="profile-view__avatar-label">{user.avatar ? "Фото профиля" : "[ Фото-заглушка ]"}</span>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById("avatar-file-input-view").click()}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#1BAB7C", fontSize: "13px", fontWeight: 600, fontFamily: "'Manrope', sans-serif", textAlign: "left" }}
+                    >
+                      {user.avatar ? "Изменить фото" : "Добавить фото"}
+                    </button>
                   </div>
+                  <input
+                    id="avatar-file-input-view"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChangeDirect}
+                    style={{ display: "none" }}
+                  />
                 </div>
 
                 <div className="profile-view__fields">
@@ -701,35 +770,59 @@ export default function ProfileScreen({
 
           {/* Достижения */}
           <div className="card" id="card-achievements" style={{ marginBottom: "16px" }}>
-            <h2 className="card__title">Достижения</h2>
-            <div className="achievement-row">
-              <div className="achievement-row__icon">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <h2 className="card__title" style={{ margin: 0 }}>Достижения</h2>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>
+                {unlockedCount}/{achievementDefs.length}
+              </span>
+            </div>
+
+            {/* Текущая серия */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", borderRadius: "16px", background: "rgba(27,171,124,0.06)", marginBottom: "14px" }}>
+              <span style={{ fontSize: "28px" }}>🔥</span>
+              <div>
+                <div style={{ fontSize: "22px", fontWeight: 800, fontFamily: "'Manrope', sans-serif", color: "var(--color-text)", lineHeight: 1 }}>
+                  {streak}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "3px" }}>
+                  {streak === 0 ? "нет тренировок подряд — начните сегодня!" : "дней тренировок подряд"}
+                </div>
+              </div>
+            </div>
+
+            {/* Список достижений (цели) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {achievementDefs.map((a) => (
+                <div
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "10px 12px",
+                    borderRadius: "14px",
+                    background: a.done ? "rgba(27,171,124,0.08)" : "#F5F6F5",
+                    border: a.done ? "1px solid rgba(27,171,124,0.3)" : "1px solid var(--color-border)",
+                  }}
                 >
-                  <path d="M6 2h12v6a6 6 0 01-12 0V2z" />
-                  <path d="M6 4H3v2a3 3 0 003 3" />
-                  <path d="M18 4h3v2a3 3 0 01-3 3" />
-                  <path d="M12 14v4" />
-                  <path d="M8 22h8" />
-                  <path d="M10 18h4" />
-                </svg>
-              </div>
-              <div className="achievement-row__info">
-                <span className="achievement-row__value">
-                  {achievements.daysInRow}
-                </span>
-                <span className="achievement-row__label">
-                  дней тренировок подряд
-                </span>
-              </div>
+                  <span style={{ fontSize: "22px", filter: a.done ? "none" : "grayscale(1)", opacity: a.done ? 1 : 0.55 }}>
+                    {a.icon}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: "14px", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
+                      {a.title}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+                      {a.desc}
+                    </div>
+                  </div>
+                  {a.done ? (
+                    <span style={{ color: "#1BAB7C", fontWeight: 800, fontSize: "16px" }}>✓</span>
+                  ) : (
+                    <span style={{ color: "var(--color-text-secondary)", fontSize: "12px", fontWeight: 700 }}>{a.progress}</span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 

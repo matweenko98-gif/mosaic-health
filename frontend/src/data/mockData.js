@@ -7,10 +7,8 @@ export const initialProfile = {
   passedRehabilitation: true, // true = Да, false = Нет
 };
 
-export const initialHistory = [
-  { id: 1, date: "05.06.2026", name: "Гиревое дыхание на 7 точек", status: "Выполнено" },
-  { id: 2, date: "06.06.2026", name: "Гиревое дыхание на 10 точек", status: "Выполнено" },
-];
+// История пуста по умолчанию — записи появляются по мере прохождения тренировок.
+export const initialHistory = [];
 
 export const initialSettings = {
   workoutReminders: true,
