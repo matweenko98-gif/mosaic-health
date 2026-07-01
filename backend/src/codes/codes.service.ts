@@ -9,17 +9,18 @@ import { randomInt } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 
-// Алфавит без похожих символов (0/O, 1/I) — чтобы код проще диктовать.
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+// Код состоит из 5 английских заглавных букв.
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const CODE_LENGTH = 5;
 
 @Injectable()
 export class CodesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private randomCode(): string {
-    let body = '';
-    for (let i = 0; i < 6; i++) body += ALPHABET[randomInt(ALPHABET.length)];
-    return `MZ-${body}`;
+    let code = '';
+    for (let i = 0; i < CODE_LENGTH; i++) code += ALPHABET[randomInt(ALPHABET.length)];
+    return code;
   }
 
   private async generateUniqueCode(): Promise<string> {

@@ -1500,13 +1500,14 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
             <input
               type="text"
-              placeholder="Например: MZ-XXXXXX"
+              placeholder="Например: ABCDE"
               value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              onChange={(e) => setCodeInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5))}
               onKeyDown={(e) => { if (e.key === "Enter") handleActivateCode(); }}
               className="form-field__input"
               autoFocus
-              style={{ borderRadius: "14px", textAlign: "center", letterSpacing: "1px", fontWeight: 700, marginBottom: "14px" }}
+              maxLength={5}
+              style={{ borderRadius: "14px", textAlign: "center", letterSpacing: "4px", fontWeight: 700, fontSize: "20px", marginBottom: "14px" }}
             />
 
             <div style={{ display: "flex", gap: "8px" }}>
