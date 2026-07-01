@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
  */
 export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
   const products = [
-    { id: 101, name: "Чугунная гиря 8 кг", price: 3200, desc: "Оптимальный вес для дыхательной практики на 7 точек", category: "Инструменты" },
-    { id: 102, name: "Чугунная гиря 12 кг", price: 4500, desc: "Для продвинутых тренировок гиревого дыхания на 10 точек", category: "Инструменты" },
+    { id: 101, name: "Чугунная гиря 8 кг", price: 3200, desc: "Оптимальный вес для дыхательной практики на 7 точек", category: "Инструменты", image: "/kettlebell-8.jpg" },
+    { id: 102, name: "Чугунная гиря 12 кг", price: 4500, desc: "Для продвинутых тренировок гиревого дыхания на 10 точек", category: "Инструменты", image: "/kettlebell-12.jpg" },
     { id: 103, name: "Дыхательное масло (doTERRA)", price: 1900, desc: "Смесь эфирных масел терапевтического класса", category: "Добавки" },
     { id: 104, name: "Омега-3 высокой очистки", price: 2600, desc: "120 капсул высокой концентрации EPA/DHA", category: "Добавки" },
   ];
@@ -272,7 +272,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
             }}
           >
             <div>
-              {/* Квадратный блок-заглушка для фото */}
+              {/* Фото товара (или заглушка, если фото нет) */}
               <div style={{
                 position: "relative",
                 width: "100%",
@@ -283,15 +283,25 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
                 justifyContent: "center",
                 borderRadius: "16px",
                 overflow: "hidden",
-                background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+                background: prod.image
+                  ? "#F5F6F5"
+                  : "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
                 border: "1px solid rgba(0,127,99,.06)",
                 boxShadow: "inset 0 0 12px rgba(0,0,0,0.02)"
               }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
+                {prod.image ? (
+                  <img
+                    src={prod.image}
+                    alt={prod.name}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  />
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                )}
               </div>
               <h3 style={{ fontSize: "14px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", margin: 0, lineHeight: "1.2" }}>
                 {prod.name}

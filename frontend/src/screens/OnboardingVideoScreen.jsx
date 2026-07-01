@@ -21,38 +21,23 @@ export default function OnboardingVideoScreen({ onNavigate }) {
           восстановления баланса тела.
         </p>
 
-        {/* Заглушка видеоплеера */}
-        <div className="video-player-placeholder" style={{
-          height: "165px",
+        {/* Презентационный видеоролик */}
+        <div style={{
           position: "relative",
           borderRadius: "20px",
           overflow: "hidden",
-          background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
           border: "1px solid rgba(0,127,99,.08)",
           boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
-          marginBottom: "16px"
+          marginBottom: "16px",
+          background: "#000"
         }}>
-          <div style={{
-            width: "54px",
-            height: "54px",
-            borderRadius: "16px",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)"
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
-            </svg>
-          </div>
-          <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", marginTop: "12px", letterSpacing: ".3px" }}>
-            [Презентационный ролик — Заглушка]
-          </span>
+          <video
+            src="/demo-video.mp4"
+            controls
+            playsInline
+            preload="metadata"
+            style={{ width: "100%", height: "auto", display: "block", maxHeight: "260px", background: "#000" }}
+          />
         </div>
 
         <button
