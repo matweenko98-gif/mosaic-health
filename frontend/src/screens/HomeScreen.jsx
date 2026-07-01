@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { api } from "../api/client";
 import { methodDescription } from "../data/mockData";
 import WorkoutModal from "../components/WorkoutModal";
 
@@ -619,13 +620,26 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   // Состояние активного таба для домашних тренировок
   const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
 
-  // Состояния для Домашнего задания
-  const [isHomeworkUnlocked, setIsHomeworkUnlocked] = useState(
-    () => localStorage.getItem("homeworkUnlocked") === "true"
-  );
-  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
+  // Доступ к домашним заданиям определяется назначением врача (проверяется на сервере),
+  // а не кодом. Если у пациента есть хотя бы одна назначенная программа — доступ открыт.
+  const [hasProgram, setHasProgram] = useState(false);
+  const isHomeworkUnlocked = hasProgram;
+
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/me/programs")
+      .then((list) => {
+        if (active) setHasProgram(Array.isArray(list) && list.length > 0);
+      })
+      .catch(() => {
+        if (active) setHasProgram(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
 
   useEffect(() => {
@@ -780,26 +794,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       setIsEditingComplex(customPlaylist.length === 0);
       setIsHomeworkModalOpen(true);
     } else {
-      setIsPinModalOpen(true);
-      setPinInput("");
-      setPinError("");
-    }
-  }
-
-  function handleVerifyPin() {
-    if (pinInput === "0000") {
-      localStorage.setItem("homeworkUnlocked", "true");
-      setIsHomeworkUnlocked(true);
-      setIsPinModalOpen(false);
-      setPinInput("");
-      setPinError("");
-      setIsSelectorOpen(false);
-      setIsEditingComplex(customPlaylist.length === 0);
-      setIsHomeworkModalOpen(true);
-      setToast({ visible: true, message: "Доступ открыт!", type: "success" });
-    } else {
-      setPinError("Неверный код доступа");
-      setToast({ visible: true, message: "Неверный код доступа", type: "error" });
+      setToast({
+        visible: true,
+        message: "Индивидуальная программа пока не назначена врачом",
+        type: "info",
+      });
     }
   }
 
@@ -1448,89 +1447,6 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         </div>
       )}
 
-      {/* === Модальное окно ввода PIN-кода === */}
-      {isPinModalOpen && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setIsPinModalOpen(false);
-              setPinError("");
-              setPinInput("");
-            }
-          }}
-          style={{ zIndex: 300 }}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "340px", padding: "24px" }}
-          >
-            <h3 className="modal__title" style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "8px" }}>
-              Доступ к домашнему заданию
-            </h3>
-            <p className="modal__desc" style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)", marginBottom: "16px", lineHeight: "1.4" }}>
-              Введите персональный код доступа, выданный специалистом центра.
-            </p>
-
-            <div className="form-field" style={{ marginBottom: "16px" }}>
-              <input
-                type="text"
-                pattern="[0-9]*"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="Код"
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value);
-                  setPinError("");
-                }}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "8px",
-                  fontSize: "1.1rem",
-                  textAlign: "center",
-                  letterSpacing: "8px",
-                  fontWeight: "600",
-                  outline: "none",
-                  backgroundColor: "#fff"
-                }}
-              />
-              {pinError && (
-                <span style={{ color: "#ef4444", fontSize: "0.75rem", marginTop: "4px", display: "block", textAlign: "center" }}>
-                  {pinError}
-                </span>
-              )}
-            </div>
-
-            <div className="modal__actions" style={{ display: "flex", gap: "10px", flexDirection: "row" }}>
-              <button
-                className="modal__btn modal__btn--secondary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsPinModalOpen(false);
-                  setPinError("");
-                  setPinInput("");
-                }}
-                style={{ flex: 1, padding: "10px" }}
-              >
-                Отмена
-              </button>
-              <button
-                className="modal__btn modal__btn--primary"
-                onClick={handleVerifyPin}
-                style={{ flex: 1, padding: "10px" }}
-              >
-                Подтвердить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* === Выделенное модальное окно «Домашнее задание» === */}
       {isHomeworkModalOpen && (
