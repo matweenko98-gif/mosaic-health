@@ -1,0 +1,101 @@
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { randomInt } from 'crypto';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+
+// Алфавит без похожих символов (0/O, 1/I) — чтобы код проще диктовать.
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+@Injectable()
+export class CodesService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private randomCode(): string {
+    let body = '';
+    for (let i = 0; i < 6; i++) body += ALPHABET[randomInt(ALPHABET.length)];
+    return `MZ-${body}`;
+  }
+
+  private async generateUniqueCode(): Promise<string> {
+    // Практически исключаем коллизию, но на всякий случай проверяем.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = this.randomCode();
+      const exists = await this.prisma.accessCode.findUnique({ where: { code } });
+      if (!exists) return code;
+    }
+    throw new ConflictException('Не удалось сгенерировать код, попробуйте ещё раз');
+  }
+
+  // ---------- Врач / Админ ----------
+
+  async listForSpecialist(user: AuthUser) {
+    const where = user.role === Role.ADMIN ? {} : { specialistId: user.id };
+    const codes = await this.prisma.accessCode.findMany({
+      where,
+      include: {
+        activatedBy: { select: { name: true, email: true } },
+        specialist: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return codes.map((c) => ({
+      id: c.id,
+      code: c.code,
+      label: c.label,
+      status: c.activatedById ? 'activated' : 'free',
+      activatedByName: c.activatedBy?.name || null,
+      activatedByEmail: c.activatedBy?.email || null,
+      activatedAt: c.activatedAt,
+      createdAt: c.createdAt,
+    }));
+  }
+
+  async createForSpecialist(specialistId: string, label?: string) {
+    const code = await this.generateUniqueCode();
+    const created = await this.prisma.accessCode.create({
+      data: { code, label: label ?? '', specialistId },
+    });
+    return { id: created.id, code: created.code, label: created.label };
+  }
+
+  async deleteCode(user: AuthUser, id: string) {
+    const code = await this.prisma.accessCode.findUnique({ where: { id } });
+    if (!code) throw new NotFoundException('Код не найден');
+    if (user.role === Role.SPECIALIST && code.specialistId !== user.id) {
+      throw new ForbiddenException('Можно удалять только свои коды');
+    }
+    await this.prisma.accessCode.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  // ---------- Пациент ----------
+
+  async hasAccess(userId: string) {
+    const count = await this.prisma.accessCode.count({ where: { activatedById: userId } });
+    return { hasAccess: count > 0 };
+  }
+
+  async activate(userId: string, rawCode: string) {
+    const code = rawCode.trim().toUpperCase();
+    const record = await this.prisma.accessCode.findUnique({ where: { code } });
+    if (!record) throw new NotFoundException('Код не найден. Проверьте правильность.');
+
+    if (record.activatedById) {
+      // Уже активирован этим же пользователем — считаем успехом (идемпотентно).
+      if (record.activatedById === userId) return { ok: true, alreadyYours: true };
+      throw new ConflictException('Этот код уже использован на другом аккаунте');
+    }
+
+    await this.prisma.accessCode.update({
+      where: { id: record.id },
+      data: { activatedById: userId, activatedAt: new Date() },
+    });
+    return { ok: true };
+  }
+}

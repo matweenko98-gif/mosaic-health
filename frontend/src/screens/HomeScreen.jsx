@@ -620,25 +620,54 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   // Состояние активного таба для домашних тренировок
   const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
 
-  // Доступ к домашним заданиям определяется назначением врача (проверяется на сервере),
-  // а не кодом. Если у пациента есть хотя бы одна назначенная программа — доступ открыт.
-  const [hasProgram, setHasProgram] = useState(false);
-  const isHomeworkUnlocked = hasProgram;
+  // Доступ к индивидуальным тренировкам открывается кодом от врача (проверяется на сервере).
+  const [hasAccess, setHasAccess] = useState(false);
+  const isHomeworkUnlocked = hasAccess;
 
   useEffect(() => {
     let active = true;
     api
-      .get("/me/programs")
-      .then((list) => {
-        if (active) setHasProgram(Array.isArray(list) && list.length > 0);
+      .get("/me/access")
+      .then((r) => {
+        if (active) setHasAccess(!!r?.hasAccess);
       })
       .catch(() => {
-        if (active) setHasProgram(false);
+        if (active) setHasAccess(false);
       });
     return () => {
       active = false;
     };
   }, []);
+
+  // Окно активации кода доступа
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [codeSubmitting, setCodeSubmitting] = useState(false);
+
+  async function handleActivateCode() {
+    const code = codeInput.trim();
+    if (!code) {
+      setCodeError("Введите код от врача");
+      return;
+    }
+    setCodeError("");
+    setCodeSubmitting(true);
+    try {
+      await api.post("/me/activate-code", { code });
+      setHasAccess(true);
+      setIsCodeModalOpen(false);
+      setCodeInput("");
+      setToast({ visible: true, message: "Доступ открыт!", type: "success" });
+      setIsSelectorOpen(false);
+      setIsEditingComplex(customPlaylist.length === 0);
+      setIsHomeworkModalOpen(true);
+    } catch (err) {
+      setCodeError(err?.message || "Не удалось активировать код");
+    } finally {
+      setCodeSubmitting(false);
+    }
+  }
 
   const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
 
@@ -794,11 +823,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       setIsEditingComplex(customPlaylist.length === 0);
       setIsHomeworkModalOpen(true);
     } else {
-      setToast({
-        visible: true,
-        message: "Индивидуальная программа пока не назначена врачом",
-        type: "info",
-      });
+      // Доступа нет — предлагаем ввести код от врача.
+      setCodeInput("");
+      setCodeError("");
+      setIsCodeModalOpen(true);
     }
   }
 
@@ -1447,6 +1475,58 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         </div>
       )}
 
+
+      {/* === Модальное окно активации кода доступа === */}
+      {isCodeModalOpen && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsCodeModalOpen(false); }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "380px" }}>
+            <h2 style={{ margin: "0 0 6px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "18px", color: "var(--color-text)" }}>
+              Код доступа
+            </h2>
+            <p style={{ margin: "0 0 14px 0", fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300, lineHeight: 1.5 }}>
+              Введите код, который вам дал врач, чтобы открыть индивидуальные тренировки.
+            </p>
+
+            {codeError && (
+              <div style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "10px 12px", borderRadius: "12px", border: "1px solid #fad2cf", marginBottom: "12px" }}>
+                {codeError}
+              </div>
+            )}
+
+            <input
+              type="text"
+              placeholder="Например: MZ-XXXXXX"
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") handleActivateCode(); }}
+              className="form-field__input"
+              autoFocus
+              style={{ borderRadius: "14px", textAlign: "center", letterSpacing: "1px", fontWeight: 700, marginBottom: "14px" }}
+            />
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => setIsCodeModalOpen(false)}
+                style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "1.5px solid #a6a6a1", background: "#fff", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: "14px", cursor: "pointer" }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleActivateCode}
+                disabled={codeSubmitting}
+                style={{ flex: 1.4, padding: "12px", borderRadius: "14px", border: "none", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: "14px", cursor: "pointer", opacity: codeSubmitting ? 0.7 : 1 }}
+              >
+                {codeSubmitting ? "Проверка…" : "Активировать"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* === Выделенное модальное окно «Домашнее задание» === */}
       {isHomeworkModalOpen && (

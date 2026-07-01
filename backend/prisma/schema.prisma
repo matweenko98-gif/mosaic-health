@@ -44,6 +44,23 @@ model User {
   orders            Order[]
   emailTokens       EmailToken[]
   authoredArticles  Article[]
+  codesCreated      AccessCode[]      @relation("SpecialistCodes")
+  codesActivated    AccessCode[]      @relation("ActivatedCodes")
+}
+
+// Код доступа к индивидуальным тренировкам.
+// Врач создаёт код и называет его пациенту; пациент активирует код на своём аккаунте.
+// Один код может быть активирован только один раз (одним аккаунтом).
+model AccessCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  label         String    @default("") // пометка врача (для кого код)
+  specialistId  String
+  specialist    User      @relation("SpecialistCodes", fields: [specialistId], references: [id])
+  activatedById String?
+  activatedBy   User?     @relation("ActivatedCodes", fields: [activatedById], references: [id])
+  activatedAt   DateTime?
+  createdAt     DateTime  @default(now())
 }
 
 model UserSettings {

@@ -142,6 +142,21 @@ async function seedUsers(exercises: RawExercise[]) {
     });
   }
 
+  // Демо-коды доступа к индивидуальным тренировкам
+  const codesCount = await prisma.accessCode.count();
+  if (codesCount === 0) {
+    await prisma.accessCode.create({
+      data: {
+        code: 'MZ-DEMO01', label: 'Демо: активирован пациентом',
+        specialistId: specialist.id, activatedById: patient.id, activatedAt: new Date(),
+      },
+    });
+    await prisma.accessCode.create({
+      data: { code: 'MZ-TEST99', label: 'Демо: свободный код для теста', specialistId: specialist.id },
+    });
+    console.log('  Коды доступа: MZ-DEMO01 (активирован patient@), MZ-TEST99 (свободный)');
+  }
+
   console.log('  Демо-аккаунты: admin@mosaic.health, doctor@mosaic.health, patient@mosaic.health (пароль у всех: Demo12345)');
 }
 

@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { HistoryModule } from './history/history.module';
 import { ProgramsModule } from './programs/programs.module';
+import { CodesModule } from './codes/codes.module';
 import { ContentModule } from './content/content.module';
 import { ShopModule } from './shop/shop.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -31,6 +32,7 @@ import { AppController } from './app.controller';
     ExercisesModule,
     HistoryModule,
     ProgramsModule,
+    CodesModule,
     ContentModule,
     ShopModule,
   ],

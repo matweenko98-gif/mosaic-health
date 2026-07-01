@@ -5,6 +5,8 @@ import React, { useState, useEffect } from "react";
  */
 export default function ProfileScreen({
   user = { name: "", email: "", phone: "", age: "", country: "", hasRehabilitation: false, avatar: null },
+  role,
+  onNavigate,
   onUserSave,
   onLogout,
   history,
@@ -12,6 +14,7 @@ export default function ProfileScreen({
   onSettingsChange,
   achievements,
 }) {
+  const isSpecialist = role === "SPECIALIST" || role === "ADMIN";
   const [activeTab, setActiveTab] = useState("main"); // "main" | "activity"
   const [isEditing, setIsEditing] = useState(false);
 
@@ -923,6 +926,41 @@ export default function ProfileScreen({
             )}
           </div>
         </>
+      )}
+
+      {/* Панель врача (для врача и админа) */}
+      {isSpecialist && onNavigate && (
+        <button
+          onClick={() => onNavigate("specialist-codes")}
+          className="card card--clickable"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px",
+            borderRadius: "18px",
+            background: "#fff",
+            border: "1px solid var(--color-border)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.03)",
+            cursor: "pointer",
+            marginBottom: "16px",
+            textAlign: "left",
+          }}
+        >
+          <span style={{ fontSize: "22px" }}>🩺</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: "14px", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
+              Панель врача
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+              Коды доступа к индивидуальным тренировкам
+            </div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       )}
 
       {/* Кнопка Выхода */}

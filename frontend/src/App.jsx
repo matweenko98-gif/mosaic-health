@@ -11,6 +11,7 @@ import CartScreen from "./screens/CartScreen";
 import CheckoutScreen from "./screens/CheckoutScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
+import SpecialistCodesScreen from "./screens/SpecialistCodesScreen";
 import {
   initialHistory,
   initialSettings,
@@ -219,10 +220,14 @@ export default function App() {
             onNavigate={setCurrentScreen}
           />
         );
+      case "specialist-codes":
+        return <SpecialistCodesScreen onNavigate={setCurrentScreen} />;
       case "profile":
         return (
           <ProfileScreen
             user={user}
+            role={authUser?.role}
+            onNavigate={setCurrentScreen}
             onUserSave={handleUserSave}
             onLogout={handleLogout}
             history={history}
