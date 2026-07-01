@@ -1,38 +1,24 @@
-// Список стран с телефонными кодами для форм регистрации/профиля.
+// Список стран с телефонными кодами и флагами для форм регистрации/профиля.
 // Вверху — основные страны аудитории, далее по алфавиту.
 export const countries = [
-  { name: "Беларусь", dialCode: "+375" },
-  { name: "Россия", dialCode: "+7" },
-  { name: "Казахстан", dialCode: "+7" },
-  { name: "Украина", dialCode: "+380" },
-  { name: "Азербайджан", dialCode: "+994" },
-  { name: "Армения", dialCode: "+374" },
-  { name: "Грузия", dialCode: "+995" },
-  { name: "Израиль", dialCode: "+972" },
-  { name: "Кыргызстан", dialCode: "+996" },
-  { name: "Латвия", dialCode: "+371" },
-  { name: "Литва", dialCode: "+370" },
-  { name: "Молдова", dialCode: "+373" },
-  { name: "Польша", dialCode: "+48" },
-  { name: "США", dialCode: "+1" },
-  { name: "Таджикистан", dialCode: "+992" },
-  { name: "Туркменистан", dialCode: "+993" },
-  { name: "Турция", dialCode: "+90" },
-  { name: "Узбекистан", dialCode: "+998" },
-  { name: "Эстония", dialCode: "+372" },
-  { name: "Германия", dialCode: "+49" },
+  { name: "Беларусь", dialCode: "+375", flag: "🇧🇾" },
+  { name: "Россия", dialCode: "+7", flag: "🇷🇺" },
+  { name: "Казахстан", dialCode: "+7", flag: "🇰🇿" },
+  { name: "Украина", dialCode: "+380", flag: "🇺🇦" },
+  { name: "Азербайджан", dialCode: "+994", flag: "🇦🇿" },
+  { name: "Армения", dialCode: "+374", flag: "🇦🇲" },
+  { name: "Грузия", dialCode: "+995", flag: "🇬🇪" },
+  { name: "Израиль", dialCode: "+972", flag: "🇮🇱" },
+  { name: "Кыргызстан", dialCode: "+996", flag: "🇰🇬" },
+  { name: "Латвия", dialCode: "+371", flag: "🇱🇻" },
+  { name: "Литва", dialCode: "+370", flag: "🇱🇹" },
+  { name: "Молдова", dialCode: "+373", flag: "🇲🇩" },
+  { name: "Польша", dialCode: "+48", flag: "🇵🇱" },
+  { name: "США", dialCode: "+1", flag: "🇺🇸" },
+  { name: "Таджикистан", dialCode: "+992", flag: "🇹🇯" },
+  { name: "Туркменистан", dialCode: "+993", flag: "🇹🇲" },
+  { name: "Турция", dialCode: "+90", flag: "🇹🇷" },
+  { name: "Узбекистан", dialCode: "+998", flag: "🇺🇿" },
+  { name: "Эстония", dialCode: "+372", flag: "🇪🇪" },
+  { name: "Германия", dialCode: "+49", flag: "🇩🇪" },
 ];
-
-// Уникальные телефонные коды (для выпадающего списка кода телефона).
-// Если у нескольких стран один код (напр. +7), показываем его один раз.
-export const dialCodes = (() => {
-  const seen = new Set();
-  const list = [];
-  for (const c of countries) {
-    if (!seen.has(c.dialCode)) {
-      seen.add(c.dialCode);
-      list.push(c.dialCode);
-    }
-  }
-  return list.sort((a, b) => Number(a.replace("+", "")) - Number(b.replace("+", "")));
-})();

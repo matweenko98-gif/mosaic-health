@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { countries, dialCodes } from "../data/countries";
+import { countries } from "../data/countries";
 
 /**
  * RegisterScreen — Экран Регистрации в приложении с двухшаговой формой.
@@ -139,7 +139,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 <label htmlFor="reg-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   Телефон
                 </label>
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <select
                     aria-label="Код страны"
                     value={dialCode}
@@ -147,14 +147,20 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                     className="form-field__input"
                     style={{
                       borderRadius: "16px",
-                      flex: "0 0 96px",
                       cursor: "pointer",
                       backgroundColor: "#fff",
+                      paddingRight: "36px",
+                      appearance: "none",
+                      WebkitAppearance: "none",
+                      backgroundImage:
+                        "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236E6E6E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 14px center",
                     }}
                   >
-                    {dialCodes.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
+                    {countries.map((c, i) => (
+                      <option key={`${c.dialCode}-${i}`} value={c.dialCode}>
+                        {c.flag} {c.name} ({c.dialCode})
                       </option>
                     ))}
                   </select>
@@ -167,7 +173,6 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                     className="form-field__input"
                     style={{
                       borderRadius: "16px",
-                      flex: 1,
                     }}
                   />
                 </div>
@@ -235,11 +240,18 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                     borderRadius: "16px",
                     cursor: "pointer",
                     backgroundColor: "#fff",
+                    paddingRight: "36px",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    backgroundImage:
+                      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236E6E6E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
                   }}
                 >
                   {countries.map((c) => (
                     <option key={c.name} value={c.name}>
-                      {c.name}
+                      {c.flag} {c.name}
                     </option>
                   ))}
                 </select>
