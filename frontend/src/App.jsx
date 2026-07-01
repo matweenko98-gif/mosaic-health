@@ -86,6 +86,13 @@ export default function App() {
   // --- Корзина интернет-магазина ---
   const [cart, setCart] = useState([]);
 
+  // --- Категория, с которой открыть магазин (напр. при «купить» из масел) ---
+  const [shopCategory, setShopCategory] = useState("Все");
+  function openShopCategory(category) {
+    setShopCategory(category || "Все");
+    setCurrentScreen("shop");
+  }
+
   // --- Функции для корзины ---
   function handleAddToCart(product) {
     setCart((prev) => {
@@ -176,7 +183,12 @@ export default function App() {
       case "register":
         return <RegisterScreen onNavigate={setCurrentScreen} onRegister={handleRegister} />;
       case "health-helpers":
-        return <HealthHelpersScreen onNavigate={setCurrentScreen} />;
+        return (
+          <HealthHelpersScreen
+            onNavigate={setCurrentScreen}
+            onOpenShopCategory={openShopCategory}
+          />
+        );
       case "creator-materials":
         return <CreatorMaterialsScreen onNavigate={setCurrentScreen} />;
       case "shop":
@@ -185,6 +197,8 @@ export default function App() {
             cart={cart}
             onAddToCart={handleAddToCart}
             onNavigate={setCurrentScreen}
+            initialCategory={shopCategory}
+            onConsumeCategory={() => setShopCategory("Все")}
           />
         );
       case "cart":

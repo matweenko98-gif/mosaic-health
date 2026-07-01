@@ -133,7 +133,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       duration: "10 мин",
       level: "Базовый",
       equipment: "Коврик",
-      category: "Дыхание"
+      category: "Дыхание",
+      video: "/demo-video.mp4"
     },
     {
       id: 102,
@@ -143,7 +144,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       duration: "8 мин",
       level: "Средний",
       equipment: "Коврик",
-      category: "Дыхание"
+      category: "Дыхание",
+      video: "/demo-video.mp4"
     },
     {
       id: 103,
@@ -153,7 +155,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       duration: "8 мин",
       level: "Средний",
       equipment: "Коврик",
-      category: "Дыхание"
+      category: "Дыхание",
+      video: "/demo-video.mp4"
     },
     {
       id: 104,

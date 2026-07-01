@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 /**
  * ShopScreen — Экран «Магазин».
  */
-export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
+export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCategory = "Все", onConsumeCategory }) {
   const products = [
     { id: 101, name: "Чугунная гиря 8 кг", price: 3200, desc: "Оптимальный вес для дыхательной практики на 7 точек", category: "Инструменты", image: "/kettlebell-8.jpg" },
     { id: 102, name: "Чугунная гиря 12 кг", price: 4500, desc: "Для продвинутых тренировок гиревого дыхания на 10 точек", category: "Инструменты", image: "/kettlebell-12.jpg" },
@@ -11,9 +11,15 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate }) {
     { id: 104, name: "Омега-3 высокой очистки", price: 2600, desc: "120 капсул высокой концентрации EPA/DHA", category: "Добавки" },
   ];
 
-  const [selectedCategory, setSelectedCategory] = useState("Все");
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || "Все");
   const [shopSearch, setShopSearch] = useState("");
   const [toast, setToast] = useState({ visible: false, message: "" });
+
+  // Категория «использована» при открытии — сбрасываем в App, чтобы следующий заход был обычным.
+  useEffect(() => {
+    if (onConsumeCategory) onConsumeCategory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (toast.visible) {

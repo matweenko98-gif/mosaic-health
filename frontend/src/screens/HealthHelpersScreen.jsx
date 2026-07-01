@@ -3,11 +3,13 @@ import React, { useState } from "react";
 /**
  * HealthHelpersScreen — Экран «Масла и Омега-3».
  */
-export default function HealthHelpersScreen({ onNavigate }) {
+export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) {
   const [activeTab, setActiveTab] = useState("aromatherapy"); // "aromatherapy" | "omega3"
 
-  function handleBuyClick(item) {
-    alert(`Покупка "${item}" находится в разработке`);
+  function handleBuyClick() {
+    // Масла и Омега-3 — это добавки, ведём в магазин на соответствующую вкладку.
+    if (onOpenShopCategory) onOpenShopCategory("Добавки");
+    else onNavigate("shop");
   }
 
   function handleTelegramClick(expert) {

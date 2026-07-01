@@ -194,13 +194,15 @@ export default function WorkoutModal({
           <span>К списку</span>
         </button>
 
-        {/* Заглушка видеоплеера */}
+        {/* Видеоплеер тренировки (реальное видео или заглушка) */}
         <div className="modal__player shrink-0" id="modal-player" style={{
           height: "180px",
           position: "relative",
           borderRadius: "20px",
           overflow: "hidden",
-          background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
+          background: workout.video
+            ? "#000"
+            : "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -208,7 +210,16 @@ export default function WorkoutModal({
           border: "1px solid rgba(0,127,99,.08)",
           boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)"
         }}>
-          {!isPlaying ? (
+          {workout.video ? (
+            <video
+              key={workout.id}
+              src={workout.video}
+              controls
+              playsInline
+              preload="metadata"
+              style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+            />
+          ) : !isPlaying ? (
             <div style={{
               position: "absolute",
               inset: 0,
@@ -290,6 +301,7 @@ export default function WorkoutModal({
               ← Назад
             </button>
             
+            {!workout.video && (
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               style={{
@@ -327,7 +339,8 @@ export default function WorkoutModal({
                 </>
               )}
             </button>
-            
+            )}
+
             <button
               onClick={() => onIndexChange && onIndexChange(currentIndex + 1)}
               disabled={currentIndex === playlist.length - 1}

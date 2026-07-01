@@ -21,22 +21,19 @@ export default function OnboardingVideoScreen({ onNavigate }) {
           восстановления баланса тела.
         </p>
 
-        {/* Презентационный видеоролик */}
+        {/* Превью-изображение методики */}
         <div style={{
           position: "relative",
           borderRadius: "20px",
           overflow: "hidden",
           border: "1px solid rgba(0,127,99,.08)",
           boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)",
-          marginBottom: "16px",
-          background: "#000"
+          marginBottom: "16px"
         }}>
-          <video
-            src="/demo-video.mp4"
-            controls
-            playsInline
-            preload="metadata"
-            style={{ width: "100%", height: "auto", display: "block", maxHeight: "260px", background: "#000" }}
+          <img
+            src="/banner_home.jpg"
+            alt="Мозаика Здоровья"
+            style={{ width: "100%", height: "165px", objectFit: "cover", display: "block" }}
           />
         </div>
 
