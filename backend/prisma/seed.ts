@@ -10,7 +10,11 @@ import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const prisma = new PrismaClient();
+// Наполнение выполняем через прямое подключение (DIRECT_URL) — оно надёжнее для массовых
+// записей и не зависит от особенностей пула соединений (pgbouncer).
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL } },
+});
 
 type RawExercise = {
   id: number;
