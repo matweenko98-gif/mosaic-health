@@ -12,6 +12,7 @@ import CheckoutScreen from "./screens/CheckoutScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import SpecialistCodesScreen from "./screens/SpecialistCodesScreen";
+import AdminScreen from "./screens/AdminScreen";
 import {
   initialHistory,
   initialSettings,
@@ -222,6 +223,8 @@ export default function App() {
         );
       case "specialist-codes":
         return <SpecialistCodesScreen onNavigate={setCurrentScreen} />;
+      case "admin":
+        return <AdminScreen onNavigate={setCurrentScreen} />;
       case "profile":
         return (
           <ProfileScreen

@@ -12,6 +12,7 @@ import { ProgramsModule } from './programs/programs.module';
 import { CodesModule } from './codes/codes.module';
 import { ContentModule } from './content/content.module';
 import { ShopModule } from './shop/shop.module';
+import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AppController } from './app.controller';
@@ -35,6 +36,7 @@ import { AppController } from './app.controller';
     CodesModule,
     ContentModule,
     ShopModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

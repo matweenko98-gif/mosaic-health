@@ -15,6 +15,7 @@ export default function ProfileScreen({
   achievements,
 }) {
   const isSpecialist = role === "SPECIALIST" || role === "ADMIN";
+  const isAdmin = role === "ADMIN";
   const [activeTab, setActiveTab] = useState("main"); // "main" | "activity"
   const [isEditing, setIsEditing] = useState(false);
 
@@ -926,6 +927,41 @@ export default function ProfileScreen({
             )}
           </div>
         </>
+      )}
+
+      {/* Панель администратора (только для админа) */}
+      {isAdmin && onNavigate && (
+        <button
+          onClick={() => onNavigate("admin")}
+          className="card card--clickable"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px",
+            borderRadius: "18px",
+            background: "#fff",
+            border: "1px solid var(--color-border)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.03)",
+            cursor: "pointer",
+            marginBottom: "12px",
+            textAlign: "left",
+          }}
+        >
+          <span style={{ fontSize: "22px" }}>⚙️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: "14px", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
+              Панель администратора
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+              Пользователи, товары, статьи, заказы
+            </div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       )}
 
       {/* Панель врача (для врача и админа) */}
