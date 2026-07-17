@@ -1,15 +1,41 @@
 import React, { useState, useEffect } from "react";
+import { api } from "../api/client";
 
 /**
- * ShopScreen — Экран «Магазин».
+ * ShopScreen — Экран «Магазин». Товары загружаются с сервера (управляются в админке).
  */
 export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCategory = "Все", onConsumeCategory }) {
-  const products = [
-    { id: 101, name: "Чугунная гиря 8 кг", price: 3200, desc: "Оптимальный вес для дыхательной практики на 7 точек", category: "Инструменты", image: "/kettlebell-8.jpg" },
-    { id: 102, name: "Чугунная гиря 12 кг", price: 4500, desc: "Для продвинутых тренировок гиревого дыхания на 10 точек", category: "Инструменты", image: "/kettlebell-12.jpg" },
-    { id: 103, name: "Дыхательное масло (doTERRA)", price: 1900, desc: "Смесь эфирных масел терапевтического класса", category: "Добавки" },
-    { id: 104, name: "Омега-3 высокой очистки", price: 2600, desc: "120 капсул высокой концентрации EPA/DHA", category: "Добавки" },
-  ];
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/products")
+      .then((list) => {
+        if (!active) return;
+        // Приводим к формату экрана: description → desc, imageKey → image
+        setProducts(
+          (Array.isArray(list) ? list : []).map((p) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            desc: p.description,
+            category: p.category,
+            image: p.imageKey || null,
+          }))
+        );
+      })
+      .catch(() => {
+        if (active) setProducts([]);
+      })
+      .finally(() => {
+        if (active) setProductsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "Все");
   const [shopSearch, setShopSearch] = useState("");
@@ -256,7 +282,11 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
 
       {/* Список товаров (2 в ряд) */}
       <div className="products-list grid grid-cols-2 gap-3">
-        {filteredProducts.length === 0 ? (
+        {productsLoading ? (
+          <div style={{ gridColumn: "span 2", textAlign: "center", padding: "40px 20px", color: "var(--color-text-secondary)", fontSize: "14px" }}>
+            Загрузка товаров…
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div style={{ gridColumn: "span 2", textAlign: "center", padding: "40px 20px", color: "var(--color-text-secondary)", fontSize: "14px", fontStyle: "italic" }}>
             Ничего не найдено
           </div>

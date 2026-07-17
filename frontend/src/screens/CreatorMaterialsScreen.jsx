@@ -1,44 +1,52 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { api } from "../api/client";
 
 /**
  * CreatorMaterialsScreen — Экран «Материалы от создателя».
+ * Статьи и подкасты загружаются с сервера (управляются в админке).
  * Статьи открываются в модальном окне с полным текстом, подкаст — с плеером.
  */
 export default function CreatorMaterialsScreen({ onNavigate }) {
-  const articles = [
-    {
-      id: 1,
-      title: "Анатомия дыхания: как гиря помогает легким",
-      desc: "Подробный разбор механики дыхания при кинезиотерапевтических нагрузках.",
-      readTime: "5 мин",
-      body: [
-        "Дыхание — это не просто вдох и выдох. Это работа целой системы мышц: диафрагмы, межрёберных мышц, мышц живота и даже мышц шеи. Когда мы дышим поверхностно, большая часть этой системы «спит», а грудная клетка теряет подвижность.",
-        "Гиря в дыхательной практике играет роль мягкого сопротивления. Удерживая или перемещая вес по определённым точкам, вы заставляете диафрагму работать глубже, а рёбра — раскрываться полнее. Это увеличивает так называемую экскурсию лёгких — амплитуду их движения при дыхании.",
-        "Почему это важно? Полноценное дыхание улучшает насыщение крови кислородом, снижает уровень стресса за счёт активации парасимпатической нервной системы и возвращает подвижность грудному отделу позвоночника, который у большинства людей зажат из-за сидячего образа жизни.",
-        "Начинайте с малого веса и медленного темпа. Ваша задача — не поднять как можно больше, а почувствовать, как воздух заполняет лёгкие снизу вверх, а на выдохе тело мягко расслабляется. Регулярность важнее интенсивности: 10 минут в день дадут больше, чем час раз в неделю.",
-      ],
-    },
-    {
-      id: 2,
-      title: "Почему мы хромаем: разбор паттерна шага",
-      desc: "Изучение связи между тонусом мышц стопы и правильной походкой.",
-      readTime: "8 мин",
-      body: [
-        "Правильный шаг — это сложная согласованная работа десятков мышц. Когда одна из них выключается или, наоборот, перенапрягается, страдает весь паттерн движения: появляется хромота, перекос таза, боль в пояснице и коленях.",
-        "Чаще всего проблема начинается снизу — со стопы. Если мышцы стопы ослаблены, теряется амортизация, и ударная нагрузка при каждом шаге уходит вверх — в колени и позвоночник. Отсюда и знакомое многим «тянет поясницу» после долгой ходьбы.",
-        "Второй ключевой элемент — ягодичные мышцы. Именно они должны включаться в момент опоры на ногу. Если они «ленятся», их работу берут на себя мышцы поясницы, которые для этого не предназначены.",
-        "Восстановление правильного шага идёт снизу вверх: сначала возвращаем чувствительность и силу стопе, затем учим ягодичные включаться вовремя, и только потом отрабатываем согласованную работу рук и ног. Кинезиотерапия решает это через простые, но точные упражнения, которые вы найдёте в разделе тренировок.",
-      ],
-    },
-  ];
+  const [articles, setArticles] = useState([]);
+  const [podcasts, setPodcasts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const podcast = {
-    id: 1,
-    title: "Эпизод 12: Восстановление спины",
-    desc: "Основы дыхания для снижения компрессии позвоночника.",
-    duration: "24 мин",
-    media: "/demo-video.mp4",
-  };
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      api.get("/articles").catch(() => []),
+      api.get("/podcasts").catch(() => []),
+    ])
+      .then(([arts, pods]) => {
+        if (!active) return;
+        setArticles(
+          (Array.isArray(arts) ? arts : []).map((a) => ({
+            id: a.id,
+            title: a.title,
+            desc: a.description,
+            readTime: a.readTime,
+            // Текст хранится одной строкой; абзацы разделены пустой строкой.
+            body: (a.body || "").split("\n\n").filter(Boolean),
+          }))
+        );
+        setPodcasts(
+          (Array.isArray(pods) ? pods : []).map((p) => ({
+            id: p.id,
+            title: p.title,
+            desc: p.description,
+            duration: `${p.durationMin} мин`,
+            // Пока настоящие аудиофайлы не загружены — играем демо-ролик.
+            media: p.audioKey || "/demo-video.mp4",
+          }))
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Что открыто в модальном окне: { type: 'article' | 'podcast', item }
   const [openItem, setOpenItem] = useState(null);
@@ -76,6 +84,13 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
           Полезные статьи
         </h3>
 
+        {loading && (
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)" }}>Загрузка…</p>
+        )}
+        {!loading && articles.length === 0 && (
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>Статей пока нет.</p>
+        )}
+
         {articles.map((item) => (
           <div
             key={item.id}
@@ -103,34 +118,41 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
           Эксклюзивные подкасты
         </h3>
 
-        <div
-          className="card card--clickable"
-          onClick={() => setOpenItem({ type: "podcast", item: podcast })}
-          style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", cursor: "pointer" }}
-        >
-          <button
-            className="podcast-play-btn"
-            style={{
-              width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "#1BAB7C",
-              color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: "14px", boxShadow: "0 6px 14px -4px rgba(27,171,124,.5)", flexShrink: 0
-            }}
-            onClick={(e) => { e.stopPropagation(); setOpenItem({ type: "podcast", item: podcast }); }}
+        {!loading && podcasts.length === 0 && (
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>Подкастов пока нет.</p>
+        )}
+
+        {podcasts.map((podcast) => (
+          <div
+            key={podcast.id}
+            className="card card--clickable"
+            onClick={() => setOpenItem({ type: "podcast", item: podcast })}
+            style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", cursor: "pointer" }}
           >
-            ▶
-          </button>
-          <div style={{ flex: 1 }}>
-            <span style={{ fontSize: "10.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text-secondary)", letterSpacing: ".8px", display: "block", marginBottom: "4px" }}>
-              ПОДКАСТ • {podcast.duration}
-            </span>
-            <h4 style={{ fontSize: "15px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)", margin: 0, lineHeight: "1.3" }}>
-              {podcast.title}
-            </h4>
-            <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "4px 0 0 0", lineHeight: "1.5", fontWeight: 300 }}>
-              {podcast.desc}
-            </p>
+            <button
+              className="podcast-play-btn"
+              style={{
+                width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "#1BAB7C",
+                color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: "14px", boxShadow: "0 6px 14px -4px rgba(27,171,124,.5)", flexShrink: 0
+              }}
+              onClick={(e) => { e.stopPropagation(); setOpenItem({ type: "podcast", item: podcast }); }}
+            >
+              ▶
+            </button>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: "10.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text-secondary)", letterSpacing: ".8px", display: "block", marginBottom: "4px" }}>
+                ПОДКАСТ • {podcast.duration}
+              </span>
+              <h4 style={{ fontSize: "15px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)", margin: 0, lineHeight: "1.3" }}>
+                {podcast.title}
+              </h4>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "4px 0 0 0", lineHeight: "1.5", fontWeight: 300 }}>
+                {podcast.desc}
+              </p>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
       {/* Модальное окно статьи / подкаста */}
