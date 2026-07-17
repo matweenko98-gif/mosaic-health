@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
+> **Read [`ARCHITECTURE.md`](ARCHITECTURE.md) first** — it is the project map (in Russian): module/endpoint tables, data model, screen list, what is wired to the server vs still local, a "where to change what" reference, deploy rules, and a changelog. Keep it updated when you make significant changes.
+
 "Мозаика Здоровья" (Mosaic Health) — a PWA for a restorative-medicine / kinesiotherapy clinic. UI text is in Russian. **The owner is non-technical** — explain in plain language, see memory.
 
 **Monorepo** (the repo root was reorganized from a single Vite app):
