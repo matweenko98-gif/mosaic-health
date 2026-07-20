@@ -15,16 +15,35 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
       .then((list) => {
         if (!active) return;
         // Приводим к формату экрана: description → desc, imageKey → image
-        setProducts(
-          (Array.isArray(list) ? list : []).map((p) => ({
+        const formatted = (Array.isArray(list) ? list : []).map((p) => {
+          let descText = p.description || "";
+          let isPublished = true;
+          let stock = null;
+          let unlimited = true;
+          try {
+            if (p.description && p.description.trim().startsWith("{")) {
+              const parsed = JSON.parse(p.description);
+              descText = parsed.text ?? parsed.description ?? "";
+              isPublished = parsed.isPublished !== false;
+              stock = parsed.stock ?? null;
+              unlimited = parsed.unlimited !== false;
+            }
+          } catch (e) {
+            // legacy plain text
+          }
+          return {
             id: p.id,
             name: p.name,
             price: p.price,
-            desc: p.description,
+            desc: descText,
             category: p.category,
             image: p.imageKey || null,
-          }))
-        );
+            isPublished,
+            stock,
+            unlimited,
+          };
+        });
+        setProducts(formatted.filter((prod) => prod.isPublished));
       })
       .catch(() => {
         if (active) setProducts([]);
@@ -168,63 +187,81 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
         scrollbarWidth: "none",
         flexShrink: 0
       }} className="no-scrollbar">
-        {[
-          { id: "Все", label: "Все", icon: (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-            </svg>
-          )},
-          { id: "Инструменты", label: "Инструменты", icon: (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
-              <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
-              <path d="M6 12h12" />
-              <path d="M6.5 4.5v15" />
-              <path d="M17.5 4.5v15" />
-            </svg>
-          )},
-          { id: "Добавки", label: "Добавки", icon: (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
-              <path d="m8.5 8.5 7 7" />
-            </svg>
-          )}
-        ].map((tab) => {
-          const isActive = selectedCategory === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setSelectedCategory(tab.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 16px",
-                borderRadius: "14px",
-                fontSize: "13px",
-                fontFamily: "'Manrope', sans-serif",
-                fontWeight: "700",
-                cursor: "pointer",
-                border: "1px solid",
-                borderColor: isActive ? "var(--color-accent)" : "var(--color-border)",
-                backgroundColor: isActive ? "rgba(27, 171, 124, 0.08)" : "#fff",
-                color: isActive ? "var(--color-active)" : "var(--color-text-secondary)",
-                boxShadow: isActive ? "0 4px 12px rgba(27, 171, 124, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
-                whiteSpace: "nowrap",
-                transition: "all 0.2s ease",
-                flexShrink: 0,
-                flex: 1
-              }}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+        {(() => {
+          const customCats = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
+          const dynamicCategories = [
+            "Все",
+            "Инструменты",
+            "Добавки",
+            ...customCats.filter((c) => c !== "Инструменты" && c !== "Добавки" && c !== "Общее"),
+          ];
+
+          const getCategoryIcon = (catId) => {
+            if (catId === "Все") {
+              return (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              );
+            }
+            if (catId === "Инструменты") {
+              return (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
+                  <path d="M6 12h12" />
+                  <path d="M6.5 4.5v15" />
+                  <path d="M17.5 4.5v15" />
+                </svg>
+              );
+            }
+            if (catId === "Добавки") {
+              return (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                  <path d="m8.5 8.5 7 7" />
+                </svg>
+              );
+            }
+            return <span style={{ fontSize: "14px", lineHeight: 1 }}>📦</span>;
+          };
+
+          return dynamicCategories.map((catId) => {
+            const isActive = selectedCategory === catId;
+            return (
+              <button
+                key={catId}
+                type="button"
+                onClick={() => setSelectedCategory(catId)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 16px",
+                  borderRadius: "14px",
+                  fontSize: "13px",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  border: "1px solid",
+                  borderColor: isActive ? "var(--color-accent)" : "var(--color-border)",
+                  backgroundColor: isActive ? "rgba(27, 171, 124, 0.08)" : "#fff",
+                  color: isActive ? "var(--color-active)" : "var(--color-text-secondary)",
+                  boxShadow: isActive ? "0 4px 12px rgba(27, 171, 124, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0
+                }}
+              >
+                {getCategoryIcon(catId)}
+                <span>{catId}</span>
+              </button>
+            );
+          });
+        })()}
       </div>
 
       {/* Поиск по названию товаров */}

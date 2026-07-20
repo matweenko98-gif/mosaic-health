@@ -929,78 +929,25 @@ export default function ProfileScreen({
         </>
       )}
 
-      {/* Панель администратора (только для админа) */}
-      {isAdmin && onNavigate && (
-        <button
-          onClick={() => onNavigate("admin")}
-          className="card card--clickable"
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "16px",
-            borderRadius: "18px",
-            background: "#fff",
-            border: "1px solid var(--color-border)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.03)",
-            cursor: "pointer",
-            marginBottom: "12px",
-            textAlign: "left",
-          }}
-        >
-          <span style={{ fontSize: "22px" }}>⚙️</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: "14px", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
-              Панель администратора
-            </div>
-            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-              Пользователи, товары, статьи, заказы
-            </div>
-          </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      )}
-
-      {/* Панель врача (для врача и админа) */}
-      {isSpecialist && onNavigate && (
-        <button
-          onClick={() => onNavigate("specialist-codes")}
-          className="card card--clickable"
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "16px",
-            borderRadius: "18px",
-            background: "#fff",
-            border: "1px solid var(--color-border)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.03)",
-            cursor: "pointer",
-            marginBottom: "16px",
-            textAlign: "left",
-          }}
-        >
-          <span style={{ fontSize: "22px" }}>🩺</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: "14px", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
-              Панель врача
-            </div>
-            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-              Коды доступа к индивидуальным тренировкам
-            </div>
-          </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      )}
-
-      {/* Кнопка Выхода */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "4px", marginBottom: "4px" }}>
+      {/* Кнопка Выхода и Смены Режима */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginTop: "12px", marginBottom: "8px" }}>
+        {(role === "ADMIN" || role === "SPECIALIST") && onNavigate && (
+          <button
+            onClick={() => onNavigate("role-selector")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--color-active, #1BAB7C)",
+              fontSize: "0.92rem",
+              fontWeight: "600",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontFamily: "'Manrope', sans-serif"
+            }}
+          >
+            Сменить режим работы
+          </button>
+        )}
         <button
           onClick={onLogout}
           style={{

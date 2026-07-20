@@ -19,26 +19,67 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
     ])
       .then(([arts, pods]) => {
         if (!active) return;
-        setArticles(
-          (Array.isArray(arts) ? arts : []).map((a) => ({
-            id: a.id,
-            title: a.title,
-            desc: a.description,
-            readTime: a.readTime,
-            // Текст хранится одной строкой; абзацы разделены пустой строкой.
-            body: (a.body || "").split("\n\n").filter(Boolean),
-          }))
-        );
-        setPodcasts(
-          (Array.isArray(pods) ? pods : []).map((p) => ({
-            id: p.id,
-            title: p.title,
-            desc: p.description,
-            duration: `${p.durationMin} мин`,
-            // Пока настоящие аудиофайлы не загружены — играем демо-ролик.
-            media: p.audioKey || "/demo-video.mp4",
-          }))
-        );
+
+        // Обработка статей
+        const formattedArticles = (Array.isArray(arts) ? arts : [])
+          .map((a) => {
+            let descText = a.description || "";
+            let image = null;
+            let isPublished = true;
+            try {
+              if (a.description && a.description.trim().startsWith("{")) {
+                const parsed = JSON.parse(a.description);
+                descText = parsed.description || parsed.text || "";
+                image = parsed.image || null;
+                isPublished = parsed.isPublished !== false;
+              }
+            } catch (e) {
+              // legacy plain text
+            }
+            return {
+              id: a.id,
+              title: a.title,
+              desc: descText,
+              image,
+              isPublished,
+              readTime: a.readTime,
+              body: (a.body || "").split("\n\n").filter(Boolean),
+            };
+          })
+          .filter((art) => art.isPublished);
+
+        // Обработка подкастов/видео
+        const formattedPodcasts = (Array.isArray(pods) ? pods : [])
+          .map((p) => {
+            let descText = p.description || "";
+            let isVideo = false;
+            let isPublished = true;
+            let mediaUrl = p.audioKey || "";
+            try {
+              if (p.description && p.description.trim().startsWith("{")) {
+                const parsed = JSON.parse(p.description);
+                descText = parsed.description || parsed.text || "";
+                isVideo = !!parsed.isVideo;
+                isPublished = parsed.isPublished !== false;
+                mediaUrl = parsed.mediaUrl || p.audioKey || "";
+              }
+            } catch (e) {
+              // legacy plain text
+            }
+            return {
+              id: p.id,
+              title: p.title,
+              desc: descText,
+              isVideo,
+              isPublished,
+              duration: `${p.durationMin} мин`,
+              media: mediaUrl || "/demo-video.mp4",
+            };
+          })
+          .filter((pod) => pod.isPublished);
+
+        setArticles(formattedArticles);
+        setPodcasts(formattedPodcasts);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -142,7 +183,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             </button>
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: "10.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text-secondary)", letterSpacing: ".8px", display: "block", marginBottom: "4px" }}>
-                ПОДКАСТ • {podcast.duration}
+                {podcast.isVideo ? "ВИДЕОРОЛИК" : "ПОДКАСТ"} • {podcast.duration}
               </span>
               <h4 style={{ fontSize: "15px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)", margin: 0, lineHeight: "1.3" }}>
                 {podcast.title}
@@ -184,6 +225,13 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
                 <h2 style={{ margin: "8px 0 12px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "20px", color: "var(--color-text)", lineHeight: "1.25" }}>
                   {openItem.item.title}
                 </h2>
+                {openItem.item.image && (
+                  <img
+                    src={openItem.item.image}
+                    alt={openItem.item.title}
+                    style={{ width: "100%", height: "auto", maxHeight: "240px", borderRadius: "16px", objectFit: "cover", marginBottom: "16px" }}
+                  />
+                )}
                 {openItem.item.body.map((p, i) => (
                   <p key={i} style={{ fontSize: "14px", lineHeight: "1.65", color: "#4a4a4a", fontWeight: 300, margin: "0 0 12px 0" }}>
                     {p}
@@ -193,7 +241,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             ) : (
               <>
                 <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>
-                  ПОДКАСТ • {openItem.item.duration}
+                  {openItem.item.isVideo ? "ВИДЕОРОЛИК" : "ПОДКАСТ"} • {openItem.item.duration}
                 </span>
                 <h2 style={{ margin: "8px 0 12px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "20px", color: "var(--color-text)", lineHeight: "1.25" }}>
                   {openItem.item.title}

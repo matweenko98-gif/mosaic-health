@@ -57,7 +57,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
       <header className="screen__header" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
         <button
           className="back-btn"
-          onClick={() => onNavigate("profile")}
+          onClick={() => onNavigate("role-selector")}
           style={{ border: "1px solid var(--color-border)", backgroundColor: "#fff", fontFamily: "'Manrope', sans-serif", fontWeight: 600, borderRadius: "12px" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

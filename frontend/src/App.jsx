@@ -13,6 +13,7 @@ import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import SpecialistCodesScreen from "./screens/SpecialistCodesScreen";
 import AdminScreen from "./screens/AdminScreen";
+import RoleSelectorScreen from "./screens/RoleSelectorScreen";
 import {
   initialHistory,
   initialSettings,
@@ -42,17 +43,22 @@ export default function App() {
   useEffect(() => {
     if (authLoading || currentScreen !== null) return;
     if (isLoggedIn) {
-      const consentDateStr = localStorage.getItem("consentDate");
-      let needConsent = !consentDateStr;
-      if (consentDateStr) {
-        const daysDiff = (Date.now() - new Date(consentDateStr).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysDiff > 90) needConsent = true;
+      const roleUpper = (authUser?.role || "").toUpperCase();
+      if (roleUpper === "SPECIALIST" || roleUpper === "ADMIN") {
+        setCurrentScreen("role-selector");
+      } else {
+        const consentDateStr = localStorage.getItem("consentDate");
+        let needConsent = !consentDateStr;
+        if (consentDateStr) {
+          const daysDiff = (Date.now() - new Date(consentDateStr).getTime()) / (1000 * 60 * 60 * 24);
+          if (daysDiff > 90) needConsent = true;
+        }
+        setCurrentScreen(needConsent ? "onboarding-consent" : "home");
       }
-      setCurrentScreen(needConsent ? "onboarding-consent" : "home");
     } else {
       setCurrentScreen("onboarding-video");
     }
-  }, [authLoading, isLoggedIn, currentScreen]);
+  }, [authLoading, isLoggedIn, currentScreen, authUser]);
 
   // Сброс скролла при смене экранов
   useEffect(() => {
@@ -134,13 +140,23 @@ export default function App() {
   // --- Обработчики входа и регистрации (через сервер) ---
   // Возвращают промис, чтобы экраны входа/регистрации могли показать ошибку.
   async function handleLogin(email, password) {
-    await login(email, password);
-    setCurrentScreen("home");
+    const u = await login(email, password);
+    const roleUpper = (u?.role || "").toUpperCase();
+    if (roleUpper === "SPECIALIST" || roleUpper === "ADMIN") {
+      setCurrentScreen("role-selector");
+    } else {
+      setCurrentScreen("home");
+    }
   }
 
   async function handleRegister(userData) {
-    await register(userData);
-    setCurrentScreen("home");
+    const u = await register(userData);
+    const roleUpper = (u?.role || "").toUpperCase();
+    if (roleUpper === "SPECIALIST" || roleUpper === "ADMIN") {
+      setCurrentScreen("role-selector");
+    } else {
+      setCurrentScreen("home");
+    }
   }
 
   function handleUserSave(updatedUser) {
@@ -225,6 +241,14 @@ export default function App() {
         return <SpecialistCodesScreen onNavigate={setCurrentScreen} />;
       case "admin":
         return <AdminScreen onNavigate={setCurrentScreen} />;
+      case "role-selector":
+        return (
+          <RoleSelectorScreen
+            onNavigate={setCurrentScreen}
+            role={authUser?.role}
+            onLogout={handleLogout}
+          />
+        );
       case "profile":
         return (
           <ProfileScreen
@@ -275,6 +299,7 @@ export default function App() {
     "onboarding-consent",
     "login",
     "register",
+    "role-selector",
   ].includes(currentScreen);
 
   return (
@@ -283,7 +308,7 @@ export default function App() {
         {/* Фиксированная верхняя шапка (общая для всех экранов) */}
         <header className="app-header header-premium">
           <div className="header-premium__left" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "11px", minWidth: 0 }}>
-            {!(currentScreen === "onboarding-video" || currentScreen === "onboarding-consent" || currentScreen === "login" || currentScreen === "register") && (
+            {!(currentScreen === "onboarding-video" || currentScreen === "onboarding-consent" || currentScreen === "login" || currentScreen === "register" || currentScreen === "role-selector") && (
               <>
                 <img
                   src="/logo_mozaika.svg"

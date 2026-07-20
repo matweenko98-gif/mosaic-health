@@ -1,129 +1,103 @@
-// Схема базы данных «Мозаика Здоровья»
-// Документация: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  // Рабочее подключение (для Supabase — через пул соединений).
   url       = env("DATABASE_URL")
-  // Прямое подключение для миграций (для Supabase — порт 5432).
   directUrl = env("DIRECT_URL")
 }
 
-// ====================== Пользователи и доступы ======================
-
-enum Role {
-  PATIENT // пациент (по умолчанию)
-  SPECIALIST // врач/специалист — назначает программы
-  ADMIN // администратор — управляет контентом и магазином
-}
-
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  passwordHash     String
-  role             Role      @default(PATIENT)
-  name             String    @default("")
-  phone            String    @default("")
-  age              String    @default("")
-  country          String    @default("")
-  hasRehabilitation Boolean  @default(false)
-  avatarKey        String? // ключ файла аватара в хранилище
-  emailVerifiedAt  DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  settings          UserSettings?
-  workoutLogs       WorkoutLog[]
-  programsAsPatient Program[]         @relation("PatientPrograms")
-  programsAsSpecialist Program[]      @relation("SpecialistPrograms")
-  programProgress   ProgramProgress[]
-  orders            Order[]
-  emailTokens       EmailToken[]
-  authoredArticles  Article[]
-  codesCreated      AccessCode[]      @relation("SpecialistCodes")
-  codesActivated    AccessCode[]      @relation("ActivatedCodes")
+  id                   String            @id @default(cuid())
+  email                String            @unique
+  passwordHash         String
+  role                 Role              @default(PATIENT)
+  name                 String            @default("")
+  phone                String            @default("")
+  age                  String            @default("")
+  country              String            @default("")
+  hasRehabilitation    Boolean           @default(false)
+  avatarKey            String?
+  emailVerifiedAt      DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  codesActivated       AccessCode[]      @relation("ActivatedCodes")
+  codesCreated         AccessCode[]      @relation("SpecialistCodes")
+  authoredArticles     Article[]
+  emailTokens          EmailToken[]
+  orders               Order[]
+  programsAsPatient    Program[]         @relation("PatientPrograms")
+  programsAsSpecialist Program[]         @relation("SpecialistPrograms")
+  programProgress      ProgramProgress[]
+  settings             UserSettings?
+  workoutLogs          WorkoutLog[]
 }
 
-// Код доступа к индивидуальным тренировкам.
-// Врач создаёт код и называет его пациенту; пациент активирует код на своём аккаунте.
-// Один код может быть активирован только один раз (одним аккаунтом).
 model AccessCode {
   id            String    @id @default(cuid())
   code          String    @unique
-  label         String    @default("") // пометка врача (для кого код)
+  label         String    @default("")
   specialistId  String
-  specialist    User      @relation("SpecialistCodes", fields: [specialistId], references: [id])
   activatedById String?
-  activatedBy   User?     @relation("ActivatedCodes", fields: [activatedById], references: [id])
   activatedAt   DateTime?
   createdAt     DateTime  @default(now())
+  activatedBy   User?     @relation("ActivatedCodes", fields: [activatedById], references: [id])
+  specialist    User      @relation("SpecialistCodes", fields: [specialistId], references: [id])
 }
 
 model UserSettings {
   id                   String  @id @default(cuid())
   userId               String  @unique
-  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   workoutReminders     Boolean @default(true)
   articleNotifications Boolean @default(false)
   language             String  @default("RU")
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailToken {
-  id        String        @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      EmailTokenType
-  token     String        @unique
+  token     String         @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime      @default(now())
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-enum EmailTokenType {
-  VERIFY
-  RESET
-}
-
-// ====================== Тренировки и программы ======================
 
 model Exercise {
-  id           Int      @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   title        String
-  description  String   @default("")
-  durationMin  Int      @default(0)
-  category     String   @default("Общее")
-  videoKey     String? // ключ видеофайла в хранилище
-  isIndividual Boolean  @default(false) // упражнение для индивидуальных программ (бывшие id >= 101)
-  createdAt    DateTime @default(now())
-
+  description  String        @default("")
+  durationMin  Int           @default(0)
+  category     String        @default("Общее")
+  videoKey     String?
+  isIndividual Boolean       @default(false)
+  createdAt    DateTime      @default(now())
   programItems ProgramItem[]
 }
 
 model Program {
-  id           String        @id @default(cuid())
-  title        String        @default("Индивидуальная программа")
+  id           String           @id @default(cuid())
+  title        String           @default("Индивидуальная программа")
   patientId    String
-  patient      User          @relation("PatientPrograms", fields: [patientId], references: [id], onDelete: Cascade)
   specialistId String
-  specialist   User          @relation("SpecialistPrograms", fields: [specialistId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  items    ProgramItem[]
-  progress ProgramProgress?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  patient      User             @relation("PatientPrograms", fields: [patientId], references: [id], onDelete: Cascade)
+  specialist   User             @relation("SpecialistPrograms", fields: [specialistId], references: [id])
+  items        ProgramItem[]
+  progress     ProgramProgress?
 }
 
 model ProgramItem {
   id         String   @id @default(cuid())
   programId  String
-  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   exerciseId Int
-  exercise   Exercise @relation(fields: [exerciseId], references: [id])
   order      Int      @default(0)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@unique([programId, exerciseId])
 }
@@ -131,18 +105,17 @@ model ProgramItem {
 model ProgramProgress {
   id           String   @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   programId    String   @unique
-  program      Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   currentIndex Int      @default(-1)
   queue        Json     @default("[]")
   updatedAt    DateTime @updatedAt
+  program      Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model WorkoutLog {
   id             String   @id @default(cuid())
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exerciseId     Int?
   programId      String?
   name           String
@@ -152,19 +125,18 @@ model WorkoutLog {
   totalCount     Int      @default(0)
   exercises      Json     @default("[]")
   completedAt    DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// ====================== Контент от создателя ======================
-
 model Article {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
-  description String    @default("")
-  body        String    @default("")
-  readTime    String    @default("")
+  description String   @default("")
+  body        String   @default("")
+  readTime    String   @default("")
   authorId    String?
-  author      User?     @relation(fields: [authorId], references: [id])
-  publishedAt DateTime  @default(now())
+  publishedAt DateTime @default(now())
+  author      User?    @relation(fields: [authorId], references: [id])
 }
 
 model Podcast {
@@ -172,23 +144,55 @@ model Podcast {
   title       String
   description String   @default("")
   durationMin Int      @default(0)
-  audioKey    String? // ключ аудиофайла в хранилище
+  audioKey    String?
   publishedAt DateTime @default(now())
 }
 
-// ====================== Магазин ======================
-
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
-  price       Int // в минимальных единицах валюты (целое)
-  description String   @default("")
-  category    String   @default("Общее")
+  price       Int
+  description String      @default("")
+  category    String      @default("Общее")
   imageKey    String?
-  inStock     Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  inStock     Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+}
 
-  orderItems OrderItem[]
+model Order {
+  id            String      @id @default(cuid())
+  userId        String?
+  recipientName String
+  phone         String
+  address       String
+  total         Int
+  status        OrderStatus @default(NEW)
+  createdAt     DateTime    @default(now())
+  user          User?       @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId Int?
+  name      String
+  price     Int
+  quantity  Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+}
+
+enum Role {
+  PATIENT
+  SPECIALIST
+  ADMIN
+}
+
+enum EmailTokenType {
+  VERIFY
+  RESET
 }
 
 enum OrderStatus {
@@ -196,29 +200,4 @@ enum OrderStatus {
   CONFIRMED
   SHIPPED
   CANCELLED
-}
-
-model Order {
-  id            String      @id @default(cuid())
-  userId        String?
-  user          User?       @relation(fields: [userId], references: [id])
-  recipientName String
-  phone         String
-  address       String
-  total         Int
-  status        OrderStatus @default(NEW)
-  createdAt     DateTime    @default(now())
-
-  items OrderItem[]
-}
-
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId Int?
-  product   Product? @relation(fields: [productId], references: [id])
-  name      String
-  price     Int
-  quantity  Int
 }
