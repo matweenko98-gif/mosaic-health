@@ -185,8 +185,11 @@
 | Что | Как обновляется |
 |---|---|
 | **Vercel** (фронт) | **Автоматически** при push в `main` |
-| **Render** (бэкенд) | **ВРУЧНУЮ**: Manual Deploy → Deploy latest commit (репозиторий чужой → автодеплой не настроен) |
+| **Render** (бэкенд) | Auto-Deploy = `On Commit`. **Но срабатывает только если сервис подключён к репозиторию через GitHub.** Если сервис создан по публичной ссылке — уведомления от GitHub не приходят, и нужен либо **Manual Deploy**, либо **Deploy Hook** (Settings → Deploy → Deploy Hook) |
 | **Supabase** (база) | Миграции и seed применяются **во время сборки Render** (`prisma migrate deploy && npm run db:seed`) |
+
+> **Внимание:** бесплатный проект Supabase засыпает после ~недели простоя. Тогда сборка Render падает с ошибкой
+> `FATAL: (ENOTFOUND) tenant/user ... not found`. Лечится кнопкой **Restore** в панели Supabase.
 
 **Переменные окружения бэкенда** (`backend/.env.example`): `DATABASE_URL`, `DIRECT_URL` (на Render — одинаковые, прямое подключение 5432), `JWT_*`, `FRONTEND_URL`, `S3_*` (если не задан `S3_ENDPOINT` — медиа выключено, приложение не падает).
 
