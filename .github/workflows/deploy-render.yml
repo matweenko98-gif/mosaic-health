@@ -1,0 +1,25 @@
+# Автодеплой бэкенда на Render.
+# При каждом изменении в ветке main дёргает секретную ссылку Render (Deploy Hook),
+# и Render запускает сборку. Ссылка хранится в секретах репозитория как RENDER_DEPLOY_HOOK
+# (GitHub → Settings → Secrets and variables → Actions).
+name: deploy-backend-to-render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Запустить деплой на Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "Секрет RENDER_DEPLOY_HOOK не задан — деплой пропущен."
+            exit 0
+          fi
+          echo "Отправляю запрос на деплой…"
+          curl -fsS -X POST "$HOOK" && echo "Готово: Render принял запрос на деплой."
