@@ -44,6 +44,7 @@ model AccessCode {
   createdAt     DateTime  @default(now())
   activatedBy   User?     @relation("ActivatedCodes", fields: [activatedById], references: [id])
   specialist    User      @relation("SpecialistCodes", fields: [specialistId], references: [id])
+  isRevoked     Boolean   @default(false)
 }
 
 model UserSettings {

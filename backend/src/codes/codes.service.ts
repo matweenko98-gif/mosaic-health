@@ -40,21 +40,48 @@ export class CodesService {
     const codes = await this.prisma.accessCode.findMany({
       where,
       include: {
-        activatedBy: { select: { name: true, email: true } },
+        activatedBy: {
+          select: {
+            name: true,
+            email: true,
+            createdAt: true,
+            _count: {
+              select: { workoutLogs: true },
+            },
+            workoutLogs: {
+              select: { completedAt: true },
+              orderBy: { completedAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
         specialist: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
-    return codes.map((c) => ({
-      id: c.id,
-      code: c.code,
-      label: c.label,
-      status: c.activatedById ? 'activated' : 'free',
-      activatedByName: c.activatedBy?.name || null,
-      activatedByEmail: c.activatedBy?.email || null,
-      activatedAt: c.activatedAt,
-      createdAt: c.createdAt,
-    }));
+    return codes.map((c) => {
+      let status = 'free';
+      if (c.isRevoked) {
+        status = 'revoked';
+      } else if (c.activatedById) {
+        status = 'activated';
+      }
+
+      return {
+        id: c.id,
+        code: c.code,
+        label: c.label,
+        status,
+        activatedByName: c.activatedBy?.name || null,
+        activatedByEmail: c.activatedBy?.email || null,
+        activatedByRegisteredAt: c.activatedBy?.createdAt || null,
+        activatedAt: c.activatedAt,
+        createdAt: c.createdAt,
+        isRevoked: c.isRevoked,
+        workoutCount: c.activatedBy?._count?.workoutLogs ?? 0,
+        lastWorkout: c.activatedBy?.workoutLogs?.[0]?.completedAt ?? null,
+      };
+    });
   }
 
   async createForSpecialist(specialistId: string, label?: string) {
@@ -75,10 +102,25 @@ export class CodesService {
     return { ok: true };
   }
 
+  async revokeCode(user: AuthUser, id: string) {
+    const code = await this.prisma.accessCode.findUnique({ where: { id } });
+    if (!code) throw new NotFoundException('Код не найден');
+    if (user.role === Role.SPECIALIST && code.specialistId !== user.id) {
+      throw new ForbiddenException('Можно отзывать только свои коды');
+    }
+    await this.prisma.accessCode.update({
+      where: { id },
+      data: { isRevoked: true },
+    });
+    return { ok: true };
+  }
+
   // ---------- Пациент ----------
 
   async hasAccess(userId: string) {
-    const count = await this.prisma.accessCode.count({ where: { activatedById: userId } });
+    const count = await this.prisma.accessCode.count({
+      where: { activatedById: userId, isRevoked: false },
+    });
     return { hasAccess: count > 0 };
   }
 
@@ -86,6 +128,10 @@ export class CodesService {
     const code = rawCode.trim().toUpperCase();
     const record = await this.prisma.accessCode.findUnique({ where: { code } });
     if (!record) throw new NotFoundException('Код не найден. Проверьте правильность.');
+
+    if (record.isRevoked) {
+      throw new ConflictException('Этот код был отозван и больше недействителен');
+    }
 
     if (record.activatedById) {
       // Уже активирован этим же пользователем — считаем успехом (идемпотентно).

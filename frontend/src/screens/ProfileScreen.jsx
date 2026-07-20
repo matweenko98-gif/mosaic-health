@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { api } from "../api/client";
 
 /**
  * ProfileScreen — Экран «Профиль / Личный кабинет».
@@ -18,6 +19,22 @@ export default function ProfileScreen({
   const isAdmin = role === "ADMIN";
   const [activeTab, setActiveTab] = useState("main"); // "main" | "activity"
   const [isEditing, setIsEditing] = useState(false);
+
+  // Состояния для активации кода
+  const [hasAccess, setHasAccess] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [codeSuccess, setCodeSuccess] = useState("");
+  const [codeSubmitting, setCodeSubmitting] = useState(false);
+
+  useEffect(() => {
+    const isPatient = role === "PATIENT" || role === "patient" || (!isSpecialist && !isAdmin);
+    if (isPatient) {
+      api.get("/me/access")
+        .then((r) => setHasAccess(!!r?.hasAccess))
+        .catch(() => setHasAccess(false));
+    }
+  }, [role, isSpecialist, isAdmin]);
 
   // Локальные состояния для полей формы редактирования
   const [formName, setFormName] = useState(user.name || "");
@@ -563,6 +580,71 @@ export default function ProfileScreen({
               </div>
             )}
           </div>
+
+          {/* Код доступа врача (только для роли PATIENT) */}
+          {(role === "PATIENT" || role === "patient" || (!isSpecialist && !isAdmin)) && (
+            <div className="card" id="card-access-code" style={{ marginTop: "16px" }}>
+              <h2 className="card__title">Индивидуальные тренировки</h2>
+              {hasAccess ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-active)", fontWeight: 700, fontSize: "14px", padding: "10px 0" }}>
+                  <span>🔓 Доступ к индивидуальным тренировкам открыт!</span>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: 0 }}>
+                    Введите пятизначный код доступа, выданный вашим врачом, чтобы открыть доступ к персональным комплексам упражнений.
+                  </p>
+                  {codeError && (
+                    <div style={{ color: "#d93025", fontSize: "12.5px", backgroundColor: "#fce8e6", padding: "8px 12px", borderRadius: "12px", border: "1px solid #fad2cf" }}>
+                      {codeError}
+                    </div>
+                  )}
+                  {codeSuccess && (
+                    <div style={{ color: "var(--color-active)", fontSize: "12.5px", backgroundColor: "rgba(27,171,124,0.08)", padding: "8px 12px", borderRadius: "12px", border: "1px solid rgba(27,171,124,0.3)" }}>
+                      {codeSuccess}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                    <input
+                      type="text"
+                      placeholder="Код доступа"
+                      value={codeInput}
+                      onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                      className="form-field__input"
+                      style={{ textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700, borderRadius: "14px", flex: 1, marginBottom: 0 }}
+                    />
+                    <button
+                      onClick={async () => {
+                        const code = codeInput.trim();
+                        if (!code) {
+                          setCodeError("Введите код доступа");
+                          return;
+                        }
+                        setCodeError("");
+                        setCodeSuccess("");
+                        setCodeSubmitting(true);
+                        try {
+                          await api.post("/me/activate-code", { code });
+                          setHasAccess(true);
+                          setCodeSuccess("Код успешно активирован! Доступ открыт.");
+                          setCodeInput("");
+                        } catch (err) {
+                          setCodeError(err?.message || "Не удалось активировать код");
+                        } finally {
+                          setCodeSubmitting(false);
+                        }
+                      }}
+                      disabled={codeSubmitting}
+                      className="btn-save"
+                      style={{ margin: 0, width: "auto", padding: "0 20px", borderRadius: "14px" }}
+                    >
+                      {codeSubmitting ? "..." : "Активировать"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Настройки */}
           <div className="card" id="card-settings">

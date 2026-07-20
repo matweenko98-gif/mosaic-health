@@ -21,6 +21,7 @@ export class RegisterDto {
   @IsOptional() @IsString() age?: string;
   @IsOptional() @IsString() country?: string;
   @IsOptional() @IsBoolean() hasRehabilitation?: boolean;
+  @IsOptional() @IsString() code?: string;
 }
 
 export class LoginDto {

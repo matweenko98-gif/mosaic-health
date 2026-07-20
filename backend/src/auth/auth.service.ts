@@ -69,6 +69,22 @@ export class AuthService {
     if (exists) {
       throw new ConflictException('Пользователь с таким email уже существует');
     }
+
+    let accessCodeRecord: any = null;
+    if (dto.code) {
+      const code = dto.code.trim().toUpperCase();
+      accessCodeRecord = await this.prisma.accessCode.findUnique({ where: { code } });
+      if (!accessCodeRecord) {
+        throw new BadRequestException('Код не найден. Проверьте правильность.');
+      }
+      if (accessCodeRecord.isRevoked) {
+        throw new ConflictException('Этот код был отозван и больше недействителен');
+      }
+      if (accessCodeRecord.activatedById) {
+        throw new ConflictException('Этот код уже использован на другом аккаунте');
+      }
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: {
@@ -82,6 +98,14 @@ export class AuthService {
         settings: { create: {} },
       },
     });
+
+    if (accessCodeRecord) {
+      await this.prisma.accessCode.update({
+        where: { id: accessCodeRecord.id },
+        data: { activatedById: user.id, activatedAt: new Date() },
+      });
+    }
+
     await this.createAndSendEmailToken(user, EmailTokenType.VERIFY);
     const tokens = await this.issueTokens(user);
     return { user: this.publicUser(user), ...tokens };

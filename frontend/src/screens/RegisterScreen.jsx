@@ -17,6 +17,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   const [age, setAge] = useState("");
   const [country, setCountry] = useState("Беларусь");
   const [rehab, setRehab] = useState(false);
+  const [code, setCode] = useState("");
   
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +72,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
         country: country.trim(),
         hasRehabilitation: rehab,
         password,
+        code: code.trim(),
       });
     } catch (err) {
       setError(err?.message || "Не удалось зарегистрироваться");
@@ -255,6 +257,23 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                <label htmlFor="reg-code" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
+                  Код доступа от врача (необязательно)
+                </label>
+                <input
+                  id="reg-code"
+                  type="text"
+                  placeholder="например: ABCDE"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="form-field__input"
+                  style={{
+                    borderRadius: "16px"
+                  }}
+                />
               </div>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", borderBottom: "1px solid #ececec", marginBottom: "8px" }}>

@@ -27,6 +27,11 @@ export class SpecialistCodesController {
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.codes.deleteCode(user, id);
   }
+
+  @Post(':id/revoke')
+  revoke(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.codes.revokeCode(user, id);
+  }
 }
 
 /**
