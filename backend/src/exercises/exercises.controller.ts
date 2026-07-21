@@ -5,7 +5,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('exercises')
 export class ExercisesController {
-  constructor(private readonly exercises: ExercisesService) {}
+  constructor(private readonly exercises: ExercisesService) { }
 
   // Общий каталог тренировок
   @Get()
@@ -13,9 +13,9 @@ export class ExercisesController {
     return this.exercises.findCatalog(category);
   }
 
-  // Список индивидуальных упражнений — только для врача и админа (конструктор программ)
+  // Список индивидуальных упражнений — для пациентов, врачей и админов
   @Get('individual')
-  @Roles(Role.SPECIALIST, Role.ADMIN)
+  @Roles(Role.PATIENT, Role.SPECIALIST, Role.ADMIN)
   individual(@Query('category') category?: string) {
     return this.exercises.findIndividual(category);
   }

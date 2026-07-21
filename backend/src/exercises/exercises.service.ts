@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ExercisesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // Общий каталог (доступен всем вошедшим)
   findCatalog(category?: string) {
@@ -26,4 +26,39 @@ export class ExercisesService {
     if (!exercise) throw new NotFoundException('Упражнение не найдено');
     return exercise;
   }
+
+  async create(dto: any) {
+    const durationMin = parseInt(dto.duration, 10) || 0;
+    return this.prisma.exercise.create({
+      data: {
+        title: dto.title,
+        description: dto.description || '',
+        category: dto.category || 'Общее',
+        isIndividual: !!dto.isIndividual,
+        durationMin,
+        videoKey: dto.videoKey || null,
+      },
+    });
+  }
+
+  async update(id: number, dto: any) {
+    await this.findOne(id);
+    const data: any = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.category !== undefined) data.category = dto.category;
+    if (dto.isIndividual !== undefined) data.isIndividual = !!dto.isIndividual;
+    if (dto.videoKey !== undefined) data.videoKey = dto.videoKey;
+    if (dto.duration !== undefined) {
+      data.durationMin = parseInt(dto.duration, 10) || 0;
+    }
+    return this.prisma.exercise.update({ where: { id }, data });
+  }
+
+  async delete(id: number) {
+    await this.findOne(id);
+    await this.prisma.exercise.delete({ where: { id } });
+    return { ok: true };
+  }
 }
+

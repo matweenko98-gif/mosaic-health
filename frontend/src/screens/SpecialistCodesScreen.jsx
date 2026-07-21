@@ -19,6 +19,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [revokeConfirmId, setRevokeConfirmId] = useState(null);
   const [shareModalData, setShareModalData] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, code }
 
   // Показ всплывающего уведомления
   const showToast = (message) => {
@@ -432,7 +433,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
 
                     {(free || revoked) && (
                       <button
-                        onClick={() => handleDelete(c.id)}
+                        onClick={() => setDeleteConfirm({ id: c.id, code: c.code })}
                         title="Удалить код"
                         style={{
                           border: "none",
@@ -783,6 +784,75 @@ export default function SpecialistCodesScreen({ onNavigate }) {
           </div>
         </div>
       )}
+      {/* Всплывающее окно подтверждения удаления (Confirm Modal в стиле админ-панели) */}
+      {deleteConfirm && (
+        <div className="modal-overlay-admin" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal-admin" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 10px 0", fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)" }}>
+              Подтверждение удаления
+            </h3>
+            <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: "1.5", fontWeight: 300 }}>
+              Вы уверены, что хотите удалить код доступа <strong>«{deleteConfirm.code}»</strong>? Это действие необратимо.
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                className="btn-save"
+                style={{ flex: 1, margin: 0, backgroundColor: "#d93025", boxShadow: "0 4px 12px rgba(217,48,37,.3)" }}
+                onClick={() => {
+                  handleDelete(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+              >
+                Удалить
+              </button>
+              <button
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "14px",
+                  border: "1.5px solid #a6a6a1",
+                  background: "#fff",
+                  fontWeight: "700",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontFamily: "'Manrope', sans-serif",
+                  transition: "all 0.15s ease",
+                  flex: 1
+                }}
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-overlay-admin {
+          position: fixed;
+          inset: 0;
+          background-color: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justifyContent: center;
+          padding: 16px;
+          z-index: 10000;
+        }
+        .modal-admin {
+          background-color: #fff;
+          border-radius: 24px;
+          padding: 20px;
+          width: 100%;
+          max-width: 380px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+          animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      `}</style>
     </section>
   );
 }

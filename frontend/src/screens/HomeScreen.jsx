@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { methodDescription } from "../data/mockData";
 import WorkoutModal from "../components/WorkoutModal";
+import { ORIGINAL_EXERCISES_MAP } from "../data/originalExercises";
+import { useAuth } from "../context/AuthContext";
 
 /**
  * HomeScreen — Главный экран «Мозаика Здоровья».
@@ -14,608 +16,155 @@ import WorkoutModal from "../components/WorkoutModal";
  * - Материалы от создателя: контентная Bento-карточка
  * - Магазин и Наш Telegram: mini-карточки 1×1 (половина ширины)
  */
+function formatDuration(val) {
+  if (!val) return "0 мин";
+  const s = String(val).trim();
+  if (s.endsWith("мин") || s.endsWith("минут") || s.endsWith("м")) return s;
+  return `${s} мин`;
+}
+
+function formatExercise(ex) {
+  let descText = ex.description || "";
+  let isPublished = true;
+  let duration = ex.durationMin ? `${ex.durationMin} мин` : "0 мин";
+  let level = "Базовый";
+  let equipment = "Без инвентаря";
+  let exerciseTime = "10 мин";
+  let totalTime = "";
+  let coverUrl = null;
+
+  const original = ORIGINAL_EXERCISES_MAP[ex.id];
+  let category = ex.category;
+  let label = ex.title;
+
+  if (original) {
+    category = original.category;
+    label = original.label;
+    duration = original.duration || duration;
+    level = original.level || level;
+    equipment = original.equipment || equipment;
+  }
+
+  try {
+    if (ex.description && ex.description.trim().startsWith("{")) {
+      const parsed = JSON.parse(ex.description);
+      descText = parsed.instructions ?? parsed.description ?? "";
+      isPublished = parsed.isPublished !== false;
+      duration = parsed.duration ?? duration;
+      level = parsed.level ?? level;
+      equipment = parsed.equipment ?? equipment;
+      exerciseTime = parsed.duration ?? duration;
+      coverUrl = parsed.coverUrl ?? null;
+      if (parsed.category) {
+        category = parsed.category;
+      }
+    }
+  } catch (e) {}
+  return {
+    ...ex,
+    title: ex.title,
+    label,
+    description: descText,
+    category,
+    duration: formatDuration(duration),
+    level,
+    equipment,
+    exerciseTime: formatDuration(duration),
+    totalTime: "",
+    coverUrl,
+    isPublished,
+    video: ex.videoKey || (original ? original.video : null),
+  };
+}
+
+function getCategoryIcon(catName) {
+  if (catName === "Дыхание") {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+      </svg>
+    );
+  }
+  if (catName === "Шаг" || catName === "Ходьба") {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="13" cy="4" r="2" />
+        <path d="M13 18l-3-5-1-4-2 2v6" />
+        <path d="M6 20h3l1-4" />
+        <path d="M17 20l-1-4-3-1" />
+      </svg>
+    );
+  }
+  if (catName === "Упражнение" || catName === "Упражнения") {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
+        <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
+        <path d="M6 12h12" />
+        <path d="M6.5 4.5v15" />
+        <path d="M17.5 4.5v15" />
+      </svg>
+    );
+  }
+  if (catName === "Расслабление") {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  );
+}
+
+function mapCyrillicToEnglish(text) {
+  const ruToEnMap = {
+    'Й': 'Q', 'Ц': 'W', 'У': 'E', 'К': 'R', 'Е': 'T', 'Н': 'Y', 'Г': 'U', 'Ш': 'I', 'Щ': 'O', 'З': 'P',
+    'Ф': 'A', 'Ы': 'S', 'В': 'D', 'А': 'F', 'П': 'G', 'Р': 'H', 'О': 'J', 'Л': 'K', 'Д': 'L',
+    'Я': 'Z', 'Ч': 'X', 'С': 'C', 'М': 'V', 'И': 'B', 'Т': 'N', 'Ь': 'M'
+  };
+  return text.toUpperCase().split("").map(char => ruToEnMap[char] || char).join("");
+}
+
 export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
+  const { user } = useAuth();
+  const userId = user?.id || "guest";
+
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectorSearch, setSelectorSearch] = useState("");
   const [homeworkSearch, setHomeworkSearch] = useState("");
   const [selectedSelectorTab, setSelectedSelectorTab] = useState("Все");
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
-  // Группы активностей для выбора тренировки с расширенными метаданными
-  const breathingGroup = [
-    {
-      id: 1,
-      title: "Гиревое дыхание на 7 точек",
-      label: "На 7 точек",
-      description: "Видео-инструкция по методике",
-      duration: "15 мин",
-      level: "Базовый",
-      equipment: "С гирей",
-    },
-    {
-      id: 2,
-      title: "Гиревое дыхание на 10 точек",
-      label: "На 10 точек",
-      description: "Видео-инструкция по методике",
-      duration: "20 мин",
-      level: "Продвинутый",
-      equipment: "С гирей",
-    },
-  ];
+  const [catalogWorkouts, setCatalogWorkouts] = useState([]);
+  const [homeworkWorkouts, setHomeworkWorkouts] = useState([]);
+  const [workoutsLoading, setWorkoutsLoading] = useState(true);
 
-  const stepGroup = [
-    {
-      id: 3,
-      title: "Шаг (Вид 1)",
-      label: "Шаг (Вид 1)",
-      description: "Методика шага — Вид 1 (заглушка)",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-    },
-    {
-      id: 4,
-      title: "Шаг (Вид 2)",
-      label: "Шаг (Вид 2)",
-      description: "Методика шага — Вид 2 (заглушка)",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-    },
-    {
-      id: 5,
-      title: "Шаг (Вид 3)",
-      label: "Шаг (Вид 3)",
-      description: "Методика шага — Вид 3 (заглушка)",
-      duration: "15 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-    },
-  ];
-
-  const allExercises = [
-    ...breathingGroup,
-    ...stepGroup,
-    {
-      id: 6,
-      title: "Диафрагмальный релиз",
-      label: "Диафрагмальный релиз",
-      description: "Самомассаж диафрагмы, направленный на устранение мышечных зажимов, увеличение глубины вдоха и расслабление нервной системы.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-    },
-    {
-      id: 7,
-      title: "Мобилизация грудного отдела",
-      label: "Мобилизация грудного",
-      description: "Комплекс упражнений для раскрытия плечевого пояса и грудной клетки, возвращающий подвижность ребрам.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-    },
-    {
-      id: 8,
-      title: "Активация стопы",
-      label: "Активация стопы",
-      description: "Миофасциальный релиз подошвенного апоневроза с помощью теннисного или массажного мяча для восстановления амортизации стопы.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Мяч",
-    },
-    {
-      id: 9,
-      title: "Координация шага",
-      label: "Координация шага",
-      description: "Согласованная работа рук и ног с акцентом на перекрестный паттерн ходьбы для выравнивания осанки.",
-      duration: "15 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-    },
-    {
-      id: 10,
-      title: "Растяжка поясничного отдела",
-      label: "Растяжка поясницы",
-      description: "Декомпрессия поясничных позвонков, снятие гипертонуса с квадратных мышц поясницы после нагрузок.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-    },
-  ];
-
-  // Реальный список тренировок для Домашнего задания
-  const homeworkExercises = [
-    // Категория Дыхание
-    {
-      id: 101,
-      title: "Дыхание на 4-ках с ротацией локтей",
-      label: "Дыхание на 4-ках с ротацией локтей",
-      description: "Упражнение в упоре на четвереньках для мобилизации лопаток, раскрытия грудного отдела и улучшения паттерна дыхания.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Дыхание",
-      video: "/demo-video.mp4"
-    },
-    {
-      id: 102,
-      title: "Дыхание на 4-ках с ротацией локтей, быстр вдох, медл выдох",
-      label: "Дыхание на 4-ках с ротацией локтей, быстр вдох, медл выдох",
-      description: "Активация парасимпатической нервной системы за счет удлиненного выдоха в сочетании с динамическим раскрытием грудной клетки.",
-      duration: "8 мин",
-      level: "Средний",
-      equipment: "Коврик",
-      category: "Дыхание",
-      video: "/demo-video.mp4"
-    },
-    {
-      id: 103,
-      title: "Дыхание на 4-ках с ротацией локтей, медл вдох, быстр выдох",
-      label: "Дыхание на 4-ках с ротацией локтей, медл вдох, быстр выдох",
-      description: "Тонизирующая дыхательная практика для мобилизации ребер и включения вспомогательных дыхательных мышц.",
-      duration: "8 мин",
-      level: "Средний",
-      equipment: "Коврик",
-      category: "Дыхание",
-      video: "/demo-video.mp4"
-    },
-    {
-      id: 104,
-      title: "Дыхание сидя на коленях",
-      label: "Дыхание сидя на коленях",
-      description: "Мягкое дыхательное упражнение сидя на пятках для расслабления поясницы и центрирования купола диафрагмы.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Дыхание"
-    },
-    {
-      id: 105,
-      title: "Дыхание сидя с поднятой прямой рукой",
-      label: "Дыхание сидя с поднятой прямой рукой",
-      description: "Асимметричное дыхание для направленного раскрытия и вентиляции одного из куполов легкого и растяжения межреберных мышц.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Дыхание"
-    },
-    {
-      id: 106,
-      title: "Лежа колени в сторону",
-      label: "Лежа колени в сторону",
-      description: "Мягкое дыхание в ротационном положении нижней части тела для декомпрессии пояснично-крестцового отдела позвоночника.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Дыхание"
-    },
-    {
-      id: 107,
-      title: "Корзинка",
-      label: "Корзинка",
-      description: "Прогиб назад лежа на животе с захватом лодыжек для раскрытия передней фасциальной линии и глубокой вентиляции легких.",
-      duration: "12 мин",
-      level: "Продвинутый",
-      equipment: "Коврик",
-      category: "Дыхание"
-    },
-
-    // Категория Упражнение
-    {
-      id: 108,
-      title: "Полумостик",
-      label: "Полумостик",
-      description: "Активация задней поверхности бедер и большой ягодичной мышцы с одновременным вытяжением передней линии бедра.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 109,
-      title: "Пресс: колени к груди",
-      label: "Пресс: колени к груди",
-      description: "Укрепление прямой и поперечной мышц живота в щадящем для поясничного отдела позвоночника режиме за счет подъема ног.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 110,
-      title: "Отжимание с колен",
-      label: "Отжимание с колен",
-      description: "Укрепление мышц груди, передней дельты и трицепса с сохранением стабильного нейтрального положения позвоночника.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 111,
-      title: "Бицепс бедра лежа",
-      label: "Бицепс бедра лежа",
-      description: "Изолированное сгибание голени лежа на животе для улучшения тонуса двуглавой мышцы бедра и стабилизации коленного сустава.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Упражнение"
-    },
-    {
-      id: 112,
-      title: "Колени к себе лежа: по 1й и 2мя ногами",
-      label: "Колени к себе лежа: по 1й и 2мя ногами",
-      description: "Мягкое поочередное и совместное подтягивание коленей к животу для разгрузки поясницы и расслабления связок крестца.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 113,
-      title: "Приседания \"в рюмочку\"",
-      label: "Приседания \"в рюмочку\"",
-      description: "Приседания с узкой постановкой стоп и широким разведением коленей для тренировки глубокого седа и мобилизации голеностопа.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Упражнение"
-    },
-    {
-      id: 114,
-      title: "Кошечка - собачка на прямых руках",
-      label: "Кошечка - собачка на прямых руках",
-      description: "Классическая волнообразная мобилизация позвоночника во флексии и экстензии из упора на четвереньках на прямых руках.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 115,
-      title: "Собака - на 4ках грудь к полу",
-      label: "Собака - на 4ках грудь к полу",
-      description: "Мягкое вытяжение плечевых суставов и верхнегрудного отдела позвоночника из упора на коленях грудью к полу.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 116,
-      title: "Кошечка - собачка на локтях",
-      label: "Кошечка - собачка на локтях",
-      description: "Мобилизация пояснично-крестцового и нижнегрудного отделов позвоночника с выключением из работы плечевого пояса.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-    {
-      id: 117,
-      title: "Икры стоя - прямо и под углами",
-      label: "Икры стоя - прямо и под углами",
-      description: "Подъемы на носки с различным разворотом стоп для проработки всех пучков икроножной мышцы и стимуляции венозного возврата.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Стена",
-      category: "Упражнение"
-    },
-    {
-      id: 118,
-      title: "Икры в позе \"Собаки\"",
-      label: "Икры в позе \"Собаки\"",
-      description: "Поочередное опускание пяток к коврику из положения собаки мордой вниз для вытяжения ахиллова сухожилия и икроножных мышц.",
-      duration: "10 мин",
-      level: "Средний",
-      equipment: "Коврик",
-      category: "Упражнение"
-    },
-
-    // Категория Расслабление
-    {
-      id: 119,
-      title: "Растяжка ЗПБ стоя: ладони на стопах, поочереди выпрямлять ноги",
-      label: "Растяжка ЗПБ стоя: ладони на стопах, поочереди выпрямлять ноги",
-      description: "Глубокое динамическое растяжение мышц задней поверхности бедер и подколенных сухожилий в наклоне корпуса вперед.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Расслабление"
-    },
-    {
-      id: 120,
-      title: "Скрут стоя, рука наверх",
-      label: "Скрут стоя, рука наверх",
-      description: "Мягкая ротация грудного отдела из наклона с вытяжением руки вертикально вверх для снятия блоков и зажимов позвоночника.",
-      duration: "10 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Расслабление"
-    },
-    {
-      id: 121,
-      title: "Раскачка: колено внутрь по 1 ноге",
-      label: "Раскачка: колено внутрь по 1 ноге",
-      description: "Мягкое вращение бедренной кости внутрь в положении лежа на спине для мобилизации суставной капсулы тазобедренного сустава.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 122,
-      title: "Раскачка: в стороны колени вместе",
-      label: "Раскачка: в стороны колени вместе",
-      description: "Мягкие наклоны согнутых коленей вправо и влево лежа на спине для релиза мышц поясничного отдела и крестца.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 123,
-      title: "Колено к себе лежа на расслабление НЧС",
-      label: "Колено к себе лежа на расслабление НЧС",
-      description: "Подтягивание колена руками к противоположному плечу для релиза грушевидной мышцы и улучшения подвижности крестцово-подвздошного сочленения.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 124,
-      title: "Раскачка: вперед-назад",
-      label: "Раскачка: вперед-назад",
-      description: "Перекаты на округлом позвоночнике вперед и назад для массажа околопозвоночных мышц и улучшения сегментарной мобильности.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 125,
-      title: "Колени к груди - развести в бабочку - свести (круг в ТЗБ)",
-      label: "Колени к груди - развести в бабочку - свести (круг в ТЗБ)",
-      description: "Круговые вращения бедер вовнутрь из положения лежа на спине для улучшения скольжения головки бедренной кости.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 126,
-      title: "Колени развести в бабочку - свести к животу - вниз (круг в ТЗБ)",
-      label: "Колени развести в бабочку - свести к животу - вниз (круг в ТЗБ)",
-      description: "Круговые вращения бедер наружу лежа на спине для расслабления тазового дна и паховых связок.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 127,
-      title: "Растягивающий шаг",
-      label: "Растягивающий шаг",
-      description: "Широкие выпады с удержанием таза в нейтральном положении для растяжения подвздошно-поясничной мышцы передней ноги.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Расслабление"
-    },
-    {
-      id: 128,
-      title: "Растяжка лестничная мышца сидя",
-      label: "Растяжка лестничная мышца сидя",
-      description: "Деликатное вытяжение передней и боковой поверхностей шеи сидя на стуле с фиксацией противоположного плеча.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Стул",
-      category: "Расслабление"
-    },
-    {
-      id: 129,
-      title: "Раскачка: Крокодил стопы",
-      label: "Раскачка: Крокодил стопы",
-      description: "Комплексная волнообразная скрутка позвоночного столба лежа, запускаемая от движения стоп, для релиза глубоких ротаторов.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 130,
-      title: "Раскачка: согнутые колени на ширине плеч, вместе в стороны",
-      label: "Раскачка: согнутые колени на ширине плеч, вместе в стороны",
-      description: "Наклоны коленей вовнутрь и в стороны в широком положении стоп лежа на спине для релиза таза и поясницы.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 131,
-      title: "Раскачка: по 1 ноге колено внутрь и наружу",
-      label: "Раскачка: по 1 ноге колено внутрь и наружу",
-      description: "Поочередное изолированное отведение и приведение бедра лежа на спине для выравнивания тонуса ротаторов бедра.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Коврик",
-      category: "Расслабление"
-    },
-    {
-      id: 132,
-      title: "Растяжка грудных - прямая рука о стену",
-      label: "Растяжка грудных - прямая рука о стену",
-      description: "Мягкое раскрытие плечевого пояса и растяжение большой грудной мышцы за счет разворота корпуса от стены.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Стена",
-      category: "Расслабление"
-    },
-    {
-      id: 133,
-      title: "Растяжка ягодичной сидя",
-      label: "Растяжка ягодичной сидя",
-      description: "Растяжение большой, средней ягодичной и грушевидной мышц сидя на стуле с укладыванием голени на бедро другой ноги.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Стул",
-      category: "Расслабление"
-    },
-    {
-      id: 134,
-      title: "Растяжка верхняя трапеция сидя, ШВЗ",
-      label: "Растяжка верхняя трапеция сидя, ШВЗ",
-      description: "Деликатное растяжение верхней части трапеции и мышцы, поднимающей лопатку, сидя на стуле с наклоном головы вперед и вбок.",
-      duration: "8 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Расслабление"
-    },
-    {
-      id: 135,
-      title: "Самомассаж фитнес-роллом отводящих, ТФЛ",
-      label: "Самомассаж фитнес-роллом отводящих, ТФЛ",
-      description: "Миофасциальный релиз напрягателя широкой фасции бедра и отводящих мышц с помощью прокатки на фитнес-ролле.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Фитнес-ролл",
-      category: "Расслабление"
-    },
-    {
-      id: 136,
-      title: "Самомассаж фитнес-роллом приводящих",
-      label: "Самомассаж фитнес-роллом приводящих",
-      description: "Миофасциальный самомассаж внутренней поверхности бедра на фитнес-ролле для улучшения эластичности приводящей группы мышц.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Фитнес-ролл",
-      category: "Расслабление"
-    },
-    {
-      id: 137,
-      title: "Самомассаж фитнес-роллом ЗПБ",
-      label: "Самомассаж фитнес-роллом ЗПБ",
-      description: "Прокатка задней поверхности бедра на массажном ролле для устранения мышечных триггеров и спазмов.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Фитнес-ролл",
-      category: "Расслабление"
-    },
-    {
-      id: 138,
-      title: "Самомассаж фитнес-роллом икры",
-      label: "Самомассаж фитнес-роллом икры",
-      description: "Миофасциальный релиз камбаловидной и икроножной мышц на фитнес-ролле для снятия зажимов и усталости в голенях.",
-      duration: "10 мин",
-      level: "Базовый",
-      equipment: "Фитнес-ролл",
-      category: "Расслабление"
-    },
-    {
-      id: 139,
-      title: "Самомассаж фитнес-роллом ППБ",
-      label: "Самомассаж фитнес-роллом ППБ",
-      description: "Миофасциальный самомассаж передней поверхности бедра (квадрицепса) на фитнес-ролле для разгрузки коленных суставов.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Фитнес-ролл",
-      category: "Расслабление"
-    },
-
-    // Категория Ходьба
-    {
-      id: 140,
-      title: "Ходьба классика",
-      label: "Ходьба классика",
-      description: "Тренировка правильного распределения веса и амортизации стопы во время классической ходьбы на месте.",
-      duration: "15 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 141,
-      title: "Ходьба со скрутом",
-      label: "Ходьба со скрутом",
-      description: "Ходьба на месте с контролируемым противовращением плечевого пояса и таза для мобилизации позвоночника.",
-      duration: "15 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 142,
-      title: "Ходьба на месте колено к плечу",
-      label: "Ходьба на месте колено к плечу",
-      description: "Активная ходьба на месте с высоким подъемом бедра по диагонали к противоположному плечу для тренировки баланса.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 143,
-      title: "Ходьба на месте, руки вперед, локти назад",
-      label: "Ходьба на месте, руки вперед, локти назад",
-      description: "Ходьба на месте с синхронной горизонтальной тягой рук для активации ромбовидных и трапециевидных мышц.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 144,
-      title: "Ходьба на месте, руки прямые вверх",
-      label: "Ходьба на месте, руки прямые вверх",
-      description: "Ходьба на месте с поднятыми прямыми руками для укрепления мышц-разгибателей спины и улучшения осанки.",
-      duration: "10 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 145,
-      title: "Ходьба 2-10 пятка к носочку",
-      label: "Ходьба 2-10 пятка к носочку",
-      description: "Ходьба по прямой линии стык в стык для тренировки мозжечка, координации и глубоких мышц-стабилизаторов.",
-      duration: "12 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 146,
-      title: "Ходьба 2-10 с ротацией корпуса",
-      label: "Ходьба 2-10 с ротацией корпуса",
-      description: "Балансирующая ходьба пятка к носку с поворотом корпуса в сторону передней ноги для продвинутого контроля равновесия.",
-      duration: "15 мин",
-      level: "Продвинутый",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 147,
-      title: "Ходьба на стопу",
-      label: "Ходьба на стопу",
-      description: "Специальная ходьба с акцентом на проработку свода стопы и трех точек опоры для исправления паттернов шага.",
-      duration: "12 мин",
-      level: "Базовый",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    },
-    {
-      id: 148,
-      title: "Ходьба длинный шаг, ладони вместе перед собой",
-      label: "Ходьба длинный шаг, ладони вместе перед собой",
-      description: "Ходьба длинными выпадами с вытянутыми перед собой руками для раскрытия тазобедренных суставов и вытяжения позвоночника.",
-      duration: "15 мин",
-      level: "Средний",
-      equipment: "Без инвентаря",
-      category: "Ходьба"
-    }
-  ];
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      api.get("/exercises").catch(() => []),
+      api.get("/exercises/individual").catch(() => []),
+    ])
+      .then(([catalog, homework]) => {
+        if (!active) return;
+        setCatalogWorkouts((catalog || []).map(formatExercise));
+        setHomeworkWorkouts((homework || []).map(formatExercise));
+      })
+      .finally(() => {
+        if (active) setWorkoutsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Состояние активного таба для домашних тренировок
   const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
@@ -681,18 +230,24 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   }, [toast.visible]);
 
   // Выбранный плейлист (массив ID) с автосохранением в localStorage
-  const [customPlaylist, setCustomPlaylist] = useState(() => {
-    try {
-      const saved = localStorage.getItem("customPlaylist");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [customPlaylist, setCustomPlaylist] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem("customPlaylist", JSON.stringify(customPlaylist));
-  }, [customPlaylist]);
+    try {
+      const saved = localStorage.getItem(`customPlaylist_${userId}`);
+      setCustomPlaylist(saved ? JSON.parse(saved) : []);
+    } catch {
+      setCustomPlaylist([]);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (customPlaylist.length > 0) {
+      localStorage.setItem(`customPlaylist_${userId}`, JSON.stringify(customPlaylist));
+    } else {
+      localStorage.removeItem(`customPlaylist_${userId}`);
+    }
+  }, [customPlaylist, userId]);
 
 
   // Перемещение упражнений (drag-and-drop & стрелочки)
@@ -773,19 +328,20 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   }, [isHomeworkModalOpen]);
 
   // Состояния сохраненной сессии
-  const [savedHomeworkQueue, setSavedHomeworkQueue] = useState(() => {
-    try {
-      const q = localStorage.getItem("savedHomeworkQueue");
-      return q ? JSON.parse(q) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [savedHomeworkQueue, setSavedHomeworkQueue] = useState([]);
+  const [savedHomeworkIndex, setSavedHomeworkIndex] = useState(-1);
 
-  const [savedHomeworkIndex, setSavedHomeworkIndex] = useState(() => {
-    const idx = localStorage.getItem("savedHomeworkIndex");
-    return idx ? parseInt(idx, 10) : -1;
-  });
+  useEffect(() => {
+    try {
+      const qSaved = localStorage.getItem(`savedHomeworkQueue_${userId}`);
+      const idxSaved = localStorage.getItem(`savedHomeworkIndex_${userId}`);
+      setSavedHomeworkQueue(qSaved ? JSON.parse(qSaved) : []);
+      setSavedHomeworkIndex(idxSaved ? Number(idxSaved) : -1);
+    } catch {
+      setSavedHomeworkQueue([]);
+      setSavedHomeworkIndex(-1);
+    }
+  }, [userId]);
 
   // Состояния для активного плеера
   const [playlistQueue, setPlaylistQueue] = useState([]);
@@ -794,16 +350,16 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   // Автосохранение прогресса ДЗ
   useEffect(() => {
     if (playlistQueue.length > 0 && playlistQueue[0].id >= 101) {
-      localStorage.setItem("savedHomeworkQueue", JSON.stringify(playlistQueue));
-      localStorage.setItem("savedHomeworkIndex", String(currentPlaylistIndex));
+      localStorage.setItem(`savedHomeworkQueue_${userId}`, JSON.stringify(playlistQueue));
+      localStorage.setItem(`savedHomeworkIndex_${userId}`, String(currentPlaylistIndex));
       setSavedHomeworkQueue(playlistQueue);
       setSavedHomeworkIndex(currentPlaylistIndex);
     }
-  }, [playlistQueue, currentPlaylistIndex]);
+  }, [playlistQueue, currentPlaylistIndex, userId]);
 
   function clearSavedHomework() {
-    localStorage.removeItem("savedHomeworkQueue");
-    localStorage.removeItem("savedHomeworkIndex");
+    localStorage.removeItem(`savedHomeworkQueue_${userId}`);
+    localStorage.removeItem(`savedHomeworkIndex_${userId}`);
     setSavedHomeworkQueue([]);
     setSavedHomeworkIndex(-1);
   }
@@ -894,17 +450,19 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     }
   }
 
-  const filteredBreathingGroup = breathingGroup.filter((item) =>
-    item.label.toLowerCase().includes(selectorSearch.toLowerCase()) ||
-    item.title.toLowerCase().includes(selectorSearch.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(selectorSearch.toLowerCase()))
-  );
+  const publishedCatalog = catalogWorkouts.filter(w => w.isPublished && ![6, 7, 8, 9, 10].includes(w.id));
+  const publishedHomework = homeworkWorkouts.filter(w => w.isPublished);
 
-  const filteredStepGroup = stepGroup.filter((item) =>
-    item.label.toLowerCase().includes(selectorSearch.toLowerCase()) ||
-    item.title.toLowerCase().includes(selectorSearch.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(selectorSearch.toLowerCase()))
-  );
+  const selectorCategories = Array.from(new Set(publishedCatalog.map(w => w.category).filter(Boolean)));
+  const homeworkCategories = Array.from(new Set(publishedHomework.map(w => w.category).filter(Boolean)));
+
+  const filteredCatalog = publishedCatalog
+    .filter((item) => selectedSelectorTab === "Все" || item.category === selectedSelectorTab)
+    .filter((item) =>
+      item.label.toLowerCase().includes(selectorSearch.toLowerCase()) ||
+      item.title.toLowerCase().includes(selectorSearch.toLowerCase()) ||
+      (item.description && item.description.toLowerCase().includes(selectorSearch.toLowerCase()))
+    );
 
   return (
     <section className="screen" id="screen-home">
@@ -1200,35 +758,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               }}
               className="no-scrollbar"
             >
-              {[
-                {
-                  id: "Все", label: "Все", icon: (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="3" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                      <rect x="3" y="14" width="7" height="7" />
-                    </svg>
-                  )
-                },
-                {
-                  id: "Дыхание", label: "Дыхание", icon: (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
-                    </svg>
-                  )
-                },
-                {
-                  id: "Шаг", label: "Шаг", icon: (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="13" cy="4" r="2" />
-                      <path d="M13 18l-3-5-1-4-2 2v6" />
-                      <path d="M6 20h3l1-4" />
-                      <path d="M17 20l-1-4-3-1" />
-                    </svg>
-                  )
-                }
-              ].map((tab) => {
+              {[{ id: "Все", label: "Все" }, ...selectorCategories.map(cat => ({ id: cat, label: cat }))].map((tab) => {
                 const isActive = selectedSelectorTab === tab.id;
                 return (
                   <button
@@ -1252,189 +782,138 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       boxShadow: isActive ? "0 4px 12px rgba(27, 171, 124, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
                       whiteSpace: "nowrap",
                       transition: "all 0.2s ease",
-                      flexShrink: 0,
-                      flex: 1
+                      flexShrink: 0
                     }}
                   >
-                    {tab.icon}
+                    {getCategoryIcon(tab.id)}
                     <span>{tab.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Группа: Гиревое дыхание */}
-            {(selectedSelectorTab === "Все" || selectedSelectorTab === "Дыхание") && (
-              <div className="activity-section" style={{ padding: "0 20px" }}>
-                <h3 className="activity-section__title">Гиревое дыхание</h3>
-                <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
-                  {filteredBreathingGroup.length === 0 ? (
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0", gridColumn: "span 2" }}>Ничего не найдено</span>
-                  ) : (
-                    filteredBreathingGroup.map((item) => (
-                      <button
-                        key={item.id}
-                        className="workout-card-btn"
-                        onClick={() => handleSelectActivity(item)}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "stretch",
-                          width: "100%",
-                          padding: "10px",
-                          backgroundColor: "#fff",
-                          border: "none",
-                          borderRadius: "18px",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        {/* Large photo placeholder (video preview) */}
-                        <div
-                          style={{
-                            position: "relative",
-                            width: "100%",
-                            height: "100px",
-                            backgroundColor: "rgba(27, 171, 124, 0.08)",
-                            borderRadius: "12px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden",
-                            background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)",
-                            border: "1px solid rgba(27, 171, 124, 0.06)"
-                          }}
-                        >
-                          <div style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(255, 255, 255, 0.9)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                            backdropFilter: "blur(4px)"
-                          }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
-                            </svg>
-                          </div>
-                        </div>
+            {workoutsLoading ? (
+              <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", textAlign: "center", padding: "20px" }}>Загрузка тренировок…</p>
+            ) : (
+              (() => {
+                const activeCategories = selectedSelectorTab === "Все"
+                  ? selectorCategories
+                  : [selectedSelectorTab].filter(c => selectorCategories.includes(c));
+                
+                if (filteredCatalog.length === 0) {
+                  return <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", fontStyle: "italic", textAlign: "center", padding: "20px" }}>Ничего не найдено</p>;
+                }
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
-                          <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
-                            {item.label}
-                          </span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                              {item.duration}
-                            </span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                              {item.level}
-                            </span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
-                              {item.equipment}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
+                return activeCategories.map((cat, catIdx) => {
+                  const catItems = filteredCatalog.filter(item => item.category === cat);
+                  if (catItems.length === 0) return null;
+                  return (
+                    <div key={cat} className="activity-section" style={{ marginTop: catIdx > 0 ? "14px" : "0px", padding: "0 20px" }}>
+                      <h3 className="activity-section__title" style={{ fontFamily: "'Manrope', sans-serif", fontSize: "14.5px", fontWeight: "800", color: "var(--color-text)", marginBottom: "8px" }}>
+                        {cat === "Дыхание" ? "Гиревое дыхание" : cat === "Шаг" ? "Методика шага" : cat}
+                      </h3>
+                      <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
+                        {catItems.map((item) => (
+                          <button
+                            key={item.id}
+                            className="workout-card-btn"
+                            onClick={() => handleSelectActivity(item)}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "stretch",
+                              width: "100%",
+                              padding: "10px",
+                              backgroundColor: "#fff",
+                              border: "none",
+                              borderRadius: "18px",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <div
+                              style={{
+                                position: "relative",
+                                width: "100%",
+                                height: "100px",
+                                backgroundColor: "rgba(27, 171, 124, 0.08)",
+                                borderRadius: "12px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                                border: "1px solid rgba(27, 171, 124, 0.06)"
+                              }}
+                            >
+                              {item.video ? (
+                                <video
+                                  src={`${item.video}#t=1`}
+                                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                  preload="metadata"
+                                  playsInline
+                                  muted
+                                />
+                              ) : item.coverUrl ? (
+                                <div style={{
+                                  position: "absolute",
+                                  inset: 0,
+                                  background: `url(${item.coverUrl}) center/cover no-repeat`
+                                }} />
+                              ) : (
+                                <div style={{
+                                  position: "absolute",
+                                  inset: 0,
+                                  background: "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
+                                }} />
+                              )}
+                              <div style={{
+                                position: "absolute",
+                                width: "36px",
+                                height: "36px",
+                                borderRadius: "50%",
+                                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                                backdropFilter: "blur(4px)"
+                              }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polygon points="5 3 19 12 5 21 5 3" fill="#1BAB7C" />
+                                </svg>
+                              </div>
+                            </div>
 
-            {/* Группа: Методика шага */}
-            {(selectedSelectorTab === "Все" || selectedSelectorTab === "Шаг") && (
-              <div className="activity-section" style={{ marginTop: selectedSelectorTab === "Все" ? "14px" : "0px", padding: "0 20px" }}>
-                <h3 className="activity-section__title">Методика шага</h3>
-                <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
-                  {filteredStepGroup.length === 0 ? (
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", fontStyle: "italic", padding: "4px 0", gridColumn: "span 2" }}>Ничего не найдено</span>
-                  ) : (
-                    filteredStepGroup.map((item) => (
-                      <button
-                        key={item.id}
-                        className="workout-card-btn"
-                        onClick={() => handleSelectActivity(item)}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "stretch",
-                          width: "100%",
-                          padding: "10px",
-                          backgroundColor: "#fff",
-                          border: "none",
-                          borderRadius: "18px",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        {/* Large photo placeholder (video preview) */}
-                        <div
-                          style={{
-                            position: "relative",
-                            width: "100%",
-                            height: "100px",
-                            backgroundColor: "rgba(0, 148, 184, 0.08)",
-                            borderRadius: "12px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden",
-                            background: "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)",
-                            border: "1px solid rgba(0, 148, 184, 0.06)"
-                          }}
-                        >
-                          <div style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(255, 255, 255, 0.9)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                            backdropFilter: "blur(4px)"
-                          }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="5 3 19 12 5 21 5 3" fill="#0094B8" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
-                          <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
-                            {item.label}
-                          </span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                              {item.duration}
-                            </span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                              {item.level}
-                            </span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
-                              {item.equipment}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+                              <span style={{ fontSize: "0.82rem", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
+                                {item.label}
+                              </span>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#007F63", background: "rgba(0,127,99,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                  {item.duration}
+                                </span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                  {item.level}
+                                </span>
+                                {item.equipment && (
+                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                                    {item.equipment}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()
             )}
 
             {/* Кнопка перехода к домашним тренировкам */}
@@ -1502,7 +981,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               type="text"
               placeholder="Например: ABCDE"
               value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5))}
+              onChange={(e) => {
+                const mapped = mapCyrillicToEnglish(e.target.value);
+                setCodeInput(mapped.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5));
+              }}
               onKeyDown={(e) => { if (e.key === "Enter") handleActivateCode(); }}
               className="form-field__input"
               autoFocus
@@ -1605,6 +1087,22 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     Сохраненная программа упражнений для ваших ежедневных занятий:
                   </div>
 
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", margin: "4px 0 8px 0" }}>
+                    <span style={{ fontSize: "0.72rem", background: "rgba(27, 171, 124, 0.08)", color: "var(--color-active)", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
+                      Всего упражнений: {customPlaylist.length}
+                    </span>
+                    <span style={{ fontSize: "0.72rem", background: "rgba(0, 148, 184, 0.08)", color: "#0094B8", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
+                      Общее время: {
+                        customPlaylist.reduce((sum, id) => {
+                          const item = homeworkWorkouts.find(ex => ex.id === id);
+                          if (!item) return sum;
+                          const minutes = parseInt(item.duration, 10);
+                          return sum + (isNaN(minutes) ? 0 : minutes);
+                        }, 0)
+                      } мин
+                    </span>
+                  </div>
+
                   {/* Прогресс-виджет (показывается только при наличии незавершённой тренировки) */}
                   {savedHomeworkQueue.length > 0 && savedHomeworkIndex >= 0 && (
                     <div style={{
@@ -1699,7 +1197,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {customPlaylist
-                      .map((id) => homeworkExercises.find((ex) => ex.id === id))
+                      .map((id) => homeworkWorkouts.find((ex) => ex.id === id))
                       .filter(Boolean)
                       .map((item, idx) => (
                         <div
@@ -1832,11 +1330,6 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                               alignItems: "center",
                               justifyContent: "center",
                               overflow: "hidden",
-                              background: item.category === "Дыхание" 
-                                ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
-                                : item.category === "Упражнение"
-                                  ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
-                                  : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)",
                               border: item.category === "Дыхание" 
                                 ? "1px solid rgba(0, 127, 99, 0.06)" 
                                 : item.category === "Упражнение"
@@ -1844,7 +1337,29 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                   : "1px solid rgba(235, 96, 116, 0.06)"
                             }}
                           >
+                            {item.video ? (
+                              <video
+                                src={`${item.video}#t=1`}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                preload="metadata"
+                                playsInline
+                                muted
+                              />
+                            ) : (
+                              <div style={{
+                                position: "absolute",
+                                inset: 0,
+                                background: item.coverUrl
+                                  ? `url(${item.coverUrl}) center/cover no-repeat`
+                                  : item.category === "Дыхание" 
+                                    ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
+                                    : item.category === "Упражнение"
+                                      ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
+                                      : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)"
+                              }} />
+                            )}
                             <div style={{
+                              position: "absolute",
                               width: "40px",
                               height: "40px",
                               borderRadius: "50%",
@@ -1931,7 +1446,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     <button
                       onClick={() => {
                         const selectedWorkouts = customPlaylist
-                          .map((id) => homeworkExercises.find((ex) => ex.id === id))
+                          .map((id) => homeworkWorkouts.find((ex) => ex.id === id))
                           .filter(Boolean);
                         setPlaylistQueue(selectedWorkouts);
                         setCurrentPlaylistIndex(0);
@@ -1984,13 +1499,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       Редактировать
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm("Сбросить весь комплекс и прогресс?")) {
-                          setCustomPlaylist([]);
-                          clearSavedHomework();
-                          setIsEditingComplex(true);
-                        }
-                      }}
+                      onClick={() => setResetConfirmOpen(true)}
                       style={{
                         flex: 1,
                         padding: "11px 8px",
@@ -2185,6 +1694,22 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     Выберите индивидуальные упражнения в нужном вам порядке для составления плейлиста тренировки:
                   </div>
 
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", margin: "4px 0 8px 0" }}>
+                    <span style={{ fontSize: "0.72rem", background: "rgba(27, 171, 124, 0.08)", color: "var(--color-active)", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
+                      Выбрано упражнений: {customPlaylist.length}
+                    </span>
+                    <span style={{ fontSize: "0.72rem", background: "rgba(0, 148, 184, 0.08)", color: "#0094B8", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
+                      Общее время: {
+                        customPlaylist.reduce((sum, id) => {
+                          const item = homeworkWorkouts.find(ex => ex.id === id);
+                          if (!item) return sum;
+                          const minutes = parseInt(item.duration, 10);
+                          return sum + (isNaN(minutes) ? 0 : minutes);
+                        }, 0)
+                      } мин
+                    </span>
+                  </div>
+
                   {/* Список тренировок с галочками/порядковыми номерами */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                     {homeworkExercises
@@ -2268,11 +1793,6 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 overflow: "hidden",
-                                background: item.category === "Дыхание" 
-                                  ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
-                                  : item.category === "Упражнение"
-                                    ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
-                                    : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)",
                                 border: item.category === "Дыхание" 
                                   ? "1px solid rgba(0, 127, 99, 0.06)" 
                                   : item.category === "Упражнение"
@@ -2280,7 +1800,29 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                     : "1px solid rgba(235, 96, 116, 0.06)"
                               }}
                             >
+                              {item.video ? (
+                                <video
+                                  src={`${item.video}#t=1`}
+                                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                  preload="metadata"
+                                  playsInline
+                                  muted
+                                />
+                              ) : (
+                                <div style={{
+                                  position: "absolute",
+                                  inset: 0,
+                                  background: item.coverUrl
+                                    ? `url(${item.coverUrl}) center/cover no-repeat`
+                                    : item.category === "Дыхание" 
+                                      ? "repeating-linear-gradient(135deg, #E9EBEA, #E9EBEA 11px, #F1F3F2 11px, #F1F3F2 22px)"
+                                      : item.category === "Упражнение"
+                                        ? "repeating-linear-gradient(135deg, #E9ECEF, #E9ECEF 11px, #F1F3F5 11px, #F1F3F5 22px)"
+                                        : "repeating-linear-gradient(135deg, #F9EBEB, #F9EBEB 11px, #FDF1F1 11px, #FDF1F1 22px)"
+                                }} />
+                              )}
                               <div style={{
+                                position: "absolute",
                                 width: "36px",
                                 height: "36px",
                                 borderRadius: "50%",
@@ -2339,7 +1881,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   <button
                     onClick={() => {
                       const selectedWorkouts = customPlaylist
-                        .map((id) => homeworkExercises.find((ex) => ex.id === id))
+                        .map((id) => homeworkWorkouts.find((ex) => ex.id === id))
                         .filter(Boolean);
                       setPlaylistQueue(selectedWorkouts);
                       setCurrentPlaylistIndex(0);
@@ -2436,6 +1978,47 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
           <span style={{ fontSize: "0.82rem", fontWeight: "600", color: toast.type === "error" ? "#dc2626" : "var(--color-text)" }}>
             {toast.message}
           </span>
+        </div>
+      )}
+
+      {resetConfirmOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setResetConfirmOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          style={{ zIndex: 11000 }}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "360px", padding: "20px" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif", textAlign: "center" }}>
+              Сброс комплекса
+            </h3>
+            <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: "0 0 20px 0", lineHeight: "1.5", textAlign: "center" }}>
+              Вы действительно хотите сбросить весь текущий комплекс упражнений и обнулить сохраненный прогресс?
+            </p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => setResetConfirmOpen(false)}
+                style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "1.5px solid #a6a6a1", background: "#fff", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease" }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => {
+                  setCustomPlaylist([]);
+                  clearSavedHomework();
+                  setIsEditingComplex(true);
+                  setResetConfirmOpen(false);
+                  setIsHomeworkModalOpen(false);
+                  setIsSelectorOpen(true);
+                  setToast({ visible: true, message: "Комплекс сброшен", type: "success" });
+                }}
+                style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "none", background: "#ef4444", color: "#fff", fontFamily: "'Manrope', sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease" }}
+              >
+                Сбросить
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

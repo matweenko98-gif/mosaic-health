@@ -41,9 +41,6 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {isAdmin && (
           <div className="bento-card" onClick={() => onNavigate("admin")}>
             <span className="bento-card__badge">Доступно</span>
-            <span className="bento-card__icon" role="img" aria-label="admin">
-              ⚙️
-            </span>
             <h2 className="bento-card__title">Панель администратора</h2>
             <p className="bento-card__desc">
               Управление пользователями, товарами, статьями и заказами.
@@ -55,9 +52,6 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {isSpecialist && (
           <div className="bento-card" onClick={() => onNavigate("specialist-codes")}>
             <span className="bento-card__badge">Доступно</span>
-            <span className="bento-card__icon" role="img" aria-label="doctor">
-              🩺
-            </span>
             <h2 className="bento-card__title">Панель врача</h2>
             <p className="bento-card__desc">
               Генерация кодов доступа к индивидуальным тренировкам.
@@ -68,9 +62,6 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {/* Карточка 3: Режим пациента */}
         {isSpecialist && (
           <div className="bento-card" onClick={() => onNavigate("home")}>
-            <span className="bento-card__icon" role="img" aria-label="patient">
-              👤
-            </span>
             <h2 className="bento-card__title">Режим пациента</h2>
             <p className="bento-card__desc">
               Просмотр приложения и тренировок глазами клиента.
