@@ -1,15 +1,17 @@
 import React from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * BottomNav — фиксированная нижняя панель навигации.
  * Переключает экраны: «Главная» и «Профиль».
  */
 export default function BottomNav({ currentScreen, onNavigate }) {
+  const { t } = useLanguage();
   const isHome = currentScreen === "home";
   const isProfile = currentScreen === "profile";
 
   return (
-    <nav className="bottom-nav" role="navigation" aria-label="Основная навигация">
+    <nav className="bottom-nav" role="navigation" aria-label={t("Основная навигация")}>
       <div className="bottom-nav__container">
         {/* Главная */}
         <button
@@ -32,7 +34,7 @@ export default function BottomNav({ currentScreen, onNavigate }) {
             <path d="m3 9.5 9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <path d="M9 22V13a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v9" />
           </svg>
-          {isHome && <span className="bottom-nav__label">Главная</span>}
+          {isHome && <span className="bottom-nav__label">{t("Главная")}</span>}
         </button>
 
         {/* Профиль */}
@@ -56,7 +58,7 @@ export default function BottomNav({ currentScreen, onNavigate }) {
             <circle cx="12" cy="8" r="4" />
             <path d="M5.5 21a7 7 0 0 1 13 0" />
           </svg>
-          {isProfile && <span className="bottom-nav__label">Профиль</span>}
+          {isProfile && <span className="bottom-nav__label">{t("Профиль")}</span>}
         </button>
       </div>
     </nav>

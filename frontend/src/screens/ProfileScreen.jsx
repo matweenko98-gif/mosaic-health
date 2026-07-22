@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * ProfileScreen — Экран «Профиль / Личный кабинет».
@@ -15,6 +16,7 @@ export default function ProfileScreen({
   onSettingsChange,
   achievements,
 }) {
+  const { t, currentLang } = useLanguage();
   const isSpecialist = role === "SPECIALIST" || role === "ADMIN";
   const isAdmin = role === "ADMIN";
   const [activeTab, setActiveTab] = useState("main"); // "main" | "activity"
@@ -191,19 +193,19 @@ export default function ProfileScreen({
   const streak = computeStreak(history);
 
   const achievementDefs = [
-    { id: "first", icon: "🎯", title: "Первый шаг", desc: "Завершите первую тренировку", done: totalWorkouts >= 1, progress: `${Math.min(totalWorkouts, 1)}/1` },
-    { id: "streak3", icon: "🔥", title: "В ритме", desc: "3 дня тренировок подряд", done: streak >= 3, progress: `${Math.min(streak, 3)}/3` },
-    { id: "ten", icon: "💪", title: "Постоянство", desc: "10 завершённых тренировок", done: totalWorkouts >= 10, progress: `${Math.min(totalWorkouts, 10)}/10` },
-    { id: "streak7", icon: "⭐", title: "Неделя силы", desc: "7 дней тренировок подряд", done: streak >= 7, progress: `${Math.min(streak, 7)}/7` },
-    { id: "streak30", icon: "🏆", title: "Мастер баланса", desc: "30 дней тренировок подряд", done: streak >= 30, progress: `${Math.min(streak, 30)}/30` },
+    { id: "first", icon: "🎯", title: t("Первый шаг"), desc: t("Завершите первую тренировку"), done: totalWorkouts >= 1, progress: `${Math.min(totalWorkouts, 1)}/1` },
+    { id: "streak3", icon: "🔥", title: t("В ритме"), desc: t("3 дня тренировок подряд"), done: streak >= 3, progress: `${Math.min(streak, 3)}/3` },
+    { id: "ten", icon: "💪", title: t("Постоянство"), desc: t("10 завершённых тренировок"), done: totalWorkouts >= 10, progress: `${Math.min(totalWorkouts, 10)}/10` },
+    { id: "streak7", icon: "⭐", title: t("Неделя силы"), desc: t("7 дней тренировок подряд"), done: streak >= 7, progress: `${Math.min(streak, 7)}/7` },
+    { id: "streak30", icon: "🏆", title: t("Мастер баланса"), desc: t("30 дней тренировок подряд"), done: streak >= 30, progress: `${Math.min(streak, 30)}/30` },
   ];
   const unlockedCount = achievementDefs.filter((a) => a.done).length;
 
   return (
     <section className="screen" id="screen-profile">
       <header className="screen__header">
-        <h1 className="screen__title">Профиль</h1>
-        <p className="screen__subtitle">Личный кабинет пользователя</p>
+        <h1 className="screen__title">{t("Профиль")}</h1>
+        <p className="screen__subtitle">{t("Личный кабинет пользователя")}</p>
       </header>
 
       {/* Горизонтальная лента категорий для профиля */}
@@ -219,13 +221,13 @@ export default function ProfileScreen({
         flexShrink: 0
       }} className="no-scrollbar">
         {[
-          { id: "main", label: "Основное", icon: (
+          { id: "main", label: t("Основное"), icon: (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           )},
-          { id: "activity", label: "Активность", icon: (
+          { id: "activity", label: t("Активность"), icon: (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
@@ -269,7 +271,7 @@ export default function ProfileScreen({
       {/* Сообщение об успешном сохранении */}
       {saveMessage && (
         <div className="save-message" id="save-message" style={{ margin: "8px 0" }}>
-          {saveMessage}
+          {t(saveMessage)}
         </div>
       )}
 
@@ -278,7 +280,7 @@ export default function ProfileScreen({
         <>
           {/* Блок: Профиль пользователя */}
           <div className="card" id="card-profile-form">
-            <h2 className="card__title">Профиль пользователя</h2>
+            <h2 className="card__title">{t("Профиль пользователя")}</h2>
 
             {!isEditing ? (
               /* Режим просмотра информации с фото-заглушкой */
@@ -287,13 +289,13 @@ export default function ProfileScreen({
                   <div
                     className="profile-view__avatar-placeholder"
                     onClick={() => document.getElementById("avatar-file-input-view").click()}
-                    title="Изменить фото"
+                    title={t("Изменить фото")}
                     style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "pointer" }}
                   >
                     {user.avatar ? (
                       <img
                         src={user.avatar}
-                        alt="Аватар"
+                        alt={t("Аватар")}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
@@ -322,14 +324,14 @@ export default function ProfileScreen({
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--color-text)" }}>
-                      {user.name || "Пользователь"}
+                      {user.name || t("Пользователь")}
                     </span>
                     <button
                       type="button"
                       onClick={() => document.getElementById("avatar-file-input-view").click()}
                       style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#1BAB7C", fontSize: "13px", fontWeight: 600, fontFamily: "'Manrope', sans-serif", textAlign: "left" }}
                     >
-                      {user.avatar ? "Изменить фото" : "Добавить фото"}
+                      {user.avatar ? t("Изменить фото") : t("Добавить фото")}
                     </button>
                   </div>
                   <input
@@ -343,25 +345,25 @@ export default function ProfileScreen({
 
                 <div className="profile-view__fields">
                   <div className="profile-view__row">
-                    <span className="profile-view__label">Телефон:</span>
+                    <span className="profile-view__label">{t("Телефон:")}</span>
                     <span className="profile-view__value">{user.phone || "—"}</span>
                   </div>
                   <div className="profile-view__row">
-                    <span className="profile-view__label">Email:</span>
+                    <span className="profile-view__label">{t("Email:")}</span>
                     <span className="profile-view__value">{user.email || "—"}</span>
                   </div>
                   <div className="profile-view__row">
-                    <span className="profile-view__label">Возраст:</span>
-                    <span className="profile-view__value">{user.age ? `${user.age} лет` : "—"}</span>
+                    <span className="profile-view__label">{t("Возраст:")}</span>
+                    <span className="profile-view__value">{user.age ? `${user.age} ${t("лет")}` : "—"}</span>
                   </div>
                   <div className="profile-view__row">
-                    <span className="profile-view__label">Страна:</span>
+                    <span className="profile-view__label">{t("Страна:")}</span>
                     <span className="profile-view__value">{user.country || "—"}</span>
                   </div>
                   <div className="profile-view__row">
-                    <span className="profile-view__label">Реабилитация:</span>
+                    <span className="profile-view__label">{t("Реабилитация:")}</span>
                     <span className="profile-view__value">
-                      {user.hasRehabilitation ? "Да" : "Нет"}
+                      {user.hasRehabilitation ? t("Да") : t("Нет")}
                     </span>
                   </div>
                 </div>
@@ -371,7 +373,7 @@ export default function ProfileScreen({
                   className="btn-save mt-4"
                   onClick={() => setIsEditing(true)}
                 >
-                  Редактировать
+                  {t("Редактировать")}
                 </button>
               </div>
             ) : (
@@ -394,12 +396,12 @@ export default function ProfileScreen({
                       justifyContent: "center",
                       backgroundColor: "#f3f4f6"
                     }}
-                    title="Нажмите для выбора фото"
+                    title={t("Нажмите для выбора фото")}
                   >
                     {formAvatar ? (
                       <img
                         src={formAvatar}
-                        alt="Превью"
+                        alt={t("Превью")}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
@@ -432,19 +434,19 @@ export default function ProfileScreen({
                       fontWeight: "500",
                       textAlign: "center"
                     }}>
-                      Изм.
+                      {t("Изм.")}
                     </div>
                   </div>
                   
                   <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     <span style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--color-text)" }}>
-                      {formName || "Пользователь"}
+                      {formName || t("Пользователь")}
                     </span>
                     <span
                       style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", cursor: "pointer", textDecoration: "underline" }}
                       onClick={() => document.getElementById("avatar-file-input").click()}
                     >
-                      Изменить фото
+                      {t("Изменить фото")}
                     </span>
                   </div>
                   
@@ -460,7 +462,7 @@ export default function ProfileScreen({
 
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="input-name">
-                    Имя
+                    {t("Имя")}
                   </label>
                   <input
                     id="input-name"
@@ -473,7 +475,7 @@ export default function ProfileScreen({
 
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="input-email">
-                    Email
+                    {t("Email")}
                   </label>
                   <input
                     id="input-email"
@@ -486,7 +488,7 @@ export default function ProfileScreen({
 
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="input-phone">
-                    Телефон
+                    {t("Телефон")}
                   </label>
                   <input
                     id="input-phone"
@@ -499,7 +501,7 @@ export default function ProfileScreen({
 
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="input-age">
-                    Возраст
+                    {t("Возраст")}
                   </label>
                   <input
                     id="input-age"
@@ -514,7 +516,7 @@ export default function ProfileScreen({
 
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="input-country">
-                    Страна
+                    {t("Страна")}
                   </label>
                   <input
                     id="input-country"
@@ -527,7 +529,7 @@ export default function ProfileScreen({
 
                 <div className="form-field form-field--row">
                   <span className="form-field__label">
-                    Проходил реабилитацию в центре
+                    {t("Проходил реабилитацию в центре")}
                   </span>
                   <button
                     id="toggle-rehab"
@@ -539,7 +541,7 @@ export default function ProfileScreen({
                     <span className="toggle__track">
                       <span className="toggle__thumb" />
                     </span>
-                    <span className="toggle__label">{formRehab ? "Да" : "Нет"}</span>
+                    <span className="toggle__label">{formRehab ? t("Да") : t("Нет")}</span>
                   </button>
                 </div>
 
@@ -550,7 +552,7 @@ export default function ProfileScreen({
                     style={{ flex: 1, margin: 0 }}
                     onClick={handleSaveProfile}
                   >
-                    Сохранить
+                    {t("Сохранить")}
                   </button>
                   <button
                     id="btn-cancel-profile"
@@ -574,7 +576,7 @@ export default function ProfileScreen({
                     }}
                     onClick={handleCancelProfile}
                   >
-                    Отмена
+                    {t("Отмена")}
                   </button>
                 </div>
               </div>
@@ -584,30 +586,30 @@ export default function ProfileScreen({
           {/* Код доступа врача (только для роли PATIENT) */}
           {(role === "PATIENT" || role === "patient" || (!isSpecialist && !isAdmin)) && (
             <div className="card" id="card-access-code" style={{ marginTop: "16px" }}>
-              <h2 className="card__title">Индивидуальные тренировки</h2>
+              <h2 className="card__title">{t("Индивидуальные тренировки")}</h2>
               {hasAccess ? (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-active)", fontWeight: 700, fontSize: "14px", padding: "10px 0" }}>
-                  <span>🔓 Доступ к индивидуальным тренировкам открыт!</span>
+                  <span>🔓 {t("Доступ к индивидуальным тренировкам открыт!")}</span>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", margin: 0 }}>
-                    Введите пятизначный код доступа, выданный вашим врачом, чтобы открыть доступ к персональным комплексам упражнений.
+                    {t("Введите пятизначный код доступа, выданный вашим врачом, чтобы открыть доступ к персональным комплексам упражнений.")}
                   </p>
                   {codeError && (
                     <div style={{ color: "#d93025", fontSize: "12.5px", backgroundColor: "#fce8e6", padding: "8px 12px", borderRadius: "12px", border: "1px solid #fad2cf" }}>
-                      {codeError}
+                      {t(codeError)}
                     </div>
                   )}
                   {codeSuccess && (
                     <div style={{ color: "var(--color-active)", fontSize: "12.5px", backgroundColor: "rgba(27,171,124,0.08)", padding: "8px 12px", borderRadius: "12px", border: "1px solid rgba(27,171,124,0.3)" }}>
-                      {codeSuccess}
+                      {t(codeSuccess)}
                     </div>
                   )}
                   <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                     <input
                       type="text"
-                      placeholder="Код доступа"
+                      placeholder={t("Код доступа")}
                       value={codeInput}
                       onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
                       className="form-field__input"
@@ -638,7 +640,7 @@ export default function ProfileScreen({
                       className="btn-save"
                       style={{ margin: 0, width: "auto", padding: "0 20px", borderRadius: "14px" }}
                     >
-                      {codeSubmitting ? "..." : "Активировать"}
+                      {codeSubmitting ? "..." : t("Активировать")}
                     </button>
                   </div>
                 </div>
@@ -648,11 +650,11 @@ export default function ProfileScreen({
 
           {/* Настройки */}
           <div className="card" id="card-settings">
-            <h2 className="card__title">Настройки</h2>
+            <h2 className="card__title">{t("Настройки")}</h2>
 
             <div className="settings-row">
               <span className="settings-row__label">
-                Напоминания о тренировках
+                {t("Напоминания о тренировках")}
               </span>
               <button
                 id="toggle-reminders"
@@ -665,14 +667,14 @@ export default function ProfileScreen({
                   <span className="toggle__thumb" />
                 </span>
                 <span className="toggle__label">
-                  {settings.workoutReminders ? "Вкл" : "Выкл"}
+                  {settings.workoutReminders ? t("Вкл") : t("Выкл")}
                 </span>
               </button>
             </div>
 
             <div className="settings-row">
               <span className="settings-row__label">
-                Уведомления о статьях
+                {t("Уведомления о статьях")}
               </span>
               <button
                 id="toggle-articles"
@@ -685,7 +687,7 @@ export default function ProfileScreen({
                   <span className="toggle__thumb" />
                 </span>
                 <span className="toggle__label">
-                  {settings.articleNotifications ? "Вкл" : "Выкл"}
+                  {settings.articleNotifications ? t("Вкл") : t("Выкл")}
                 </span>
               </button>
             </div>
@@ -698,7 +700,7 @@ export default function ProfileScreen({
         <>
           {/* Календарь активности */}
           <div className="card" id="card-activity-calendar" style={{ padding: "18px" }}>
-            <h2 className="card__title" style={{ marginBottom: "12px", fontSize: "1.05rem", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>Календарь активности</h2>
+            <h2 className="card__title" style={{ marginBottom: "12px", fontSize: "1.05rem", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>{t("Календарь активности")}</h2>
             
             {/* Панель переключения месяцев */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
@@ -723,7 +725,7 @@ export default function ProfileScreen({
                 ‹
               </button>
               <span style={{ fontSize: "0.95rem", fontWeight: "800", fontFamily: "'Manrope', sans-serif", color: "var(--color-text)" }}>
-                {monthsRu[month]} {year}
+                {t(monthsRu[month])} {year}
               </span>
               <button 
                 type="button"
@@ -751,7 +753,7 @@ export default function ProfileScreen({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "6px", textAlign: "center", marginBottom: "8px" }}>
               {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((wDay) => (
                 <span key={wDay} style={{ fontSize: "0.7rem", fontWeight: "700", color: "var(--color-text-secondary)", textTransform: "uppercase" }}>
-                  {wDay}
+                  {t(wDay)}
                 </span>
               ))}
             </div>
@@ -810,7 +812,7 @@ export default function ProfileScreen({
                       transition: "all 0.15s ease",
                       fontFamily: "'Manrope', sans-serif"
                     }}
-                    title={dayHasWorkout ? "Есть тренировки. Нажмите для фильтрации." : "Нет тренировок."}
+                    title={dayHasWorkout ? t("Есть тренировки. Нажмите для фильтрации.") : t("Нет тренировок.")}
                   >
                     {day}
                   </button>
@@ -835,7 +837,7 @@ export default function ProfileScreen({
               fontFamily: "'Manrope', sans-serif",
               fontWeight: "700"
             }}>
-              <span>Показаны тренировки за {selectedFilterDate}</span>
+              <span>{t("Показаны тренировки за")} {selectedFilterDate}</span>
               <button 
                 type="button"
                 onClick={() => setSelectedFilterDate(null)}
@@ -849,7 +851,7 @@ export default function ProfileScreen({
                   textDecoration: "underline"
                 }}
               >
-                Сбросить
+                {t("Сбросить")}
               </button>
             </div>
           )}
@@ -857,7 +859,7 @@ export default function ProfileScreen({
           {/* Достижения */}
           <div className="card" id="card-achievements" style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-              <h2 className="card__title" style={{ margin: 0 }}>Достижения</h2>
+              <h2 className="card__title" style={{ margin: 0 }}>{t("Достижения")}</h2>
               <span style={{ fontSize: "12px", fontWeight: 700, color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>
                 {unlockedCount}/{achievementDefs.length}
               </span>
@@ -871,7 +873,7 @@ export default function ProfileScreen({
                   {streak}
                 </div>
                 <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "3px" }}>
-                  {streak === 0 ? "нет тренировок подряд — начните сегодня!" : "дней тренировок подряд"}
+                  {streak === 0 ? t("нет тренировок подряд — начните сегодня!") : t("дней тренировок подряд")}
                 </div>
               </div>
             </div>
@@ -914,10 +916,10 @@ export default function ProfileScreen({
 
           {/* История основных тренировок */}
           <div className="card" id="card-main-history" style={{ marginBottom: "16px" }}>
-            <h2 className="card__title">История основных тренировок</h2>
+            <h2 className="card__title">{t("История основных тренировок")}</h2>
             {filteredMainHistory.length === 0 ? (
               <p className="card__text card__text--empty">
-                {selectedFilterDate ? "В этот день не было основных тренировок" : "Пока нет завершённых основных тренировок"}
+                {selectedFilterDate ? t("В этот день не было основных тренировок") : t("Пока нет завершённых основных тренировок")}
               </p>
             ) : (
               <ul className="history-list">
@@ -925,7 +927,7 @@ export default function ProfileScreen({
                   <li key={entry.id} className="history-list__item">
                     <span className="history-list__date">{entry.date}</span>
                     <span className="history-list__name">{entry.name}</span>
-                    <span className="history-list__status">{entry.status}</span>
+                    <span className="history-list__status">{t(entry.status)}</span>
                   </li>
                 ))}
               </ul>
@@ -934,16 +936,16 @@ export default function ProfileScreen({
 
           {/* История индивидуальных тренировок */}
           <div className="card" id="card-individual-history">
-            <h2 className="card__title">История индивидуальных тренировок</h2>
+            <h2 className="card__title">{t("История индивидуальных тренировок")}</h2>
             {filteredIndividualHistory.length === 0 ? (
               <p className="card__text card__text--empty">
-                {selectedFilterDate ? "В этот день не было индивидуальных тренировок" : "Пока нет завершённых индивидуальных тренировок"}
+                {selectedFilterDate ? t("В этот день не было индивидуальных тренировок") : t("Пока нет завершённых индивидуальных тренировок")}
               </p>
             ) : (
               <ul className="history-list">
                 {filteredIndividualHistory.map((entry) => {
                   const isFullyCompleted = entry.status === "Завершено" || entry.status === "Выполнено полностью" || entry.completedCount === entry.totalCount;
-                  const progressText = isFullyCompleted ? "Завершено" : entry.status;
+                  const progressText = isFullyCompleted ? t("Завершено") : t(entry.status);
                   
                   return (
                      <li key={entry.id} className="history-list__item" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px", padding: "12px 14px", height: "auto" }}>
@@ -965,7 +967,7 @@ export default function ProfileScreen({
                         </span>
                       </div>
                       <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--color-text)", margin: "2px 0" }}>
-                        {entry.name || "Индивидуальная программа"}
+                        {entry.name || t("Индивидуальная программа")}
                       </div>
                       {entry.exercises && entry.exercises.length > 0 && (
                         <div style={{
@@ -1027,7 +1029,7 @@ export default function ProfileScreen({
               fontFamily: "'Manrope', sans-serif"
             }}
           >
-            Сменить режим работы
+            {t("Сменить режим работы")}
           </button>
         )}
         <button
@@ -1042,7 +1044,7 @@ export default function ProfileScreen({
             textDecoration: "underline"
           }}
         >
-          Выйти из аккаунта
+          {t("Выйти из аккаунта")}
         </button>
       </div>
     </section>

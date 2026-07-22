@@ -34,18 +34,22 @@ export class UpdateOrderStatusDto {
 }
 
 export class CreateProductDto {
-  @IsString() name: string;
+  @IsString() name_ru: string;
+  @IsOptional() @IsString() name_en?: string;
   @IsInt() @Min(0) price: number;
-  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() description_ru?: string;
+  @IsOptional() @IsString() description_en?: string;
   @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() imageKey?: string;
   @IsOptional() @IsBoolean() inStock?: boolean;
 }
 
 export class UpdateProductDto {
-  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() name_ru?: string;
+  @IsOptional() @IsString() name_en?: string;
   @IsOptional() @IsInt() @Min(0) price?: number;
-  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() description_ru?: string;
+  @IsOptional() @IsString() description_en?: string;
   @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() imageKey?: string;
   @IsOptional() @IsBoolean() inStock?: boolean;

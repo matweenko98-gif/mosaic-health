@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * CreatorMaterialsScreen — Экран «Материалы от создателя».
@@ -7,8 +8,9 @@ import { api } from "../api/client";
  * Статьи открываются в модальном окне с полным текстом, подкаст — с плеером.
  */
 export default function CreatorMaterialsScreen({ onNavigate }) {
-  const [articles, setArticles] = useState([]);
-  const [podcasts, setPodcasts] = useState([]);
+  const { t, currentLang } = useLanguage();
+  const [rawArticles, setRawArticles] = useState([]);
+  const [rawPodcasts, setRawPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,67 +21,8 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
     ])
       .then(([arts, pods]) => {
         if (!active) return;
-
-        // Обработка статей
-        const formattedArticles = (Array.isArray(arts) ? arts : [])
-          .map((a) => {
-            let descText = a.description || "";
-            let image = null;
-            let isPublished = true;
-            try {
-              if (a.description && a.description.trim().startsWith("{")) {
-                const parsed = JSON.parse(a.description);
-                descText = parsed.description || parsed.text || "";
-                image = parsed.image || null;
-                isPublished = parsed.isPublished !== false;
-              }
-            } catch (e) {
-              // legacy plain text
-            }
-            return {
-              id: a.id,
-              title: a.title,
-              desc: descText,
-              image,
-              isPublished,
-              readTime: a.readTime,
-              body: (a.body || "").split("\n\n").filter(Boolean),
-            };
-          })
-          .filter((art) => art.isPublished);
-
-        // Обработка подкастов/видео
-        const formattedPodcasts = (Array.isArray(pods) ? pods : [])
-          .map((p) => {
-            let descText = p.description || "";
-            let isVideo = false;
-            let isPublished = true;
-            let mediaUrl = p.audioKey || "";
-            try {
-              if (p.description && p.description.trim().startsWith("{")) {
-                const parsed = JSON.parse(p.description);
-                descText = parsed.description || parsed.text || "";
-                isVideo = !!parsed.isVideo;
-                isPublished = parsed.isPublished !== false;
-                mediaUrl = parsed.mediaUrl || p.audioKey || "";
-              }
-            } catch (e) {
-              // legacy plain text
-            }
-            return {
-              id: p.id,
-              title: p.title,
-              desc: descText,
-              isVideo,
-              isPublished,
-              duration: `${p.durationMin} мин`,
-              media: mediaUrl || "/demo-video.mp4",
-            };
-          })
-          .filter((pod) => pod.isPublished);
-
-        setArticles(formattedArticles);
-        setPodcasts(formattedPodcasts);
+        setRawArticles(Array.isArray(arts) ? arts : []);
+        setRawPodcasts(Array.isArray(pods) ? pods : []);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -88,6 +31,77 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
       active = false;
     };
   }, []);
+
+  const articles = React.useMemo(() => {
+    const isRu = currentLang === "RU";
+    return rawArticles
+      .filter((a) => isRu ? !!a.title_ru : !!a.title_en)
+      .map((a) => {
+        const title = isRu ? a.title_ru : a.title_en;
+        const rawDesc = isRu ? a.description_ru : a.description_en;
+        const rawBody = isRu ? a.body_ru : a.body_en;
+
+        let descText = rawDesc || "";
+        let image = null;
+        let isPublished = true;
+        try {
+          if (rawDesc && rawDesc.trim().startsWith("{")) {
+            const parsed = JSON.parse(rawDesc);
+            descText = parsed.description || parsed.text || "";
+            image = parsed.image || null;
+            isPublished = parsed.isPublished !== false;
+          }
+        } catch (e) {
+          // fallback plain text
+        }
+        return {
+          id: a.id,
+          title,
+          desc: descText,
+          image,
+          isPublished,
+          readTime: isRu ? a.readTime : (a.readTime || "").replace("мин", "min"),
+          body: (rawBody || "").split("\n\n").filter(Boolean),
+        };
+      })
+      .filter((art) => art.isPublished);
+  }, [rawArticles, currentLang]);
+
+  const podcasts = React.useMemo(() => {
+    const isRu = currentLang === "RU";
+    return rawPodcasts
+      .filter((p) => isRu ? !!p.title_ru : !!p.title_en)
+      .map((p) => {
+        const title = isRu ? p.title_ru : p.title_en;
+        const rawDesc = isRu ? p.description_ru : p.description_en;
+
+        let descText = rawDesc || "";
+        let isVideo = false;
+        let isPublished = true;
+        let mediaUrl = p.audioKey || "";
+        try {
+          if (rawDesc && rawDesc.trim().startsWith("{")) {
+            const parsed = JSON.parse(rawDesc);
+            descText = parsed.description || parsed.text || "";
+            isVideo = !!parsed.isVideo;
+            isPublished = parsed.isPublished !== false;
+            mediaUrl = parsed.mediaUrl || p.audioKey || "";
+          }
+        } catch (e) {
+          // fallback plain text
+        }
+        return {
+          id: p.id,
+          title,
+          desc: descText,
+          isVideo,
+          isPublished,
+          duration: isRu ? `${p.durationMin} мин` : `${p.durationMin} min`,
+          media: mediaUrl || "/demo-video.mp4",
+        };
+      })
+      .filter((pod) => pod.isPublished);
+  }, [rawPodcasts, currentLang]);
 
   // Что открыто в модальном окне: { type: 'article' | 'podcast', item }
   const [openItem, setOpenItem] = useState(null);
@@ -111,25 +125,25 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Назад</span>
+          <span>{t("Назад")}</span>
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Полезные материалы</h1>
-          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Статьи и подкасты от создателя</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>{t("Полезные материалы")}</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>{t("Статьи и подкасты от создателя")}</p>
         </div>
       </header>
 
       {/* Раздел: Статьи */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <h3 style={{ fontSize: "11px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", textTransform: "uppercase", letterSpacing: ".8px", color: "var(--color-text-secondary)", borderBottom: "1px solid var(--color-border)", paddingBottom: "6px", margin: "16px 0 8px 0" }}>
-          Полезные статьи
+          {t("Полезные статьи")}
         </h3>
 
         {loading && (
-          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)" }}>Загрузка…</p>
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)" }}>{t("Загрузка…")}</p>
         )}
         {!loading && articles.length === 0 && (
-          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>Статей пока нет.</p>
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>{t("Статей пока нет.")}</p>
         )}
 
         {articles.map((item) => (
@@ -140,7 +154,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             style={{ padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", cursor: "pointer" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "11px" }}>
-              <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>СТАТЬЯ</span>
+              <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>{t("СТАТЬЯ")}</span>
               <span style={{ color: "var(--color-text-secondary)", fontWeight: 300 }}>{item.readTime}</span>
             </div>
             <h4 style={{ fontSize: "15px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)", margin: "0 0 6px 0", lineHeight: "1.3" }}>
@@ -156,11 +170,11 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
       {/* Раздел: Подкасты */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
         <h3 style={{ fontSize: "11px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", textTransform: "uppercase", letterSpacing: ".8px", color: "var(--color-text-secondary)", borderBottom: "1px solid var(--color-border)", paddingBottom: "6px", margin: "16px 0 8px 0" }}>
-          Эксклюзивные подкасты
+          {t("Эксклюзивные подкасты")}
         </h3>
 
         {!loading && podcasts.length === 0 && (
-          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>Подкастов пока нет.</p>
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300 }}>{t("Подкастов пока нет.")}</p>
         )}
 
         {podcasts.map((podcast) => (
@@ -183,7 +197,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             </button>
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: "10.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text-secondary)", letterSpacing: ".8px", display: "block", marginBottom: "4px" }}>
-                {podcast.isVideo ? "ВИДЕОРОЛИК" : "ПОДКАСТ"} • {podcast.duration}
+                {podcast.isVideo ? t("ВИДЕОРОЛИК") : t("ПОДКАСТ")} • {podcast.duration}
               </span>
               <h4 style={{ fontSize: "15px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)", margin: 0, lineHeight: "1.3" }}>
                 {podcast.title}
@@ -214,13 +228,13 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
                 <line x1="19" y1="12" x2="5" y2="12" />
                 <polyline points="12 19 5 12 12 5" />
               </svg>
-              <span>Закрыть</span>
+              <span>{t("Закрыть")}</span>
             </button>
 
             {openItem.type === "article" ? (
               <>
                 <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>
-                  СТАТЬЯ • {openItem.item.readTime}
+                  {t("СТАТЬЯ")} • {openItem.item.readTime}
                 </span>
                 <h2 style={{ margin: "8px 0 12px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "20px", color: "var(--color-text)", lineHeight: "1.25" }}>
                   {openItem.item.title}
@@ -241,7 +255,7 @@ export default function CreatorMaterialsScreen({ onNavigate }) {
             ) : (
               <>
                 <span style={{ fontWeight: "700", fontFamily: "'Manrope', sans-serif", fontSize: "10.5px", letterSpacing: ".8px", color: "#007F63" }}>
-                  {openItem.item.isVideo ? "ВИДЕОРОЛИК" : "ПОДКАСТ"} • {openItem.item.duration}
+                  {openItem.item.isVideo ? t("ВИДЕОРОЛИК") : t("ПОДКАСТ")} • {openItem.item.duration}
                 </span>
                 <h2 style={{ margin: "8px 0 12px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "20px", color: "var(--color-text)", lineHeight: "1.25" }}>
                   {openItem.item.title}

@@ -20,6 +20,8 @@ import {
   achievements,
 } from "./data/mockData";
 import { useAuth } from "./context/AuthContext";
+import { LanguageProvider, useLanguage } from "./context/LanguageContext";
+import { api } from "./api/client";
 import "./index.css";
 
 /**
@@ -90,6 +92,27 @@ export default function App() {
 
   const [history, setHistory] = useState(initialHistory);
   const [settings, setSettings] = useState(initialSettings);
+
+  // Sync settings with backend on login
+  useEffect(() => {
+    if (isLoggedIn) {
+      api.get("/me/settings")
+        .then((data) => {
+          if (data) setSettings(data);
+        })
+        .catch((err) => console.error("Failed to fetch settings from backend:", err));
+    }
+  }, [isLoggedIn]);
+
+  const handleSettingsChange = (newSettingsOrFn) => {
+    setSettings((prev) => {
+      const updated = typeof newSettingsOrFn === "function" ? newSettingsOrFn(prev) : newSettingsOrFn;
+      if (isLoggedIn) {
+        api.patch("/me/settings", updated).catch(err => console.error("Failed to save settings:", err));
+      }
+      return updated;
+    });
+  };
 
   // --- Корзина интернет-магазина ---
   const [cart, setCart] = useState([]);
@@ -259,7 +282,7 @@ export default function App() {
             onLogout={handleLogout}
             history={history}
             settings={settings}
-            onSettingsChange={setSettings}
+            onSettingsChange={handleSettingsChange}
             achievements={achievements}
           />
         );
@@ -303,6 +326,75 @@ export default function App() {
   ].includes(currentScreen);
 
   return (
+    <LanguageProvider
+      settingsLang={settings?.language}
+      onLangChange={(lang) => {
+        handleSettingsChange((prev) => ({ ...prev, language: lang }));
+      }}
+    >
+      <AppContent
+        currentScreen={currentScreen}
+        setCurrentScreen={setCurrentScreen}
+        user={user}
+        setUser={setUser}
+        settings={settings}
+        setSettings={setSettings}
+        history={history}
+        setHistory={setHistory}
+        cart={cart}
+        setCart={setCart}
+        shopCategory={shopCategory}
+        setShopCategory={setShopCategory}
+        mainContentRef={mainContentRef}
+        authUser={authUser}
+        isLoggedIn={isLoggedIn}
+        handleWorkoutComplete={handleWorkoutComplete}
+        handleUserSave={handleUserSave}
+        handleLogout={handleLogout}
+        handleAddToCart={handleAddToCart}
+        handleUpdateCartQuantity={handleUpdateCartQuantity}
+        handleRemoveFromCart={handleRemoveFromCart}
+        handleClearCart={handleClearCart}
+        openShopCategory={openShopCategory}
+        renderScreen={renderScreen}
+        isOnboardingScreen={isOnboardingScreen}
+        showBottomNav={showBottomNav}
+      />
+    </LanguageProvider>
+  );
+}
+
+function AppContent({
+  currentScreen,
+  setCurrentScreen,
+  user,
+  setUser,
+  settings,
+  setSettings,
+  history,
+  setHistory,
+  cart,
+  setCart,
+  shopCategory,
+  setShopCategory,
+  mainContentRef,
+  authUser,
+  isLoggedIn,
+  handleWorkoutComplete,
+  handleUserSave,
+  handleLogout,
+  handleAddToCart,
+  handleUpdateCartQuantity,
+  handleRemoveFromCart,
+  handleClearCart,
+  openShopCategory,
+  renderScreen,
+  isOnboardingScreen,
+  showBottomNav,
+}) {
+  const { currentLang, setLanguage, t } = useLanguage();
+
+  return (
     <div className="app-wrapper">
       <div className="app-shell">
         {/* Фиксированная верхняя шапка (общая для всех экранов) */}
@@ -312,7 +404,7 @@ export default function App() {
               <>
                 <img
                   src="/logo_mozaika.svg"
-                  alt="Логотип Мозаика Здоровья"
+                  alt={t("Логотип Мозаика Здоровья")}
                   style={{
                     width: "44px",
                     height: "44px",
@@ -322,8 +414,8 @@ export default function App() {
                   }}
                 />
                 <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15", minWidth: 0 }}>
-                  <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "15px", color: "#1d2321", letterSpacing: "-.3px", whiteSpace: "nowrap" }}>Мозаика Здоровья</span>
-                  <span style={{ fontSize: "10px", color: "#6E6E6E", marginTop: "2px", whiteSpace: "nowrap" }}>Методика вашего баланса</span>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "15px", color: "#1d2321", letterSpacing: "-.3px", whiteSpace: "nowrap" }}>{t("Мозаика Здоровья")}</span>
+                  <span style={{ fontSize: "10px", color: "#6E6E6E", marginTop: "2px", whiteSpace: "nowrap" }}>{t("Методика вашего баланса")}</span>
                 </div>
               </>
             )}
@@ -333,21 +425,17 @@ export default function App() {
             <div className="lang-tabs" id="lang-tabs">
               <button
                 className={`lang-tabs__btn ${
-                  settings?.language === "RU" ? "lang-tabs__btn--active" : ""
+                  currentLang === "RU" ? "lang-tabs__btn--active" : ""
                 }`}
-                onClick={() =>
-                  setSettings((prev) => ({ ...prev, language: "RU" }))
-                }
+                onClick={() => setLanguage("RU")}
               >
                 RU
               </button>
               <button
                 className={`lang-tabs__btn ${
-                  settings?.language === "EN" ? "lang-tabs__btn--active" : ""
+                  currentLang === "EN" ? "lang-tabs__btn--active" : ""
                 }`}
-                onClick={() =>
-                  setSettings((prev) => ({ ...prev, language: "EN" }))
-                }
+                onClick={() => setLanguage("EN")}
               >
                 EN
               </button>
@@ -356,8 +444,8 @@ export default function App() {
             {/* Иконка колокольчика (Уведомления) */}
             <button
               className="notification-bell-btn"
-              onClick={() => alert("У вас нет новых уведомлений")}
-              aria-label="Уведомления"
+              onClick={() => alert(t("У вас нет новых уведомлений"))}
+              aria-label={t("Уведомления")}
             >
               <svg
                 width="19"

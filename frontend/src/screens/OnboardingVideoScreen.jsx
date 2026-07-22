@@ -1,24 +1,25 @@
 import React from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * OnboardingVideoScreen — Первый экран онбординга (видео-презентация).
  */
 export default function OnboardingVideoScreen({ onNavigate }) {
+  const { t } = useLanguage();
   return (
     <section className="screen screen--onboarding" id="screen-onboarding-video">
       <header className="screen__header text-center" style={{ margin: "12px 0 8px" }}>
         <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
-          Мозаика Здоровья
+          {t("Мозаика Здоровья")}
         </h1>
         <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
-          Знакомство с методикой центра
+          {t("Знакомство с методикой центра")}
         </p>
       </header>
 
       <div className="card text-center" style={{ background: "#fff", borderRadius: "24px", padding: "20px 24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
         <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "13.5px", lineHeight: "1.5", color: "#4a4a4a", fontWeight: 300, marginBottom: "14px" }}>
-          Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и
-          восстановления баланса тела.
+          {t("Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и восстановления баланса тела.")}
         </p>
 
         {/* Превью-изображение методики */}
@@ -32,7 +33,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
         }}>
           <img
             src="/banner_home.jpg"
-            alt="Мозаика Здоровья"
+            alt={t("Мозаика Здоровья")}
             style={{ width: "100%", height: "165px", objectFit: "cover", display: "block" }}
           />
         </div>
@@ -42,7 +43,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
           className="btn-save"
           onClick={() => onNavigate("onboarding-consent")}
         >
-          Далее
+          {t("Далее")}
         </button>
         <button
           type="button"
@@ -65,7 +66,7 @@ export default function OnboardingVideoScreen({ onNavigate }) {
             transition: "background-color 0.15s ease"
           }}
         >
-          У меня уже есть аккаунт — войти
+          {t("У меня уже есть аккаунт — войти")}
         </button>
       </div>
     </section>

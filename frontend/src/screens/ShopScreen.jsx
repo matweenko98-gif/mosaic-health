@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * ShopScreen — Экран «Магазин». Товары загружаются с сервера (управляются в админке).
  */
 export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCategory = "Все", onConsumeCategory }) {
-  const [products, setProducts] = useState([]);
+  const { t, currentLang } = useLanguage();
+  const [rawProducts, setRawProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
 
   useEffect(() => {
@@ -14,39 +16,10 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
       .get("/products")
       .then((list) => {
         if (!active) return;
-        // Приводим к формату экрана: description → desc, imageKey → image
-        const formatted = (Array.isArray(list) ? list : []).map((p) => {
-          let descText = p.description || "";
-          let isPublished = true;
-          let stock = null;
-          let unlimited = true;
-          try {
-            if (p.description && p.description.trim().startsWith("{")) {
-              const parsed = JSON.parse(p.description);
-              descText = parsed.text ?? parsed.description ?? "";
-              isPublished = parsed.isPublished !== false;
-              stock = parsed.stock ?? null;
-              unlimited = parsed.unlimited !== false;
-            }
-          } catch (e) {
-            // legacy plain text
-          }
-          return {
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            desc: descText,
-            category: p.category,
-            image: p.imageKey || null,
-            isPublished,
-            stock,
-            unlimited,
-          };
-        });
-        setProducts(formatted.filter((prod) => prod.isPublished));
+        setRawProducts(Array.isArray(list) ? list : []);
       })
       .catch(() => {
-        if (active) setProducts([]);
+        if (active) setRawProducts([]);
       })
       .finally(() => {
         if (active) setProductsLoading(false);
@@ -55,6 +28,43 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
       active = false;
     };
   }, []);
+
+  const products = React.useMemo(() => {
+    const isRu = currentLang === "RU";
+    return rawProducts
+      .filter((p) => isRu ? !!p.name_ru : !!p.name_en)
+      .map((p) => {
+        const name = isRu ? p.name_ru : p.name_en;
+        const rawDesc = isRu ? p.description_ru : p.description_en;
+        let descText = rawDesc || "";
+        let isPublished = true;
+        let stock = null;
+        let unlimited = true;
+        try {
+          if (rawDesc && rawDesc.trim().startsWith("{")) {
+            const parsed = JSON.parse(rawDesc);
+            descText = parsed.text ?? parsed.description ?? "";
+            isPublished = parsed.isPublished !== false;
+            stock = parsed.stock ?? null;
+            unlimited = parsed.unlimited !== false;
+          }
+        } catch (e) {
+          // fallback plain text
+        }
+        return {
+          id: p.id,
+          name,
+          price: p.price,
+          desc: descText,
+          category: p.category,
+          image: p.imageKey || null,
+          isPublished,
+          stock,
+          unlimited,
+        };
+      })
+      .filter((prod) => prod.isPublished);
+  }, [rawProducts, currentLang]);
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "Все");
   const [shopSearch, setShopSearch] = useState("");
@@ -86,7 +96,10 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
 
   function handleAddProductToCart(prod) {
     onAddToCart(prod);
-    setToast({ visible: true, message: `Товар "${prod.name}" добавлен в корзину` });
+    setToast({
+      visible: true,
+      message: t('Товар "{name}" добавлен в корзину').replace("{name}", prod.name)
+    });
   }
 
   return (
@@ -139,7 +152,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
-            <span>Назад</span>
+            <span>{t("Назад")}</span>
           </button>
 
           {/* Ссылка в корзину */}
@@ -164,14 +177,14 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
               gap: "6px"
             }}
           >
-            <span>🛒 Корзина</span>
+            <span>🛒 {t("Корзина")}</span>
             {cartCount > 0 && <span className="cart-badge-btn__count">{cartCount}</span>}
           </button>
         </div>
 
         <div className="header-title-container">
-          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Магазин</h1>
-          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Инструменты и добавки</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>{t("Магазин")}</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>{t("Инструменты и добавки")}</p>
         </div>
       </header>
 
@@ -257,7 +270,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
                 }}
               >
                 {getCategoryIcon(catId)}
-                <span>{catId}</span>
+                <span>{t(catId)}</span>
               </button>
             );
           });
@@ -274,7 +287,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
         </span>
         <input
           type="text"
-          placeholder="Поиск товаров..."
+          placeholder={t("Поиск товаров...")}
           value={shopSearch}
           onChange={(e) => setShopSearch(e.target.value)}
           style={{
@@ -321,11 +334,11 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
       <div className="products-list grid grid-cols-2 gap-3">
         {productsLoading ? (
           <div style={{ gridColumn: "span 2", textAlign: "center", padding: "40px 20px", color: "var(--color-text-secondary)", fontSize: "14px" }}>
-            Загрузка товаров…
+            {t("Загрузка товаров…")}
           </div>
         ) : filteredProducts.length === 0 ? (
           <div style={{ gridColumn: "span 2", textAlign: "center", padding: "40px 20px", color: "var(--color-text-secondary)", fontSize: "14px", fontStyle: "italic" }}>
-            Ничего не найдено
+            {t("Ничего не найдено")}
           </div>
         ) : (
           filteredProducts.map((prod) => (
@@ -407,7 +420,7 @@ export default function ShopScreen({ cart, onAddToCart, onNavigate, initialCateg
                 }}
                 onClick={() => handleAddProductToCart(prod)}
               >
-                В корзину
+                {t("В корзину")}
               </button>
             </div>
           </div>

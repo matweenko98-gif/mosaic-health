@@ -4,6 +4,7 @@ import { methodDescription } from "../data/mockData";
 import WorkoutModal from "../components/WorkoutModal";
 import { ORIGINAL_EXERCISES_MAP } from "../data/originalExercises";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * HomeScreen — Главный экран «Мозаика Здоровья».
@@ -16,38 +17,49 @@ import { useAuth } from "../context/AuthContext";
  * - Материалы от создателя: контентная Bento-карточка
  * - Магазин и Наш Telegram: mini-карточки 1×1 (половина ширины)
  */
-function formatDuration(val) {
-  if (!val) return "0 мин";
+function formatDuration(val, isRu) {
+  if (!val) return isRu ? "0 мин" : "0 min";
   const s = String(val).trim();
-  if (s.endsWith("мин") || s.endsWith("минут") || s.endsWith("м")) return s;
-  return `${s} мин`;
+  if (s.endsWith("мин") || s.endsWith("минут") || s.endsWith("м")) {
+    return isRu ? s : s.replace(/мин|минут|м/g, "min");
+  }
+  if (s.endsWith("min") || s.endsWith("minutes") || s.endsWith("m")) {
+    return !isRu ? s : s.replace(/min|minutes|m/g, "мин");
+  }
+  return `${s} ${isRu ? "мин" : "min"}`;
 }
 
-function formatExercise(ex) {
-  let descText = ex.description || "";
+function formatExercise(ex, currentLang = "RU") {
+  const isRu = currentLang === "RU";
+  const title = isRu ? ex.title_ru : ex.title_en;
+  const rawDescription = isRu ? ex.description_ru : ex.description_en;
+
+  let descText = rawDescription || "";
   let isPublished = true;
   let duration = ex.durationMin ? `${ex.durationMin} мин` : "0 мин";
-  let level = "Базовый";
-  let equipment = "Без инвентаря";
-  let exerciseTime = "10 мин";
+  if (!isRu) duration = ex.durationMin ? `${ex.durationMin} min` : "0 min";
+  let level = isRu ? "Базовый" : "Basic";
+  let equipment = isRu ? "Без инвентаря" : "None";
+  let exerciseTime = isRu ? "10 мин" : "10 min";
   let totalTime = "";
   let coverUrl = null;
 
   const original = ORIGINAL_EXERCISES_MAP[ex.id];
   let category = ex.category;
-  let label = ex.title;
+  let label = title || ex.title_ru || "";
 
   if (original) {
     category = original.category;
-    label = original.label;
+    label = isRu ? (original.label || title) : (original.label_en || title);
     duration = original.duration || duration;
     level = original.level || level;
     equipment = original.equipment || equipment;
   }
 
+  let videoKey = null;
   try {
-    if (ex.description && ex.description.trim().startsWith("{")) {
-      const parsed = JSON.parse(ex.description);
+    if (rawDescription && rawDescription.trim().startsWith("{")) {
+      const parsed = JSON.parse(rawDescription);
       descText = parsed.instructions ?? parsed.description ?? "";
       isPublished = parsed.isPublished !== false;
       duration = parsed.duration ?? duration;
@@ -55,25 +67,37 @@ function formatExercise(ex) {
       equipment = parsed.equipment ?? equipment;
       exerciseTime = parsed.duration ?? duration;
       coverUrl = parsed.coverUrl ?? null;
+      videoKey = parsed.videoKey || null;
       if (parsed.category) {
         category = parsed.category;
       }
     }
   } catch (e) {}
+
+  if (!videoKey) {
+    const otherDescription = isRu ? ex.description_en : ex.description_ru;
+    if (otherDescription && otherDescription.trim().startsWith("{")) {
+      try {
+        const parsedOther = JSON.parse(otherDescription);
+        videoKey = parsedOther.videoKey || null;
+      } catch (e) {}
+    }
+  }
+
   return {
     ...ex,
-    title: ex.title,
-    label,
+    title: title || ex.title_ru || ex.title_en || "",
+    label: label || title || ex.title_ru || ex.title_en || "",
     description: descText,
     category,
-    duration: formatDuration(duration),
+    duration: formatDuration(duration, isRu),
     level,
     equipment,
-    exerciseTime: formatDuration(duration),
+    exerciseTime: formatDuration(duration, isRu),
     totalTime: "",
     coverUrl,
     isPublished,
-    video: ex.videoKey || (original ? original.video : null),
+    video: videoKey || ex.videoKey || (original ? original.video : null),
   };
 }
 
@@ -135,6 +159,7 @@ function mapCyrillicToEnglish(text) {
 export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const { user } = useAuth();
   const userId = user?.id || "guest";
+  const { currentLang, t } = useLanguage();
 
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
@@ -143,8 +168,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [selectedSelectorTab, setSelectedSelectorTab] = useState("Все");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
-  const [catalogWorkouts, setCatalogWorkouts] = useState([]);
-  const [homeworkWorkouts, setHomeworkWorkouts] = useState([]);
+  const [rawCatalog, setRawCatalog] = useState([]);
+  const [rawHomework, setRawHomework] = useState([]);
   const [workoutsLoading, setWorkoutsLoading] = useState(true);
 
   useEffect(() => {
@@ -155,8 +180,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     ])
       .then(([catalog, homework]) => {
         if (!active) return;
-        setCatalogWorkouts((catalog || []).map(formatExercise));
-        setHomeworkWorkouts((homework || []).map(formatExercise));
+        setRawCatalog(catalog || []);
+        setRawHomework(homework || []);
       })
       .finally(() => {
         if (active) setWorkoutsLoading(false);
@@ -165,6 +190,20 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       active = false;
     };
   }, []);
+
+  const catalogWorkouts = React.useMemo(() => {
+    const isRu = currentLang === "RU";
+    return rawCatalog
+      .filter((ex) => isRu ? !!ex.title_ru : !!ex.title_en)
+      .map((ex) => formatExercise(ex, currentLang));
+  }, [rawCatalog, currentLang]);
+
+  const homeworkWorkouts = React.useMemo(() => {
+    const isRu = currentLang === "RU";
+    return rawHomework
+      .filter((ex) => isRu ? !!ex.title_ru : !!ex.title_en)
+      .map((ex) => formatExercise(ex, currentLang));
+  }, [rawHomework, currentLang]);
 
   // Состояние активного таба для домашних тренировок
   const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
@@ -473,7 +512,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
           {/* Main banner image */}
           <img
             src="/banner_home.jpg"
-            alt="Верните телу баланс и движение"
+            alt={t("Верните телу баланс и движение")}
             style={{
               position: "absolute",
               inset: 0,
@@ -486,9 +525,9 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(150deg, rgba(0,148,184,.42), rgba(27,171,124,.30) 40%, rgba(235,96,116,.0) 70%), linear-gradient(to top, rgba(0,46,36,.86) 2%, rgba(0,46,36,.30) 38%, rgba(0,46,36,0) 62%)" }}></div>
           {/* content */}
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyParagraph: "flex-end", justifySelf: "stretch", justifyContent: "flex-end", gap: "13px", padding: "22px" }}>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "34px", lineHeight: 1.1, color: "#fff", letterSpacing: "-.6px", textShadow: "0 2px 14px rgba(0,30,22,.5)", maxWidth: "320px" }}>Верните телу<br />баланс и движение</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "34px", lineHeight: 1.1, color: "#fff", letterSpacing: "-.6px", textShadow: "0 2px 14px rgba(0,30,22,.5)", maxWidth: "320px" }}>{t("Верните телу")}<br />{t("баланс и движение")}</span>
             <button onClick={() => setIsSelectorOpen(true)} style={{ display: "flex", border: "none", cursor: "pointer", alignItems: "center", gap: "8px", alignSelf: "flex-start", backgroundColor: "#fff", padding: "11px 18px", borderRadius: "999px", boxShadow: "0 8px 20px -6px rgba(0,30,22,.5)" }}>
-              <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13px", color: "#007F63" }}>Начать тренировку</span>
+              <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13px", color: "#007F63" }}>{t("Начать тренировку")}</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
             </button>
           </div>
@@ -498,19 +537,19 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         <section className="bento-grid__item bento-grid__item--full" style={{ minHeight: "240px", display: "flex", flexDirection: "column", justifyContent: "center", background: "#fff", borderRadius: "20px", padding: "24px 20px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#1BAB7C" }}></span>
-            <h2 style={{ margin: 0, fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "20px", color: "#1d2321" }}>О методике</h2>
+            <h2 style={{ margin: 0, fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "20px", color: "#1d2321" }}>{t("О методике")}</h2>
           </div>
-          <p style={{ margin: "14px 0 0", fontSize: "15px", lineHeight: 1.68, color: "#4a4a4a", fontWeight: 300 }}>{methodDescription}</p>
+          <p style={{ margin: "14px 0 0", fontSize: "15px", lineHeight: 1.68, color: "#4a4a4a", fontWeight: 300 }}>{t(methodDescription)}</p>
           <div style={{ display: "flex", gap: "8px", marginTop: "18px", flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#007F63", background: "rgba(0,127,99,.1)", padding: "6px 12px", borderRadius: "999px" }}>Кинезиология</span>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#0094B8", background: "rgba(0,148,184,.1)", padding: "6px 12px", borderRadius: "999px" }}>Кинезиотерапия</span>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#EB6074", background: "rgba(235,96,116,.1)", padding: "6px 12px", borderRadius: "999px" }}>Долголетие</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#007F63", background: "rgba(0,127,99,.1)", padding: "6px 12px", borderRadius: "999px" }}>{t("Кинезиология")}</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#0094B8", background: "rgba(0,148,184,.1)", padding: "6px 12px", borderRadius: "999px" }}>{t("Кинезиотерапия")}</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "11.5px", color: "#EB6074", background: "rgba(235,96,116,.1)", padding: "6px 12px", borderRadius: "999px" }}>{t("Долголетие")}</span>
           </div>
         </section>
 
         {/* 3. Тренировки — Главный Hero-баннер */}
         <section className="bento-grid__item bento-grid__item--full">
-          <h2 style={{ margin: "0 2px 12px", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "22px", color: "#1d2321", letterSpacing: "-.4px" }}>Тренировки</h2>
+          <h2 style={{ margin: "0 2px 12px", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "22px", color: "#1d2321", letterSpacing: "-.4px" }}>{t("Тренировки")}</h2>
           <div
             onClick={() => setIsSelectorOpen(true)}
             style={{ position: "relative", height: "182px", borderRadius: "22px", overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", cursor: "pointer", justifyContent: "center", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}
@@ -518,13 +557,13 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             <div style={{ width: "54px", height: "54px", borderRadius: "16px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>
             </div>
-            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "12.5px", color: "#6E6E6E", letterSpacing: ".3px" }}>Процесс тренировки</span>
+            <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "12.5px", color: "#6E6E6E", letterSpacing: ".3px" }}>{t("Процесс тренировки")}</span>
           </div>
           <button
             onClick={() => setIsSelectorOpen(true)}
             style={{ marginTop: "13px", width: "100%", border: "none", cursor: "pointer", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", padding: "15px", borderRadius: "16px", boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)", display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}
           >
-            Выбрать тренировку
+            {t("Выбрать тренировку")}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
         </section>
@@ -554,10 +593,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               )}
             </div>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "10px", letterSpacing: ".8px", color: "#007F63", background: "rgba(0,127,99,.1)", padding: "5px 11px", borderRadius: "999px" }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#007F63" }}></span>ПЕРСОНАЛЬНАЯ ПРОГРАММА
+              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#007F63" }}></span>{t("ПЕРСОНАЛЬНАЯ ПРОГРАММА")}
             </span>
-            <h3 style={{ margin: "13px 0 0", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "19px", color: "#1d2321", letterSpacing: "-.3px" }}>Домашние задания</h3>
-            <p style={{ margin: "9px 0 0", fontSize: "13px", lineHeight: "1.6", color: "#6E6E6E", fontWeight: 300, maxWidth: "255px" }}>Для тех, кто проходит реабилитацию в центре.</p>
+            <h3 style={{ margin: "13px 0 0", fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "19px", color: "#1d2321", letterSpacing: "-.3px" }}>{t("Домашние задания")}</h3>
+            <p style={{ margin: "9px 0 0", fontSize: "13px", lineHeight: "1.6", color: "#6E6E6E", fontWeight: 300, maxWidth: "255px" }}>{t("Для тех, кто проходит реабилитацию в центре.")}</p>
             <div
               style={{ marginTop: "16px", borderTop: "1px solid rgba(0,127,99,.12)", padding: "14px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}
             >
@@ -565,12 +604,12 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 {isHomeworkUnlocked ? (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
-                    Открыть программу
+                    {t("Открыть программу")}
                   </>
                 ) : (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Открывается по коду
+                    {t("Открывается по коду")}
                   </>
                 )}
               </span>
@@ -586,12 +625,12 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             onClick={() => onNavigate("health-helpers")}
             style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
-            <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,148,184,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,148,124,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>Масла и Омега-3</div>
-              <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>Нутрицевтики для здоровья тела</div>
+              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>{t("Масла и Омега-3")}</div>
+              <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>{t("Нутрицевтики для здоровья тела")}</div>
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
@@ -608,8 +647,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>Статьи и подкасты</div>
-              <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>Знания о теле и движении</div>
+              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>{t("Статьи и подкасты")}</div>
+              <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>{t("Знания о теле и движении")}</div>
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
@@ -626,8 +665,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#EB6074" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
             </div>
             <div style={{ textAlign: "left", width: "100%" }}>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#1d2321" }}>Магазин</div>
-              <div style={{ fontSize: "11px", color: "#6E6E6E", marginTop: "1px", fontWeight: 300 }}>Купить гирю</div>
+              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#1d2321" }}>{t("Магазин")}</div>
+              <div style={{ fontSize: "11px", color: "#6E6E6E", marginTop: "1px", fontWeight: 300 }}>{t("Купить гирю")}</div>
             </div>
           </button>
 
@@ -640,8 +679,8 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
             </div>
             <div style={{ textAlign: "left", width: "100%" }}>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#1d2321" }}>Наш Telegram</div>
-              <div style={{ fontSize: "11px", color: "#6E6E6E", marginTop: "1px", fontWeight: 300 }}>Сообщество</div>
+              <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#1d2321" }}>{t("Наш Telegram")}</div>
+              <div style={{ fontSize: "11px", color: "#6E6E6E", marginTop: "1px", fontWeight: 300 }}>{t("Сообщество")}</div>
             </div>
           </button>
         </section>
@@ -682,10 +721,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   <line x1="19" y1="12" x2="5" y2="12" />
                   <polyline points="12 19 5 12 12 5" />
                 </svg>
-                <span>Назад</span>
+                <span>{t("Назад")}</span>
               </button>
               <h2 className="modal__title" style={{ margin: 0, fontSize: "1.4rem", fontWeight: "800", color: "var(--color-text)" }}>
-                Выбор тренировки
+                {t("Выбор тренировки")}
               </h2>
             </div>
 
@@ -700,7 +739,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </span>
                 <input
                   type="text"
-                  placeholder="Поиск тренировки..."
+                  placeholder={t("Поиск тренировки...")}
                   value={selectorSearch}
                   onChange={(e) => setSelectorSearch(e.target.value)}
                   style={{
@@ -758,7 +797,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               }}
               className="no-scrollbar"
             >
-              {[{ id: "Все", label: "Все" }, ...selectorCategories.map(cat => ({ id: cat, label: cat }))].map((tab) => {
+              {[{ id: "Все", label: t("Все") }, ...selectorCategories.map(cat => ({ id: cat, label: t(cat) }))].map((tab) => {
                 const isActive = selectedSelectorTab === tab.id;
                 return (
                   <button
@@ -793,7 +832,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             </div>
 
             {workoutsLoading ? (
-              <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", textAlign: "center", padding: "20px" }}>Загрузка тренировок…</p>
+              <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", textAlign: "center", padding: "20px" }}>{t("Загрузка тренировок…")}</p>
             ) : (
               (() => {
                 const activeCategories = selectedSelectorTab === "Все"
@@ -801,7 +840,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   : [selectedSelectorTab].filter(c => selectorCategories.includes(c));
                 
                 if (filteredCatalog.length === 0) {
-                  return <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", fontStyle: "italic", textAlign: "center", padding: "20px" }}>Ничего не найдено</p>;
+                  return <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", fontStyle: "italic", textAlign: "center", padding: "20px" }}>{t("Ничего не найдено")}</p>;
                 }
 
                 return activeCategories.map((cat, catIdx) => {
@@ -810,7 +849,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   return (
                     <div key={cat} className="activity-section" style={{ marginTop: catIdx > 0 ? "14px" : "0px", padding: "0 20px" }}>
                       <h3 className="activity-section__title" style={{ fontFamily: "'Manrope', sans-serif", fontSize: "14.5px", fontWeight: "800", color: "var(--color-text)", marginBottom: "8px" }}>
-                        {cat === "Дыхание" ? "Гиревое дыхание" : cat === "Шаг" ? "Методика шага" : cat}
+                        {cat === "Дыхание" ? t("Гиревое дыхание") : cat === "Шаг" ? t("Методика шага") : t(cat)}
                       </h3>
                       <div className="activity-section__grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                         {catItems.map((item) => (
@@ -940,10 +979,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                   <span style={{ fontSize: "0.9rem", fontWeight: "800", color: "#007F63" }}>
-                    Домашние тренировки
+                    {t("Домашние тренировки")}
                   </span>
                   <span style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>
-                    Индивидуальная программа реабилитации
+                    {t("Индивидуальная программа реабилитации")}
                   </span>
                 </div>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
@@ -965,10 +1004,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
         >
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "380px" }}>
             <h2 style={{ margin: "0 0 6px 0", fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "18px", color: "var(--color-text)" }}>
-              Код доступа
+              {t("Код доступа")}
             </h2>
             <p style={{ margin: "0 0 14px 0", fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 300, lineHeight: 1.5 }}>
-              Введите код, который вам дал врач, чтобы открыть индивидуальные тренировки.
+              {t("Введите код, который вам дал врач, чтобы открыть индивидуальные тренировки.")}
             </p>
 
             {codeError && (
@@ -979,7 +1018,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
             <input
               type="text"
-              placeholder="Например: ABCDE"
+              placeholder={t("Например: ABCDE")}
               value={codeInput}
               onChange={(e) => {
                 const mapped = mapCyrillicToEnglish(e.target.value);
@@ -997,14 +1036,14 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 onClick={() => setIsCodeModalOpen(false)}
                 style={{ flex: 1, padding: "12px", borderRadius: "14px", border: "1.5px solid #a6a6a1", background: "#fff", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: "14px", cursor: "pointer" }}
               >
-                Отмена
+                {t("Отмена")}
               </button>
               <button
                 onClick={handleActivateCode}
                 disabled={codeSubmitting}
                 style={{ flex: 1.4, padding: "12px", borderRadius: "14px", border: "none", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: "14px", cursor: "pointer", opacity: codeSubmitting ? 0.7 : 1 }}
               >
-                {codeSubmitting ? "Проверка…" : "Активировать"}
+                {codeSubmitting ? t("Проверка…") : t("Активировать")}
               </button>
             </div>
           </div>
@@ -1060,10 +1099,10 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   <line x1="19" y1="12" x2="5" y2="12" />
                   <polyline points="12 19 5 12 12 5" />
                 </svg>
-                <span>Назад</span>
+                <span>{t("Назад")}</span>
               </button>
               <h2 className="modal__title" style={{ margin: 0, fontSize: "1.4rem", fontWeight: "800", color: "var(--color-text)" }}>
-                {customPlaylist.length > 0 && !isEditingComplex ? "Мой комплекс" : "Домашнее задание"}
+                {customPlaylist.length > 0 && !isEditingComplex ? t("Мой комплекс") : t("Домашнее задание")}
               </h2>
             </div>
 
@@ -1084,22 +1123,22 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   }}
                 >
                   <div style={{ fontSize: "0.82rem", color: "var(--color-text-secondary)", lineHeight: "1.4" }}>
-                    Сохраненная программа упражнений для ваших ежедневных занятий:
+                    {t("Сохраненная программа упражнений для ваших ежедневных занятий:")}
                   </div>
 
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", margin: "4px 0 8px 0" }}>
                     <span style={{ fontSize: "0.72rem", background: "rgba(27, 171, 124, 0.08)", color: "var(--color-active)", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
-                      Всего упражнений: {customPlaylist.length}
+                      {t("Всего упражнений:")} {customPlaylist.length}
                     </span>
                     <span style={{ fontSize: "0.72rem", background: "rgba(0, 148, 184, 0.08)", color: "#0094B8", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
-                      Общее время: {
+                      {t("Общее время:")} {
                         customPlaylist.reduce((sum, id) => {
                           const item = homeworkWorkouts.find(ex => ex.id === id);
                           if (!item) return sum;
                           const minutes = parseInt(item.duration, 10);
                           return sum + (isNaN(minutes) ? 0 : minutes);
                         }, 0)
-                      } мин
+                      } {t("мин")}
                     </span>
                   </div>
 
@@ -1118,11 +1157,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--color-active)" }}>
-                            Незавершённая тренировка
+                            {t("Незавершённая тренировка")}
                           </span>
                         </div>
                         <span style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", fontWeight: "600" }}>
-                          {savedHomeworkIndex} из {savedHomeworkQueue.length}
+                          {savedHomeworkIndex} {t("из")} {savedHomeworkQueue.length}
                         </span>
                       </div>
 
@@ -1189,7 +1228,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                           }} />
                         </div>
                         <span style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)" }}>
-                          Выполнено {Math.round((savedHomeworkIndex / savedHomeworkQueue.length) * 100)}%
+                          {t("Выполнено")} {Math.round((savedHomeworkIndex / savedHomeworkQueue.length) * 100)}%
                         </span>
                       </div>
                     </div>
@@ -1247,7 +1286,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                   color: "var(--color-text-secondary)",
                                   opacity: 0.6
                                 }}
-                                title="Перетащить упражнение"
+                                title={t("Перетащить упражнение")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <circle cx="9" cy="5" r="1.5" />
@@ -1287,7 +1326,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                   backgroundColor: idx === 0 ? "transparent" : "rgba(0,0,0,0.03)",
                                   transition: "all 0.2s ease"
                                 }}
-                                title="Переместить вверх"
+                                title={t("Вверх")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="18 15 12 9 6 15"></polyline>
@@ -1309,7 +1348,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                   backgroundColor: idx === customPlaylist.length - 1 ? "transparent" : "rgba(0,0,0,0.03)",
                                   transition: "all 0.2s ease"
                                 }}
-                                title="Переместить вниз"
+                                title={t("Вниз")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="6 9 12 15 18 9"></polyline>
@@ -1387,11 +1426,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                               </span>
                               <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.72rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "4px 8px", borderRadius: "8px", fontWeight: "600" }}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                                {item.level}
+                                {t(item.level)}
                               </span>
                               <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "0.72rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "4px 8px", borderRadius: "8px", fontWeight: "600" }}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
-                                {item.equipment}
+                                {t(item.equipment)}
                               </span>
                             </div>
                           </div>
@@ -1440,7 +1479,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                      Продолжить ({savedHomeworkIndex} из {savedHomeworkQueue.length})
+                      {t("▶ Продолжить")} ({savedHomeworkIndex} {t("из")} {savedHomeworkQueue.length})
                     </button>
                   ) : (
                     <button
@@ -1471,7 +1510,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                      Начать комплекс ({customPlaylist.length})
+                      {t("Начать тренировку")} ({customPlaylist.length})
                     </button>
                   )}
 
@@ -1496,7 +1535,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-                      Редактировать
+                      {t("Редактировать")}
                     </button>
                     <button
                       onClick={() => setResetConfirmOpen(true)}
@@ -1517,7 +1556,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
-                      Сбросить
+                      {t("Сбросить")}
                     </button>
                   </div>
                 </div>
@@ -1536,7 +1575,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     </span>
                     <input
                       type="text"
-                      placeholder="Поиск упражнения..."
+                      placeholder={t("Поиск тренировки...")}
                       value={homeworkSearch}
                       onChange={(e) => setHomeworkSearch(e.target.value)}
                       style={{
@@ -1596,7 +1635,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 >
                   {[
                     {
-                      id: "Все", label: "Все", icon: (
+                      id: "Все", label: t("Все"), icon: (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7" />
                           <rect x="14" y="3" width="7" height="7" />
@@ -1606,14 +1645,14 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       )
                     },
                     {
-                      id: "Дыхание", label: "Дыхание", icon: (
+                      id: "Дыхание", label: t("Дыхание"), icon: (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
                         </svg>
                       )
                     },
                     {
-                      id: "Упражнение", label: "Упражнения", icon: (
+                      id: "Упражнение", label: t("Упражнения"), icon: (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M18 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
                           <path d="M6 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2" />
@@ -1624,14 +1663,14 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       )
                     },
                     {
-                      id: "Расслабление", label: "Расслабление", icon: (
+                      id: "Расслабление", label: t("Расслабление"), icon: (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
                         </svg>
                       )
                     },
                     {
-                      id: "Ходьба", label: "Ходьба", icon: (
+                      id: "Ходьба", label: t("Ходьба"), icon: (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="13" cy="4" r="2" />
                           <path d="M13 18l-3-5-1-4-2 2v6" />
@@ -1691,22 +1730,22 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
                   {/* Описание */}
                   <div style={{ fontSize: "0.82rem", color: "var(--color-text-secondary)", marginBottom: "4px", lineHeight: "1.4" }}>
-                    Выберите индивидуальные упражнения в нужном вам порядке для составления плейлиста тренировки:
+                    {t("Выберите индивидуальные упражнения в нужном вам порядке для составления плейлиста тренировки:")}
                   </div>
 
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", margin: "4px 0 8px 0" }}>
                     <span style={{ fontSize: "0.72rem", background: "rgba(27, 171, 124, 0.08)", color: "var(--color-active)", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
-                      Выбрано упражнений: {customPlaylist.length}
+                      {t("Выбрано упражнений:")} {customPlaylist.length}
                     </span>
                     <span style={{ fontSize: "0.72rem", background: "rgba(0, 148, 184, 0.08)", color: "#0094B8", padding: "5px 10px", borderRadius: "8px", fontWeight: "700" }}>
-                      Общее время: {
+                      {t("Общее время:")} {
                         customPlaylist.reduce((sum, id) => {
                           const item = homeworkWorkouts.find(ex => ex.id === id);
                           if (!item) return sum;
                           const minutes = parseInt(item.duration, 10);
                           return sum + (isNaN(minutes) ? 0 : minutes);
                         }, 0)
-                      } мин
+                      } {t("мин")}
                     </span>
                   </div>
 
@@ -1851,11 +1890,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                                 </span>
                                 <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#0094B8", background: "rgba(0,148,184,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
                                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                                  {item.level}
+                                  {t(item.level)}
                                 </span>
                                 <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "0.65rem", color: "#EB6074", background: "rgba(235,96,116,0.06)", padding: "3px 6px", borderRadius: "6px", fontWeight: "600" }}>
                                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
-                                  {item.equipment}
+                                  {t(item.equipment)}
                                 </span>
                               </div>
                             </div>
@@ -1902,7 +1941,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                       transition: "all 0.2s ease"
                     }}
                   >
-                    Начать тренировку ({customPlaylist.length})
+                    {t("Начать тренировку")} ({customPlaylist.length})
                   </button>
 
                   {customPlaylist.length > 0 && (

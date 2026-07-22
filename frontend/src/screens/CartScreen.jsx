@@ -1,9 +1,11 @@
 import React from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * CartScreen — Экран «Корзина».
  */
 export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemoveItem, onNavigate }) {
+  const { t } = useLanguage();
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -36,28 +38,28 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Назад</span>
+          <span>{t("Назад")}</span>
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Корзина</h1>
-          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Выбранные товары</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>{t("Корзина")}</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>{t("Выбранные товары")}</p>
         </div>
       </header>
 
       {cart.length === 0 ? (
         <div className="card text-center" style={{ padding: "32px 16px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
           <p style={{ fontFamily: "'Manrope', sans-serif", marginBottom: "20px", fontStyle: "italic", fontSize: "14px", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-            Ваша корзина пуста
+            {t("Ваша корзина пуста")}
           </p>
           <button className="btn-save" onClick={() => onNavigate("shop")}>
-            Вернуться в магазин
+            {t("Вернуться в магазин")}
           </button>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Список выбранных товаров */}
           <div className="card" style={{ padding: "20px", borderRadius: "24px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", background: "#fff" }}>
-            <h2 className="card__title" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "12px", marginBottom: "16px", fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>Состав заказа</h2>
+            <h2 className="card__title" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "12px", marginBottom: "16px", fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>{t("Состав заказа")}</h2>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
               {cart.map((item) => (
                 <li
@@ -199,7 +201,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
 
             {/* Итого */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--color-border)" }}>
-              <span style={{ fontWeight: "700", fontSize: "14px", fontFamily: "'Manrope', sans-serif" }}>Итого к оплате ({totalItems} шт.):</span>
+              <span style={{ fontWeight: "700", fontSize: "14px", fontFamily: "'Manrope', sans-serif" }}>{t("Итого к оплате")} ({totalItems} {t("шт.")}):</span>
               <span style={{ fontWeight: "800", fontSize: "18px", color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>
                 {totalPrice} ₽
               </span>
@@ -213,7 +215,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
               className="btn-save"
               onClick={() => onNavigate("checkout")}
             >
-              Перейти к оформлению
+              {t("Перейти к оформлению")}
             </button>
             <button
               id="btn-clear-cart"
@@ -236,7 +238,7 @@ export default function CartScreen({ cart, onClearCart, onUpdateQuantity, onRemo
                 transition: "background-color 0.15s ease"
               }}
             >
-              Очистить корзину
+              {t("Очистить корзину")}
             </button>
           </div>
         </div>

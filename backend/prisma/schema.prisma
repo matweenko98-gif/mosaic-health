@@ -68,15 +68,17 @@ model EmailToken {
 }
 
 model Exercise {
-  id           Int           @id @default(autoincrement())
-  title        String
-  description  String        @default("")
-  durationMin  Int           @default(0)
-  category     String        @default("Общее")
-  videoKey     String?
-  isIndividual Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  programItems ProgramItem[]
+  id             Int           @id @default(autoincrement())
+  title_ru       String
+  title_en       String        @default("")
+  description_ru String        @default("")
+  description_en String        @default("")
+  durationMin    Int           @default(0)
+  category       String        @default("Общее")
+  videoKey       String?
+  isIndividual   Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  programItems   ProgramItem[]
 }
 
 model Program {
@@ -130,35 +132,42 @@ model WorkoutLog {
 }
 
 model Article {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String   @default("")
-  body        String   @default("")
-  readTime    String   @default("")
-  authorId    String?
-  publishedAt DateTime @default(now())
-  author      User?    @relation(fields: [authorId], references: [id])
+  id             Int      @id @default(autoincrement())
+  title_ru       String
+  title_en       String   @default("")
+  description_ru String   @default("")
+  description_en String   @default("")
+  body_ru        String   @default("")
+  body_en        String   @default("")
+  readTime       String   @default("")
+  authorId       String?
+  publishedAt    DateTime @default(now())
+  author         User?    @relation(fields: [authorId], references: [id])
 }
 
 model Podcast {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String   @default("")
-  durationMin Int      @default(0)
-  audioKey    String?
-  publishedAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  title_ru       String
+  title_en       String   @default("")
+  description_ru String   @default("")
+  description_en String   @default("")
+  durationMin    Int      @default(0)
+  audioKey       String?
+  publishedAt    DateTime @default(now())
 }
 
 model Product {
-  id          Int         @id @default(autoincrement())
-  name        String
-  price       Int
-  description String      @default("")
-  category    String      @default("Общее")
-  imageKey    String?
-  inStock     Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  orderItems  OrderItem[]
+  id             Int         @id @default(autoincrement())
+  name_ru        String
+  name_en        String      @default("")
+  price          Int
+  description_ru String      @default("")
+  description_en String      @default("")
+  category       String      @default("Общее")
+  imageKey       String?
+  inStock        Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  orderItems     OrderItem[]
 }
 
 model Order {

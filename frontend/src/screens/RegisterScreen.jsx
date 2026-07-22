@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { countries } from "../data/countries";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * RegisterScreen — Экран Регистрации в приложении с двухшаговой формой.
  * Выполнен в стиле просторного Apple-минимализма.
  */
 export default function RegisterScreen({ onNavigate, onRegister }) {
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,19 +27,19 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   function handleNextStep(e) {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Пожалуйста, введите ваше имя");
+      setError(t("Пожалуйста, введите ваше имя"));
       return;
     }
     if (!email.trim() || !email.includes("@")) {
-      setError("Пожалуйста, введите корректный Email");
+      setError(t("Пожалуйста, введите корректный Email"));
       return;
     }
     if (!phoneNumber.trim() || phoneNumber.replace(/\D/g, "").length < 5) {
-      setError("Пожалуйста, введите корректный номер телефона");
+      setError(t("Пожалуйста, введите корректный номер телефона"));
       return;
     }
     if (!password.trim() || password.length < 6) {
-      setError("Пароль должен состоять минимум из 6 символов");
+      setError(t("Пароль должен состоять минимум из 6 символов"));
       return;
     }
 
@@ -48,16 +50,16 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!age.trim()) {
-      setError("Пожалуйста, укажите ваш возраст");
+      setError(t("Пожалуйста, укажите ваш возраст"));
       return;
     }
     const ageNum = parseInt(age, 10);
     if (isNaN(ageNum) || ageNum <= 0 || ageNum > 120) {
-      setError("Пожалуйста, укажите корректный возраст (от 1 до 120 лет)");
+      setError(t("Пожалуйста, укажите корректный возраст"));
       return;
     }
     if (!country.trim()) {
-      setError("Пожалуйста, укажите вашу страну");
+      setError(t("Пожалуйста, укажите вашу страну"));
       return;
     }
 
@@ -75,7 +77,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
         code: code.trim(),
       });
     } catch (err) {
-      setError(err?.message || "Не удалось зарегистрироваться");
+      setError(err?.message || t("Не удалось зарегистрироваться"));
       setStep(1);
     } finally {
       setIsSubmitting(false);
@@ -85,9 +87,9 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
   return (
     <section className="screen screen--onboarding" id="screen-register">
       <header className="screen__header text-center" style={{ marginBottom: "12px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Регистрация</h1>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>{t("Регистрация")}</h1>
         <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
-          Шаг {step} из 2: {step === 1 ? "Основные данные" : "Дополнительные сведения"}
+          {t("Шаг")} {step} {t("из")} 2: {step === 1 ? t("Основные данные") : t("Дополнительные сведения")}
         </p>
       </header>
 
@@ -105,12 +107,12 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-name" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Имя
+                  {t("Имя")}
                 </label>
                 <input
                   id="reg-name"
                   type="text"
-                  placeholder="Иван Иванов"
+                  placeholder={t("Иванов Иван Иванович")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="form-field__input"
@@ -139,11 +141,11 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Телефон
+                  {t("Телефон")}
                 </label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <select
-                    aria-label="Код страны"
+                    aria-label={t("Код страны")}
                     value={dialCode}
                     onChange={(e) => setDialCode(e.target.value)}
                     className="form-field__input"
@@ -182,7 +184,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-password" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Пароль
+                  {t("Пароль")}
                 </label>
                 <input
                   id="reg-password"
@@ -204,7 +206,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   marginTop: "8px"
                 }}
               >
-                Далее
+                {t("Далее")}
               </button>
             </div>
           ) : (
@@ -212,7 +214,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "11px", animation: "slideUp 0.3s ease-out" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-age" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Возраст
+                  {t("Возраст")}
                 </label>
                 <input
                   id="reg-age"
@@ -231,7 +233,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-country" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Страна
+                  {t("Страна")}
                 </label>
                 <select
                   id="reg-country"
@@ -261,12 +263,12 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label htmlFor="reg-code" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-                  Код доступа от врача (необязательно)
+                  {t("Код доступа от врача (необязательно)")}
                 </label>
                 <input
                   id="reg-code"
                   type="text"
-                  placeholder="например: ABCDE"
+                  placeholder={t("например: ABCDE")}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="form-field__input"
@@ -278,7 +280,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", borderBottom: "1px solid #ececec", marginBottom: "8px" }}>
                 <span style={{ fontSize: "13.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)" }}>
-                  Проходили реабилитацию в центре?
+                  {t("Проходили реабилитацию в центре?")}
                 </span>
                 <button
                   type="button"
@@ -291,7 +293,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                     <span className="toggle__thumb" />
                   </span>
                   <span className="toggle__label">
-                    {rehab ? "Да" : "Нет"}
+                    {rehab ? t("Да") : t("Нет")}
                   </span>
                 </button>
               </div>
@@ -305,7 +307,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                {isSubmitting ? "Регистрация…" : "Зарегистрироваться"}
+                {isSubmitting ? t("Регистрация…") : t("Зарегистрироваться")}
               </button>
 
               <button
@@ -329,7 +331,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                   transition: "background-color 0.15s ease"
                 }}
               >
-                Назад
+                {t("Назад")}
               </button>
             </div>
           )}
@@ -351,7 +353,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 fontFamily: "'Manrope', sans-serif"
               }}
             >
-              Уже есть аккаунт? Войти
+              {t("Уже есть аккаунт? Войти")}
             </button>
           </div>
         )}

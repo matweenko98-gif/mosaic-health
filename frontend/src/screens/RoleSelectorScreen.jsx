@@ -1,10 +1,12 @@
 import React from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * RoleSelectorScreen — Экран выбора режима работы для сотрудников (доктор, администратор).
  * Премиальный дизайн с Bento-карточками и микро-анимациями.
  */
 export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
+  const { t } = useLanguage();
   const roleUpper = (role || "").toUpperCase();
   const isAdmin = roleUpper === "ADMIN";
   const isSpecialist = roleUpper === "SPECIALIST" || roleUpper === "ADMIN";
@@ -22,7 +24,7 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
             margin: 0,
           }}
         >
-          Выберите режим работы
+          {t("Выберите режим работы")}
         </h1>
         <p
           style={{
@@ -32,7 +34,7 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
             fontWeight: 300,
           }}
         >
-          Выберите панель управления для продолжения
+          {t("Выберите панель управления для продолжения")}
         </p>
       </header>
 
@@ -40,10 +42,10 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {/* Карточка 1: Панель администратора */}
         {isAdmin && (
           <div className="bento-card" onClick={() => onNavigate("admin")}>
-            <span className="bento-card__badge">Доступно</span>
-            <h2 className="bento-card__title">Панель администратора</h2>
+            <span className="bento-card__badge">{t("Доступно")}</span>
+            <h2 className="bento-card__title">{t("Панель админа")}</h2>
             <p className="bento-card__desc">
-              Управление пользователями, товарами, статьями и заказами.
+              {t("Управление пользователями, товарами, статьями и заказами.")}
             </p>
           </div>
         )}
@@ -51,10 +53,10 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {/* Карточка 2: Панель врача */}
         {isSpecialist && (
           <div className="bento-card" onClick={() => onNavigate("specialist-codes")}>
-            <span className="bento-card__badge">Доступно</span>
-            <h2 className="bento-card__title">Панель врача</h2>
+            <span className="bento-card__badge">{t("Доступно")}</span>
+            <h2 className="bento-card__title">{t("Панель врача")}</h2>
             <p className="bento-card__desc">
-              Генерация кодов доступа к индивидуальным тренировкам.
+              {t("Генерация кодов доступа к индивидуальным тренировкам.")}
             </p>
           </div>
         )}
@@ -62,9 +64,9 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
         {/* Карточка 3: Режим пациента */}
         {isSpecialist && (
           <div className="bento-card" onClick={() => onNavigate("home")}>
-            <h2 className="bento-card__title">Режим пациента</h2>
+            <h2 className="bento-card__title">{t("Режим пациента")}</h2>
             <p className="bento-card__desc">
-              Просмотр приложения и тренировок глазами клиента.
+              {t("Просмотр приложения и тренировок глазами клиента.")}
             </p>
           </div>
         )}
@@ -86,7 +88,7 @@ export default function RoleSelectorScreen({ onNavigate, role, onLogout }) {
               fontFamily: "'Manrope', sans-serif",
             }}
           >
-            Выйти из аккаунта
+            {t("Выйти из аккаунта")}
           </button>
         </div>
       )}

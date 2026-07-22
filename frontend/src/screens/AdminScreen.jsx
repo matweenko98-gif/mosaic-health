@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { ORIGINAL_EXERCISES_MAP } from "../data/originalExercises";
+import { useLanguage } from "../context/LanguageContext";
 
 // Вспомогательные стили в стиле Apple-минимализма нашего приложения
 const labelStyle = {
@@ -92,6 +93,51 @@ function formatDate(dateStr) {
   return `${day}.${month}.${year}`;
 }
 
+function FormLanguageToggle({ current, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+      <button
+        type="button"
+        onClick={() => onChange("RU")}
+        style={{
+          flex: 1,
+          padding: "8px 12px",
+          borderRadius: "10px",
+          border: current === "RU" ? "1.5px solid #1BAB7C" : "1px solid var(--color-border)",
+          backgroundColor: current === "RU" ? "#1BAB7C" : "#fff",
+          color: current === "RU" ? "#fff" : "var(--color-text)",
+          fontWeight: 700,
+          fontSize: "12px",
+          fontFamily: "'Manrope', sans-serif",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+        }}
+      >
+        🇷🇺 Русский (RU)
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("EN")}
+        style={{
+          flex: 1,
+          padding: "8px 12px",
+          borderRadius: "10px",
+          border: current === "EN" ? "1.5px solid #1BAB7C" : "1px solid var(--color-border)",
+          backgroundColor: current === "EN" ? "#1BAB7C" : "#fff",
+          color: current === "EN" ? "#fff" : "var(--color-text)",
+          fontWeight: 700,
+          fontSize: "12px",
+          fontFamily: "'Manrope', sans-serif",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+        }}
+      >
+        🇬🇧 English (EN)
+      </button>
+    </div>
+  );
+}
+
 function autoCaptureFrame(videoUrlOrDataURL, onCapture) {
   // If it's a YouTube URL, extract video ID and use its thumbnail
   const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -144,7 +190,8 @@ function getYouTubeEmbedUrl(url) {
 }
 
 function parseExercise(ex) {
-  let instructions = ex.description || "";
+  let instructions_ru = "";
+  let instructions_en = "";
   let isPublished = true;
   let duration = ex.durationMin ? `${ex.durationMin} мин` : "0 мин";
   let level = "Базовый";
@@ -152,6 +199,8 @@ function parseExercise(ex) {
   let exerciseTime = "";
   let totalTime = "";
   let coverUrl = "";
+  let videoKey_ru = "";
+  let videoKey_en = "";
 
   const original = ORIGINAL_EXERCISES_MAP[ex.id];
   let category = ex.category;
@@ -162,33 +211,81 @@ function parseExercise(ex) {
     equipment = original.equipment || equipment;
   }
 
+  // Parse RU description
   try {
-    if (ex.description && ex.description.trim().startsWith("{")) {
-      const parsed = JSON.parse(ex.description);
-      instructions = parsed.instructions ?? parsed.description ?? "";
+    if (ex.description_ru && ex.description_ru.trim().startsWith("{")) {
+      const parsed = JSON.parse(ex.description_ru);
+      instructions_ru = parsed.instructions ?? parsed.description ?? "";
       isPublished = parsed.isPublished !== false;
       duration = parsed.duration ?? duration;
       level = parsed.level ?? level;
       equipment = parsed.equipment ?? equipment;
       exerciseTime = parsed.duration ?? duration;
       coverUrl = parsed.coverUrl ?? "";
+      videoKey_ru = parsed.videoKey ?? "";
       if (parsed.category) {
         category = parsed.category;
       }
+    } else {
+      instructions_ru = ex.description_ru || "";
     }
   } catch (e) {}
+
+  // Parse EN description
+  try {
+    if (ex.description_en && ex.description_en.trim().startsWith("{")) {
+      const parsed = JSON.parse(ex.description_en);
+      instructions_en = parsed.instructions ?? parsed.description ?? "";
+      if (!coverUrl && parsed.coverUrl) coverUrl = parsed.coverUrl;
+      videoKey_en = parsed.videoKey ?? "";
+    } else {
+      instructions_en = ex.description_en || "";
+    }
+  } catch (e) {}
+
+  // Fallback for legacy DB records without _ru suffix
+  if (!instructions_ru && ex.description) {
+    if (ex.description.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(ex.description);
+        instructions_ru = parsed.instructions ?? parsed.description ?? "";
+        if (parsed.isPublished !== undefined) isPublished = parsed.isPublished !== false;
+        if (parsed.duration) duration = parsed.duration;
+        if (parsed.level) level = parsed.level;
+        if (parsed.equipment) equipment = parsed.equipment;
+        if (parsed.coverUrl) coverUrl = parsed.coverUrl;
+        if (parsed.videoKey) videoKey_ru = parsed.videoKey;
+      } catch (e) {}
+    } else {
+      instructions_ru = ex.description;
+    }
+  }
+
+  if (!videoKey_ru && ex.videoKey) {
+    videoKey_ru = ex.videoKey;
+  }
+
+  const title_ru = ex.title_ru || ex.title || "";
+  const title_en = ex.title_en || "";
+
   return {
     id: ex.id,
-    title: ex.title,
-    category,
+    title_ru,
+    title_en,
+    title: title_ru || title_en || "Без названия",
+    category: category || "Гиревое дыхание",
     isIndividual: !!ex.isIndividual,
-    instructions,
+    instructions_ru,
+    instructions_en,
+    instructions: instructions_ru || instructions_en || "",
     duration: formatDuration(duration),
     level,
     equipment,
     exerciseTime: formatDuration(duration),
     totalTime: "",
-    videoKey: ex.videoKey || "",
+    videoKey_ru: videoKey_ru || "",
+    videoKey_en: videoKey_en || "",
+    videoKey: videoKey_ru || videoKey_en || ex.videoKey || "",
     coverUrl,
     isPublished,
   };
@@ -340,18 +437,19 @@ function UsersTab({ showToast }) {
 }
 
 // ------------------------- Раздел: ТОВАРЫ -------------------------
-const blankProduct = { name: "", price: "", category: "Инструменты", descriptionText: "", stock: "", unlimited: true, isPublished: true, imageKey: null };
+const blankProduct = { name_ru: "", name_en: "", price: "", category: "Инструменты", descriptionText_ru: "", descriptionText_en: "", stock: "", unlimited: true, isPublished: true, imageKey: null };
 
 function ProductsTab({ showToast, setDeleteConfirm }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
-  const [editing, setEditing] = useState(null); // объект или null
+  const [editing, setEditing] = useState(null);
+  const [formLang, setFormLang] = useState("RU");
 
   // Состояния для управления категориями
   const [customCategories, setCustomCategories] = useState([]);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [renamingCategory, setRenamingCategory] = useState(null); // название переименовываемой категории
+  const [renamingCategory, setRenamingCategory] = useState(null);
   const [renamedValue, setRenamedValue] = useState("");
 
   // Фильтры
@@ -362,24 +460,59 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
   async function load() {
     try {
       const list = await api.get("/products");
-      // Парсим JSON описание
       const parsedList = (Array.isArray(list) ? list : []).map((p) => {
-        let descriptionText = p.description || "";
+        let descriptionText_ru = "";
+        let descriptionText_en = "";
         let stock = "";
         let unlimited = true;
         let isPublished = true;
+
         try {
-          if (p.description && p.description.trim().startsWith("{")) {
-            const parsed = JSON.parse(p.description);
-            descriptionText = parsed.text ?? parsed.description ?? "";
+          if (p.description_ru && p.description_ru.trim().startsWith("{")) {
+            const parsed = JSON.parse(p.description_ru);
+            descriptionText_ru = parsed.text ?? parsed.description ?? "";
             stock = parsed.stock ?? "";
             unlimited = parsed.unlimited !== false;
             isPublished = parsed.isPublished !== false;
+          } else {
+            descriptionText_ru = p.description_ru || "";
           }
         } catch (e) {}
+
+        try {
+          if (p.description_en && p.description_en.trim().startsWith("{")) {
+            const parsed = JSON.parse(p.description_en);
+            descriptionText_en = parsed.text ?? parsed.description ?? "";
+          } else {
+            descriptionText_en = p.description_en || "";
+          }
+        } catch (e) {}
+
+        // Fallback for legacy DB records
+        if (!descriptionText_ru && p.description) {
+          if (p.description.trim().startsWith("{")) {
+            try {
+              const parsed = JSON.parse(p.description);
+              descriptionText_ru = parsed.text ?? parsed.description ?? "";
+              stock = parsed.stock ?? "";
+              unlimited = parsed.unlimited !== false;
+              isPublished = parsed.isPublished !== false;
+            } catch (e) {}
+          } else {
+            descriptionText_ru = p.description;
+          }
+        }
+
+        const name_ru = p.name_ru || p.name || "";
+        const name_en = p.name_en || "";
+
         return {
           ...p,
-          descriptionText,
+          name_ru,
+          name_en,
+          name: name_ru || name_en || "Без названия",
+          descriptionText_ru,
+          descriptionText_en,
           stock,
           unlimited,
           isPublished,
@@ -403,19 +536,26 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
     }
 
     try {
-      // Ищем все товары с этой категорией и обновляем на бэкенде
       const itemsToUpdate = items.filter(item => item.category === oldName);
       for (const item of itemsToUpdate) {
-        const descriptionJson = JSON.stringify({
-          text: item.descriptionText,
+        const descriptionJson_ru = JSON.stringify({
+          text: item.descriptionText_ru || "",
+          stock: item.unlimited ? null : Number(item.stock) || 0,
+          unlimited: !!item.unlimited,
+          isPublished: !!item.isPublished,
+        });
+        const descriptionJson_en = JSON.stringify({
+          text: item.descriptionText_en || "",
           stock: item.unlimited ? null : Number(item.stock) || 0,
           unlimited: !!item.unlimited,
           isPublished: !!item.isPublished,
         });
         const body = {
-          name: item.name,
+          name_ru: item.name_ru,
+          name_en: item.name_en,
           price: item.price,
-          description: descriptionJson,
+          description_ru: descriptionJson_ru,
+          description_en: descriptionJson_en,
           category: trimmed,
           imageKey: item.imageKey,
           inStock: item.inStock
@@ -423,11 +563,9 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
         await api.patch(`/admin/products/${item.id}`, body);
       }
 
-      // Обновляем список кастомных категорий
       const updatedCustom = customCategories.map(c => c === oldName ? trimmed : c);
       setCustomCategories(updatedCustom);
 
-      // Если сейчас редактируется товар с этой категорией - обновляем
       if (editing && editing.category === oldName) {
         setEditing({ ...editing, category: trimmed });
       }
@@ -450,19 +588,26 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
     }
 
     try {
-      // Ищем все товары с этой категорией и обновляем на бэкенде в "Общее"
       const itemsToUpdate = items.filter(item => item.category === catName);
       for (const item of itemsToUpdate) {
-        const descriptionJson = JSON.stringify({
-          text: item.descriptionText,
+        const descriptionJson_ru = JSON.stringify({
+          text: item.descriptionText_ru || "",
+          stock: item.unlimited ? null : Number(item.stock) || 0,
+          unlimited: !!item.unlimited,
+          isPublished: !!item.isPublished,
+        });
+        const descriptionJson_en = JSON.stringify({
+          text: item.descriptionText_en || "",
           stock: item.unlimited ? null : Number(item.stock) || 0,
           unlimited: !!item.unlimited,
           isPublished: !!item.isPublished,
         });
         const body = {
-          name: item.name,
+          name_ru: item.name_ru,
+          name_en: item.name_en,
           price: item.price,
-          description: descriptionJson,
+          description_ru: descriptionJson_ru,
+          description_en: descriptionJson_en,
           category: "Общее",
           imageKey: item.imageKey,
           inStock: item.inStock
@@ -470,11 +615,9 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
         await api.patch(`/admin/products/${item.id}`, body);
       }
 
-      // Удаляем из списка кастомных категорий
       const updatedCustom = customCategories.filter(c => c !== catName);
       setCustomCategories(updatedCustom);
 
-      // Если сейчас редактируется товар с этой категорией - переносим в "Общее"
       if (editing && editing.category === catName) {
         setEditing({ ...editing, category: "Общее" });
       }
@@ -488,21 +631,19 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
 
   async function saveWithPublish(isPublishedVal) {
     setError("");
-    const hasName = !!(editing.name || "").trim();
+    const hasNameRu = !!(editing.name_ru || "").trim();
     const hasPrice = editing.price !== "" && Number(editing.price) >= 0;
-    const hasDesc = !!(editing.descriptionText || "").trim();
+    const hasDescRu = !!(editing.descriptionText_ru || "").trim();
     const hasImage = !!editing.imageKey;
 
     if (!isPublishedVal) {
-      // Для сохранения в черновики должно быть заполнено хотя бы одно поле
-      if (!hasName && !hasPrice && !hasDesc && !hasImage) {
-        setError("Заполните хотя бы одно поле (Название, Цена, Описание или Фото), чтобы сохранить черновик");
+      if (!hasNameRu && !hasPrice && !hasDescRu && !hasImage) {
+        setError("Заполните хотя бы одно поле на русском языке (Название, Цена, Описание или Фото), чтобы сохранить черновик");
         return;
       }
     } else {
-      // Для публикации название и цена обязательны
-      if (!hasName) {
-        setError("Пожалуйста, заполните Название товара для публикации");
+      if (!hasNameRu) {
+        setError("Пожалуйста, заполните Название товара (RU) для публикации");
         return;
       }
       if (editing.price === "" || Number(editing.price) < 0) {
@@ -511,18 +652,26 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
       }
     }
 
-    // Сохраняем расширенные метаданные в поле description в виде JSON
-    const descriptionJson = JSON.stringify({
-      text: editing.descriptionText || "",
+    const descriptionJson_ru = JSON.stringify({
+      text: editing.descriptionText_ru || "",
+      stock: editing.unlimited ? null : Number(editing.stock) || 0,
+      unlimited: !!editing.unlimited,
+      isPublished: !!isPublishedVal,
+    });
+
+    const descriptionJson_en = JSON.stringify({
+      text: editing.descriptionText_en || "",
       stock: editing.unlimited ? null : Number(editing.stock) || 0,
       unlimited: !!editing.unlimited,
       isPublished: !!isPublishedVal,
     });
 
     const body = {
-      name: (editing.name || "").trim() || "Без названия",
+      name_ru: (editing.name_ru || "").trim() || "Без названия",
+      name_en: (editing.name_en || "").trim() || "",
       price: Number(editing.price) || 0,
-      description: descriptionJson,
+      description_ru: descriptionJson_ru,
+      description_en: descriptionJson_en,
       category: editing.category || "Инструменты",
       imageKey: editing.imageKey || null,
       inStock: editing.unlimited ? true : (Number(editing.stock) > 0),
@@ -547,24 +696,33 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
   async function doDuplicateProduct(item) {
     setError("");
     try {
-      const descriptionJson = JSON.stringify({
-        text: item.descriptionText || "",
+      const descriptionJson_ru = JSON.stringify({
+        text: item.descriptionText_ru || "",
         stock: item.unlimited ? null : Number(item.stock) || 0,
         unlimited: !!item.unlimited,
         isPublished: false, // Всегда черновик
       });
 
+      const descriptionJson_en = JSON.stringify({
+        text: item.descriptionText_en || "",
+        stock: item.unlimited ? null : Number(item.stock) || 0,
+        unlimited: !!item.unlimited,
+        isPublished: false,
+      });
+
       const body = {
-        name: `${item.name} (Копия)`,
+        name_ru: `${item.name_ru || item.name} (Копия)`,
+        name_en: item.name_en ? `${item.name_en} (Copy)` : "",
         price: Number(item.price) || 0,
-        description: descriptionJson,
+        description_ru: descriptionJson_ru,
+        description_en: descriptionJson_en,
         category: item.category || "Инструменты",
         imageKey: item.imageKey || null,
         inStock: item.unlimited ? true : (Number(item.stock) > 0),
       };
 
       await api.post("/admin/products", body);
-      showToast(`Создана копия товара: "${item.name} (Копия)"`);
+      showToast(`Создана копия товара: "${item.name_ru || item.name} (Копия)"`);
       await load();
     } catch (e) {
       setError("Не удалось дублировать товар: " + (e?.message || "Ошибка"));
@@ -594,8 +752,10 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
     .filter((p) => {
       const term = search.toLowerCase();
       return (
-        p.name.toLowerCase().includes(term) ||
-        (p.descriptionText || "").toLowerCase().includes(term)
+        (p.name_ru || "").toLowerCase().includes(term) ||
+        (p.name_en || "").toLowerCase().includes(term) ||
+        (p.descriptionText_ru || "").toLowerCase().includes(term) ||
+        (p.descriptionText_en || "").toLowerCase().includes(term)
       );
     })
     .filter((p) => {
@@ -623,16 +783,57 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
             {editing.id ? "Редактирование товара" : "Добавление товара"}
           </h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Название товара</label>
-            <input
-              className="form-field__input"
-              style={inputStyle}
-              placeholder="Введите название..."
-              value={editing.name}
-              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-            />
-          </div>
+          <FormLanguageToggle current={formLang} onChange={setFormLang} />
+
+          {formLang === "RU" ? (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название товара (RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Введите название на русском..."
+                  value={editing.name_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, name_ru: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Описание товара (RU)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Подробно расскажите о товаре на русском..."
+                  value={editing.descriptionText_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_ru: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название товара (EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Enter title in English..."
+                  value={editing.name_en || ""}
+                  onChange={(e) => setEditing({ ...editing, name_en: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Описание товара (EN)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Enter detailed description in English..."
+                  value={editing.descriptionText_en || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_en: e.target.value })}
+                />
+              </div>
+            </>
+          )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <label style={labelStyle}>Цена (₽)</label>
@@ -678,17 +879,6 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Описание товара</label>
-            <textarea
-              className="form-field__input"
-              style={textareaStyle}
-              placeholder="Подробно расскажите о товаре..."
-              value={editing.descriptionText}
-              onChange={(e) => setEditing({ ...editing, descriptionText: e.target.value })}
-            />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "12px" }}>
@@ -973,8 +1163,13 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: "13.5px", color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {p.name}
+                        {p.name_ru || p.name_en || p.name || "Без названия"}
                       </div>
+                      {p.name_en && p.name_ru && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          EN: {p.name_en}
+                        </div>
+                      )}
                       <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
                         {p.price} ₽ · {p.category} · {p.unlimited ? "склад ∞" : `остаток: ${p.stock}`}
                       </div>
@@ -1024,7 +1219,7 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
                     ✏️ Редактировать
                   </button>
                   <button
-                    onClick={() => setDeleteConfirm({ name: p.name, type: "product", action: () => doRemove(p.id) })}
+                    onClick={() => setDeleteConfirm({ name: p.name_ru || p.name_en || p.name || "Без названия", type: "product", action: () => doRemove(p.id) })}
                     title="Удалить"
                     style={{
                       border: "none",
@@ -1053,12 +1248,13 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
 }
 
 // ------------------------- Раздел: СТАТЬИ -------------------------
-const blankArticle = { title: "", descriptionText: "", body: "", readTime: "5 мин", isPublished: true, image: null };
+const blankArticle = { title_ru: "", title_en: "", descriptionText_ru: "", descriptionText_en: "", body_ru: "", body_en: "", readTime: "5 мин", isPublished: true, image: null };
 
 function ArticlesTab({ showToast, setDeleteConfirm }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
+  const [formLang, setFormLang] = useState("RU");
 
   // Фильтры
   const [search, setSearch] = useState("");
@@ -1069,20 +1265,35 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
     try {
       const list = await api.get("/articles");
       const parsedList = (Array.isArray(list) ? list : []).map((a) => {
-        let descriptionText = a.description || "";
+        let descriptionText_ru = "";
+        let descriptionText_en = "";
         let image = null;
         let isPublished = true;
+        
         try {
-          if (a.description && a.description.trim().startsWith("{")) {
-            const parsed = JSON.parse(a.description);
-            descriptionText = parsed.description || parsed.text || "";
+          if (a.description_ru && a.description_ru.trim().startsWith("{")) {
+            const parsed = JSON.parse(a.description_ru);
+            descriptionText_ru = parsed.description || parsed.text || "";
             image = parsed.image || null;
             isPublished = parsed.isPublished !== false;
+          } else {
+            descriptionText_ru = a.description_ru || "";
           }
         } catch (e) {}
+
+        try {
+          if (a.description_en && a.description_en.trim().startsWith("{")) {
+            const parsed = JSON.parse(a.description_en);
+            descriptionText_en = parsed.description || parsed.text || "";
+          } else {
+            descriptionText_en = a.description_en || "";
+          }
+        } catch (e) {}
+
         return {
           ...a,
-          descriptionText,
+          descriptionText_ru,
+          descriptionText_en,
           image,
           isPublished,
         };
@@ -1099,35 +1310,44 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
 
   async function saveWithPublish(isPublishedVal) {
     setError("");
-    const hasTitle = !!(editing.title || "").trim();
-    const hasDesc = !!(editing.descriptionText || "").trim();
-    const hasBody = !!(editing.body || "").trim();
+    const hasTitleRu = !!(editing.title_ru || "").trim();
+    const hasDescRu = !!(editing.descriptionText_ru || "").trim();
+    const hasBodyRu = !!(editing.body_ru || "").trim();
     const hasImage = !!editing.image;
 
     if (!isPublishedVal) {
-      // Для черновика хотя бы одно поле должно быть заполнено
-      if (!hasTitle && !hasDesc && !hasBody && !hasImage) {
-        setError("Заполните хотя бы одно поле (Заголовок, Описание, Текст или Обложка), чтобы сохранить черновик");
+      // Для черновика хотя бы одно поле на русском должно быть заполнено
+      if (!hasTitleRu && !hasDescRu && !hasBodyRu && !hasImage) {
+        setError("Заполните хотя бы одно поле на русском языке (Заголовок, Описание, Текст или Обложка), чтобы сохранить черновик");
         return;
       }
     } else {
-      // Для публикации заголовок обязателен
-      if (!hasTitle) {
-        setError("Пожалуйста, заполните Заголовок статьи для публикации");
+      // Для публикации заголовок (RU) обязателен
+      if (!hasTitleRu) {
+        setError("Пожалуйста, заполните Заголовок статьи (RU) для публикации");
         return;
       }
     }
 
-    const descriptionJson = JSON.stringify({
-      description: editing.descriptionText || "",
+    const descriptionJson_ru = JSON.stringify({
+      description: editing.descriptionText_ru || "",
+      image: editing.image,
+      isPublished: !!isPublishedVal,
+    });
+
+    const descriptionJson_en = JSON.stringify({
+      description: editing.descriptionText_en || "",
       image: editing.image,
       isPublished: !!isPublishedVal,
     });
 
     const body = {
-      title: (editing.title || "").trim() || "Без названия",
-      description: descriptionJson,
-      body: editing.body || "",
+      title_ru: (editing.title_ru || "").trim() || "Без названия",
+      title_en: (editing.title_en || "").trim() || "",
+      description_ru: descriptionJson_ru,
+      description_en: descriptionJson_en,
+      body_ru: editing.body_ru || "",
+      body_en: editing.body_en || "",
       readTime: editing.readTime || "5 мин",
     };
 
@@ -1150,21 +1370,30 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
   async function doDuplicateArticle(item) {
     setError("");
     try {
-      const descriptionJson = JSON.stringify({
-        description: item.descriptionText || "",
-        image: item.image || null,
+      const descriptionJson_ru = JSON.stringify({
+        description: item.descriptionText_ru || "",
+        image: item.image,
+        isPublished: false, // Всегда черновик
+      });
+
+      const descriptionJson_en = JSON.stringify({
+        description: item.descriptionText_en || "",
+        image: item.image,
         isPublished: false, // Всегда черновик
       });
 
       const body = {
-        title: `${item.title} (Копия)`,
-        description: descriptionJson,
-        body: item.body || "",
+        title_ru: `${item.title_ru} (Копия)`,
+        title_en: item.title_en ? `${item.title_en} (Copy)` : "",
+        description_ru: descriptionJson_ru,
+        description_en: descriptionJson_en,
+        body_ru: item.body_ru || "",
+        body_en: item.body_en || "",
         readTime: item.readTime || "5 мин",
       };
 
       await api.post("/admin/articles", body);
-      showToast(`Создана копия статьи: "${item.title} (Копия)"`);
+      showToast(`Создана копия статьи: "${item.title_ru} (Копия)"`);
       await load();
     } catch (e) {
       setError("Не удалось дублировать статью: " + (e?.message || "Ошибка"));
@@ -1194,8 +1423,12 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
     .filter((a) => {
       const term = search.toLowerCase();
       return (
-        a.title.toLowerCase().includes(term) ||
-        (a.descriptionText || "").toLowerCase().includes(term)
+        (a.title_ru || "").toLowerCase().includes(term) ||
+        (a.title_en || "").toLowerCase().includes(term) ||
+        (a.descriptionText_ru || "").toLowerCase().includes(term) ||
+        (a.descriptionText_en || "").toLowerCase().includes(term) ||
+        (a.body_ru || "").toLowerCase().includes(term) ||
+        (a.body_en || "").toLowerCase().includes(term)
       );
     })
     .filter((a) => {
@@ -1219,27 +1452,79 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
             {editing.id ? "Редактирование статьи" : "Добавление статьи"}
           </h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Заголовок статьи</label>
-            <input
-              className="form-field__input"
-              style={inputStyle}
-              placeholder="Введите заголовок..."
-              value={editing.title}
-              onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-            />
-          </div>
+          <FormLanguageToggle current={formLang} onChange={setFormLang} />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Краткое описание (для карточки-превью)</label>
-            <textarea
-              className="form-field__input"
-              style={textareaStyle}
-              placeholder="Кратко расскажите, о чём эта статья..."
-              value={editing.descriptionText}
-              onChange={(e) => setEditing({ ...editing, descriptionText: e.target.value })}
-            />
-          </div>
+          {formLang === "RU" ? (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Заголовок статьи (RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Введите заголовок на русском..."
+                  value={editing.title_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, title_ru: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Краткое описание (RU)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Кратко расскажите о статье на русском..."
+                  value={editing.descriptionText_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_ru: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Полный текст статьи (RU)</label>
+                <textarea
+                  className="form-field__input"
+                  style={{ ...textareaStyle, minHeight: "150px" }}
+                  placeholder="Введите текст статьи на русском..."
+                  value={editing.body_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, body_ru: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Заголовок статьи (EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Enter title in English..."
+                  value={editing.title_en || ""}
+                  onChange={(e) => setEditing({ ...editing, title_en: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Краткое описание (EN)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Briefly describe the article in English..."
+                  value={editing.descriptionText_en || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_en: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Полный текст статьи (EN)</label>
+                <textarea
+                  className="form-field__input"
+                  style={{ ...textareaStyle, minHeight: "150px" }}
+                  placeholder="Enter article text in English..."
+                  value={editing.body_en || ""}
+                  onChange={(e) => setEditing({ ...editing, body_en: e.target.value })}
+                />
+              </div>
+            </>
+          )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <label style={labelStyle}>Время чтения (например: 5 мин)</label>
@@ -1249,17 +1534,6 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
               placeholder="5 мин"
               value={editing.readTime}
               onChange={(e) => setEditing({ ...editing, readTime: e.target.value })}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Полный текст статьи</label>
-            <textarea
-              className="form-field__input"
-              style={{ ...textareaStyle, minHeight: "150px" }}
-              placeholder="Введите текст статьи..."
-              value={editing.body}
-              onChange={(e) => setEditing({ ...editing, body: e.target.value })}
             />
           </div>
 
@@ -1332,13 +1606,13 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
         <button onClick={() => setEditing({ ...blankArticle })} className="btn-save" style={{ marginBottom: "14px" }}>+ Добавить статью</button>
       )}
 
-      {/* Панель фильтров списка */}
+      {/* Список статей */}
       {!editing && (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "14px" }}>
             <input
               type="text"
-              placeholder="Поиск по названию или тексту..."
+              placeholder="Поиск по заголовку, описанию..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ ...inputStyle, marginBottom: 0 }}
@@ -1367,7 +1641,6 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {filtered.map((a) => (
               <div key={a.id} style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: "10px", padding: "12px 14px" }}>
-                {/* Upper row */}
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
                     <div style={{ width: "42px", height: "42px", borderRadius: "10px", border: "1px solid var(--color-border)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#FAF9F6", flexShrink: 0 }}>
@@ -1379,13 +1652,15 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: "13.5px", color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {a.title}
+                        {a.title_ru || a.title_en || "Без названия"}
                       </div>
+                      {a.title_en && a.title_ru && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          EN: {a.title_en}
+                        </div>
+                      )}
                       <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
-                        {a.readTime}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
-                        Добавлено: {formatDate(a.publishedAt)}
+                        {a.readTime} · Добавлено: {formatDate(a.publishedAt)}
                       </div>
                     </div>
                   </div>
@@ -1397,7 +1672,6 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
                   )}
                 </div>
 
-                {/* Lower row / Actions bar */}
                 <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "8px", display: "flex", justifyContent: "flex-end", gap: "14px", alignItems: "center" }}>
                   <button
                     onClick={() => doDuplicateArticle(a)}
@@ -1430,7 +1704,7 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
                     ✏️ Редактировать
                   </button>
                   <button
-                    onClick={() => setDeleteConfirm({ name: a.title, type: "article", action: () => doRemove(a.id) })}
+                    onClick={() => setDeleteConfirm({ name: a.title_ru || a.title_en || "Без названия", type: "article", action: () => doRemove(a.id) })}
                     title="Удалить"
                     style={{
                       border: "none",
@@ -1459,12 +1733,13 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
 }
 
 // ------------------------- Раздел: ПОДКАСТЫ И ВИДЕО -------------------------
-const blankPodcast = { title: "", descriptionText: "", durationMin: "", isVideo: false, isPublished: true, mediaUrl: "" };
+const blankPodcast = { title_ru: "", title_en: "", descriptionText_ru: "", descriptionText_en: "", durationMin: "", isVideo: false, isPublished: true, mediaUrl: "" };
 
 function PodcastsTab({ showToast, setDeleteConfirm }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
+  const [formLang, setFormLang] = useState("RU");
 
   // Фильтры
   const [search, setSearch] = useState("");
@@ -1475,22 +1750,37 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
     try {
       const list = await api.get("/podcasts");
       const parsedList = (Array.isArray(list) ? list : []).map((p) => {
-        let descriptionText = p.description || "";
+        let descriptionText_ru = "";
+        let descriptionText_en = "";
         let isVideo = false;
         let isPublished = true;
         let mediaUrl = p.audioKey || "";
+        
         try {
-          if (p.description && p.description.trim().startsWith("{")) {
-            const parsed = JSON.parse(p.description);
-            descriptionText = parsed.description || parsed.text || "";
+          if (p.description_ru && p.description_ru.trim().startsWith("{")) {
+            const parsed = JSON.parse(p.description_ru);
+            descriptionText_ru = parsed.description || parsed.text || "";
             isVideo = !!parsed.isVideo;
             isPublished = parsed.isPublished !== false;
             mediaUrl = parsed.mediaUrl || p.audioKey || "";
+          } else {
+            descriptionText_ru = p.description_ru || "";
           }
         } catch (e) {}
+
+        try {
+          if (p.description_en && p.description_en.trim().startsWith("{")) {
+            const parsed = JSON.parse(p.description_en);
+            descriptionText_en = parsed.description || parsed.text || "";
+          } else {
+            descriptionText_en = p.description_en || "";
+          }
+        } catch (e) {}
+
         return {
           ...p,
-          descriptionText,
+          descriptionText_ru,
+          descriptionText_en,
           isVideo,
           isPublished,
           mediaUrl,
@@ -1508,21 +1798,21 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
 
   async function saveWithPublish(isPublishedVal) {
     setError("");
-    const hasTitle = !!(editing.title || "").trim();
-    const hasDesc = !!(editing.descriptionText || "").trim();
+    const hasTitleRu = !!(editing.title_ru || "").trim();
+    const hasDescRu = !!(editing.descriptionText_ru || "").trim();
     const hasDuration = editing.durationMin !== "" && Number(editing.durationMin) > 0;
     const hasMedia = !!(editing.mediaUrl || "").trim();
 
     if (!isPublishedVal) {
-      // Для черновика хотя бы одно поле должно быть заполнено
-      if (!hasTitle && !hasDesc && !hasDuration && !hasMedia) {
-        setError("Заполните хотя бы одно поле (Название, Описание, Длительность или Медиафайл), чтобы сохранить черновик");
+      // Для черновика хотя бы одно поле на русском должно быть заполнено
+      if (!hasTitleRu && !hasDescRu && !hasDuration && !hasMedia) {
+        setError("Заполните хотя бы одно поле на русском языке (Название, Описание, Длительность или Медиафайл), чтобы сохранить черновик");
         return;
       }
     } else {
-      // Для публикации название и длительность обязательны
-      if (!hasTitle) {
-        setError("Пожалуйста, заполните Название записи для публикации");
+      // Для публикации название (RU) и длительность обязательны
+      if (!hasTitleRu) {
+        setError("Пожалуйста, заполните Название записи (RU) для публикации");
         return;
       }
       if (editing.durationMin === "" || Number(editing.durationMin) <= 0) {
@@ -1531,16 +1821,25 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
       }
     }
 
-    const descriptionJson = JSON.stringify({
-      description: editing.descriptionText || "",
+    const descriptionJson_ru = JSON.stringify({
+      description: editing.descriptionText_ru || "",
+      isVideo: !!editing.isVideo,
+      isPublished: !!isPublishedVal,
+      mediaUrl: editing.mediaUrl || "",
+    });
+
+    const descriptionJson_en = JSON.stringify({
+      description: editing.descriptionText_en || "",
       isVideo: !!editing.isVideo,
       isPublished: !!isPublishedVal,
       mediaUrl: editing.mediaUrl || "",
     });
 
     const body = {
-      title: (editing.title || "").trim() || "Без названия",
-      description: descriptionJson,
+      title_ru: (editing.title_ru || "").trim() || "Без названия",
+      title_en: (editing.title_en || "").trim() || "",
+      description_ru: descriptionJson_ru,
+      description_en: descriptionJson_en,
       durationMin: Number(editing.durationMin) || 0,
       audioKey: editing.mediaUrl || null,
     };
@@ -1564,22 +1863,31 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
   async function doDuplicatePodcast(item) {
     setError("");
     try {
-      const descriptionJson = JSON.stringify({
-        description: item.descriptionText || "",
+      const descriptionJson_ru = JSON.stringify({
+        description: item.descriptionText_ru || "",
+        isVideo: !!item.isVideo,
+        isPublished: false, // Всегда черновик
+        mediaUrl: item.mediaUrl || "",
+      });
+
+      const descriptionJson_en = JSON.stringify({
+        description: item.descriptionText_en || "",
         isVideo: !!item.isVideo,
         isPublished: false, // Всегда черновик
         mediaUrl: item.mediaUrl || "",
       });
 
       const body = {
-        title: `${item.title} (Копия)`,
-        description: descriptionJson,
+        title_ru: `${item.title_ru} (Копия)`,
+        title_en: item.title_en ? `${item.title_en} (Copy)` : "",
+        description_ru: descriptionJson_ru,
+        description_en: descriptionJson_en,
         durationMin: Number(item.durationMin) || 0,
         audioKey: item.mediaUrl || null,
       };
 
       await api.post("/admin/podcasts", body);
-      showToast(`Создана копия медиазаписи: "${item.title} (Копия)"`);
+      showToast(`Создана копия медиазаписи: "${item.title_ru} (Копия)"`);
       await load();
     } catch (e) {
       setError("Не удалось дублировать медиазапись: " + (e?.message || "Ошибка"));
@@ -1599,8 +1907,10 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
     .filter((p) => {
       const term = search.toLowerCase();
       return (
-        p.title.toLowerCase().includes(term) ||
-        (p.descriptionText || "").toLowerCase().includes(term)
+        (p.title_ru || "").toLowerCase().includes(term) ||
+        (p.title_en || "").toLowerCase().includes(term) ||
+        (p.descriptionText_ru || "").toLowerCase().includes(term) ||
+        (p.descriptionText_en || "").toLowerCase().includes(term)
       );
     })
     .filter((p) => {
@@ -1621,33 +1931,63 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
       {editing ? (
         <div style={{ ...cardStyle, marginBottom: "14px" }}>
           <h3 style={{ margin: "0 0 14px", fontSize: "15px", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>
-            {editing.id ? "Редактирование записи" : "Добавление записи"}
+            {editing.id ? "Редактирование медиазаписи" : "Добавление медиазаписи"}
           </h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Название записи</label>
-            <input
-              className="form-field__input"
-              style={inputStyle}
-              placeholder="Введите название..."
-              value={editing.title}
-              onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-            />
-          </div>
+          <FormLanguageToggle current={formLang} onChange={setFormLang} />
+
+          {formLang === "RU" ? (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название записи (RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Введите название на русском..."
+                  value={editing.title_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, title_ru: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Описание (RU)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Краткое описание на русском..."
+                  value={editing.descriptionText_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_ru: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название записи (EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Enter title in English..."
+                  value={editing.title_en || ""}
+                  onChange={(e) => setEditing({ ...editing, title_en: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Описание (EN)</label>
+                <textarea
+                  className="form-field__input"
+                  style={textareaStyle}
+                  placeholder="Enter description in English..."
+                  value={editing.descriptionText_en || ""}
+                  onChange={(e) => setEditing({ ...editing, descriptionText_en: e.target.value })}
+                />
+              </div>
+            </>
+          )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Описание</label>
-            <textarea
-              className="form-field__input"
-              style={textareaStyle}
-              placeholder="Краткое описание медиафайла..."
-              value={editing.descriptionText}
-              onChange={(e) => setEditing({ ...editing, descriptionText: e.target.value })}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Длительность (мин)</label>
+            <label style={labelStyle}>Длительность (минут)</label>
             <input
               className="form-field__input"
               style={inputStyle}
@@ -1753,10 +2093,15 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: "13.5px", color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {p.title}
+                        {p.title_ru || p.title_en || "Без названия"}
                       </div>
+                      {p.title_en && p.title_ru && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          EN: {p.title_en}
+                        </div>
+                      )}
                       <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
-                        {p.durationMin} мин
+                        {p.durationMin} мин · {p.isVideo ? "Видео" : "Аудио"}
                       </div>
                       <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
                         Добавлено: {formatDate(p.publishedAt)}
@@ -1804,7 +2149,7 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
                     ✏️ Редактировать
                   </button>
                   <button
-                    onClick={() => setDeleteConfirm({ name: p.title, type: "podcast", action: () => doRemove(p.id) })}
+                    onClick={() => setDeleteConfirm({ name: p.title_ru || p.title_en || "Без названия", type: "podcast", action: () => doRemove(p.id) })}
                     title="Удалить"
                     style={{
                       border: "none",
@@ -1908,10 +2253,12 @@ function OrdersTab({ showToast }) {
 
 // ------------------------- Раздел: ТРЕНИРОВКИ -------------------------
 const blankWorkout = {
-  title: "",
+  title_ru: "",
+  title_en: "",
   category: "Гиревое дыхание",
   isIndividual: false,
-  instructions: "",
+  instructions_ru: "",
+  instructions_en: "",
   duration: "",
   level: "Базовый",
   equipment: "",
@@ -1927,6 +2274,7 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
   const [subTab, setSubTab] = useState("shared"); // 'shared' | 'homework'
+  const [formLang, setFormLang] = useState("RU");
 
   // Категории
   const [customCategories, setCustomCategories] = useState([]);
@@ -1973,8 +2321,18 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
     try {
       const itemsToUpdate = items.filter(item => item.category === oldName);
       for (const item of itemsToUpdate) {
-        const descriptionJson = JSON.stringify({
-          instructions: item.instructions,
+        const descriptionJson_ru = JSON.stringify({
+          instructions: item.instructions_ru || "",
+          isPublished: !!item.isPublished,
+          duration: item.duration || "",
+          level: item.level,
+          equipment: item.equipment,
+          exerciseTime: item.duration || "",
+          totalTime: "",
+          coverUrl: item.coverUrl,
+        });
+        const descriptionJson_en = JSON.stringify({
+          instructions: item.instructions_en || "",
           isPublished: !!item.isPublished,
           duration: item.duration || "",
           level: item.level,
@@ -1984,10 +2342,12 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
           coverUrl: item.coverUrl,
         });
         const body = {
-          title: item.title,
+          title_ru: item.title_ru,
+          title_en: item.title_en,
           category: trimmed,
           isIndividual: item.isIndividual,
-          description: descriptionJson,
+          description_ru: descriptionJson_ru,
+          description_en: descriptionJson_en,
           videoKey: item.videoKey || null,
           duration: item.duration || "",
         };
@@ -2019,8 +2379,18 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
     try {
       const itemsToUpdate = items.filter(item => item.category === catName);
       for (const item of itemsToUpdate) {
-        const descriptionJson = JSON.stringify({
-          instructions: item.instructions,
+        const descriptionJson_ru = JSON.stringify({
+          instructions: item.instructions_ru || "",
+          isPublished: !!item.isPublished,
+          duration: item.duration || "",
+          level: item.level,
+          equipment: item.equipment,
+          exerciseTime: item.duration || "",
+          totalTime: "",
+          coverUrl: item.coverUrl,
+        });
+        const descriptionJson_en = JSON.stringify({
+          instructions: item.instructions_en || "",
           isPublished: !!item.isPublished,
           duration: item.duration || "",
           level: item.level,
@@ -2030,10 +2400,12 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
           coverUrl: item.coverUrl,
         });
         const body = {
-          title: item.title,
+          title_ru: item.title_ru,
+          title_en: item.title_en,
           category: "Гиревое дыхание",
           isIndividual: item.isIndividual,
-          description: descriptionJson,
+          description_ru: descriptionJson_ru,
+          description_en: descriptionJson_en,
           videoKey: item.videoKey || null,
           duration: item.duration || "",
         };
@@ -2054,13 +2426,16 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
   // Сохранение тренировки
   async function saveWithPublish(isPublishedVal) {
     setError("");
-    if (!editing.title.trim()) {
-      setError("Укажите Название тренировки");
+    const hasTitleRu = !!(editing.title_ru || "").trim();
+    const hasTitleEn = !!(editing.title_en || "").trim();
+
+    if (!hasTitleRu && !hasTitleEn) {
+      setError("Пожалуйста, укажите Название тренировки (на русском или английском)");
       return;
     }
 
-    const descriptionJson = JSON.stringify({
-      instructions: editing.instructions || "",
+    const descriptionJson_ru = JSON.stringify({
+      instructions: editing.instructions_ru || "",
       isPublished: !!isPublishedVal,
       duration: editing.duration || "",
       level: editing.level || "Базовый",
@@ -2068,14 +2443,31 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
       exerciseTime: editing.duration || "",
       totalTime: "",
       coverUrl: editing.coverUrl || "",
+      videoKey: editing.videoKey_ru || "",
     });
 
+    const descriptionJson_en = JSON.stringify({
+      instructions: editing.instructions_en || "",
+      isPublished: !!isPublishedVal,
+      duration: editing.duration || "",
+      level: editing.level || "Базовый",
+      equipment: editing.equipment || "",
+      exerciseTime: editing.duration || "",
+      totalTime: "",
+      coverUrl: editing.coverUrl || "",
+      videoKey: editing.videoKey_en || "",
+    });
+
+    const rootVideo = editing.videoKey_ru || editing.videoKey_en || editing.videoKey || null;
+
     const body = {
-      title: editing.title.trim(),
+      title_ru: (editing.title_ru || "").trim() || (editing.title_en || "").trim() || "Without Title",
+      title_en: (editing.title_en || "").trim() || (editing.title_ru || "").trim() || "",
       category: editing.category || "Гиревое дыхание",
       isIndividual: !!editing.isIndividual,
-      description: descriptionJson,
-      videoKey: editing.videoKey || null,
+      description_ru: descriptionJson_ru,
+      description_en: descriptionJson_en,
+      videoKey: rootVideo,
       duration: editing.duration || "",
     };
 
@@ -2098,45 +2490,60 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
   async function doDuplicate(item) {
     setError("");
     try {
-      const descriptionJson = JSON.stringify({
-        instructions: item.instructions || "",
-        isPublished: false, // Всегда черновик
+      const descriptionJson_ru = JSON.stringify({
+        instructions: item.instructions_ru || "",
+        isPublished: false,
         duration: item.duration || "",
         level: item.level || "Базовый",
         equipment: item.equipment || "",
         exerciseTime: item.duration || "",
         totalTime: "",
         coverUrl: item.coverUrl || "",
+        videoKey: item.videoKey_ru || item.videoKey || "",
+      });
+
+      const descriptionJson_en = JSON.stringify({
+        instructions: item.instructions_en || "",
+        isPublished: false,
+        duration: item.duration || "",
+        level: item.level || "Базовый",
+        equipment: item.equipment || "",
+        exerciseTime: item.duration || "",
+        totalTime: "",
+        coverUrl: item.coverUrl || "",
+        videoKey: item.videoKey_en || "",
       });
 
       const body = {
-        title: `${item.title} (Копия)`,
+        title_ru: `${item.title_ru || item.title_en} (Копия)`,
+        title_en: item.title_en ? `${item.title_en} (Copy)` : "",
         category: item.category || "Гиревое дыхание",
         isIndividual: !!item.isIndividual,
-        description: descriptionJson,
-        videoKey: item.videoKey || null,
+        description_ru: descriptionJson_ru,
+        description_en: descriptionJson_en,
+        videoKey: item.videoKey_ru || item.videoKey_en || item.videoKey || null,
         duration: item.duration || "",
       };
 
       await api.post("/admin/exercises", body);
-      showToast(`Создана копия тренировки: "${item.title} (Копия)"`);
+      showToast(`Создана копия тренировки: "${item.title_ru || item.title_en} (Копия)"`);
       await load();
     } catch (e) {
       setError("Не удалось дублировать тренировку: " + (e?.message || "Ошибка"));
     }
   }
 
-  // Загрузка видео-файла
-  function handleVideoUpload(e) {
+  // Загрузка видео-файла (RU)
+  function handleVideoUploadRU(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUrl = reader.result;
       setEditing(prev => {
-        const next = { ...prev, videoKey: dataUrl };
+        const next = { ...prev, videoKey_ru: dataUrl, videoKey: dataUrl };
         autoCaptureFrame(dataUrl, (capturedCover) => {
-          setEditing(p => p.videoKey === dataUrl ? { ...p, coverUrl: capturedCover } : p);
+          setEditing(p => (p.videoKey_ru === dataUrl || p.videoKey === dataUrl) && !p.coverUrl ? { ...p, coverUrl: capturedCover } : p);
         });
         return next;
       });
@@ -2144,13 +2551,44 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
     reader.readAsDataURL(file);
   }
 
-  // Вставка ссылки на видео
-  function handleVideoUrlChange(url) {
+  // Вставка ссылки на видео (RU)
+  function handleVideoUrlChangeRU(url) {
     setEditing(prev => {
-      const next = { ...prev, videoKey: url };
+      const next = { ...prev, videoKey_ru: url, videoKey: url || prev.videoKey_en };
       if (url.trim()) {
         autoCaptureFrame(url, (capturedCover) => {
-          setEditing(p => p.videoKey === url ? { ...p, coverUrl: capturedCover } : p);
+          setEditing(p => (p.videoKey_ru === url || p.videoKey === url) && !p.coverUrl ? { ...p, coverUrl: capturedCover } : p);
+        });
+      }
+      return next;
+    });
+  }
+
+  // Загрузка видео-файла (EN)
+  function handleVideoUploadEN(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result;
+      setEditing(prev => {
+        const next = { ...prev, videoKey_en: dataUrl, videoKey: prev.videoKey_ru || dataUrl };
+        autoCaptureFrame(dataUrl, (capturedCover) => {
+          setEditing(p => (p.videoKey_en === dataUrl || p.videoKey === dataUrl) && !p.coverUrl ? { ...p, coverUrl: capturedCover } : p);
+        });
+        return next;
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Вставка ссылки на видео (EN)
+  function handleVideoUrlChangeEN(url) {
+    setEditing(prev => {
+      const next = { ...prev, videoKey_en: url, videoKey: prev.videoKey_ru || url };
+      if (url.trim()) {
+        autoCaptureFrame(url, (capturedCover) => {
+          setEditing(p => (p.videoKey_en === url || p.videoKey === url) && !p.coverUrl ? { ...p, coverUrl: capturedCover } : p);
         });
       }
       return next;
@@ -2200,8 +2638,10 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
     .filter(item => {
       const term = search.toLowerCase();
       return (
-        item.title.toLowerCase().includes(term) ||
-        (item.instructions || "").toLowerCase().includes(term) ||
+        (item.title_ru || "").toLowerCase().includes(term) ||
+        (item.title_en || "").toLowerCase().includes(term) ||
+        (item.instructions_ru || "").toLowerCase().includes(term) ||
+        (item.instructions_en || "").toLowerCase().includes(term) ||
         (item.category || "").toLowerCase().includes(term)
       );
     })
@@ -2315,17 +2755,203 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
             </div>
           </div>
 
-          {/* Название */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>Название</label>
-            <input
-              className="form-field__input"
-              style={inputStyle}
-              placeholder="Например: Гиревое дыхание на 7 точек..."
-              value={editing.title}
-              onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-            />
-          </div>
+          <FormLanguageToggle current={formLang} onChange={setFormLang} />
+
+          {formLang === "RU" ? (
+            <>
+              {/* Название */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название (RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="Например: Гиревое дыхание на 7 точек..."
+                  value={editing.title_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, title_ru: e.target.value })}
+                />
+              </div>
+
+              {/* О методике */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>О методике (описание и инструкции на русском)</label>
+                <textarea
+                  className="form-field__input"
+                  style={{ ...textareaStyle, minHeight: "90px" }}
+                  placeholder="Введите подробное описание и инструкции к упражнению на русском..."
+                  value={editing.instructions_ru || ""}
+                  onChange={(e) => setEditing({ ...editing, instructions_ru: e.target.value })}
+                />
+              </div>
+
+              {/* Видеозапись на русском */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "14px" }}>
+                <label style={labelStyle}>Видеозапись (Русский)</label>
+                <input
+                  className="form-field__input"
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                  placeholder="Вставьте ссылку на видео для RU версии (YouTube / Rutube / CDN)..."
+                  value={(editing.videoKey_ru || "").startsWith("data:") ? "" : (editing.videoKey_ru || "")}
+                  onChange={(e) => handleVideoUrlChangeRU(e.target.value)}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <button
+                    type="button"
+                    style={buttonSecondaryStyle}
+                    onClick={() => document.getElementById("workout-video-upload-ru").click()}
+                  >
+                    {editing.videoKey_ru ? "Заменить видеофайл RU (MP4)" : "Загрузить видеофайл RU (MP4)"}
+                  </button>
+                  {editing.videoKey_ru && (
+                    <button
+                      type="button"
+                      style={{ ...buttonSecondaryStyle, color: "#d93025", borderColor: "#fca5a5" }}
+                      onClick={() => setEditing({ ...editing, videoKey_ru: "", videoKey: editing.videoKey_en || "" })}
+                    >
+                      Удалить видео RU
+                    </button>
+                  )}
+                  <input
+                    id="workout-video-upload-ru"
+                    type="file"
+                    accept="video/mp4"
+                    onChange={handleVideoUploadRU}
+                    style={{ display: "none" }}
+                  />
+                </div>
+                {editing.videoKey_ru && (
+                  <p style={{ ...tipStyle, color: "#1BAB7C", marginBottom: "6px" }}>
+                    ✓ Видео RU привязано ({(editing.videoKey_ru || "").startsWith("data:") ? "загруженный файл MP4" : "внешняя ссылка"})
+                  </p>
+                )}
+                {editing.videoKey_ru && (() => {
+                  const youtubeUrl = getYouTubeEmbedUrl(editing.videoKey_ru);
+                  return (
+                    <div style={{ marginTop: "8px", border: "1px solid var(--color-border)", borderRadius: "14px", padding: "10px", backgroundColor: "#f9f9f9" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-text-secondary)", display: "block", marginBottom: "6px" }}>
+                        Предпросмотр видео (RU):
+                      </span>
+                      {youtubeUrl ? (
+                        <iframe
+                          width="100%"
+                          height="160"
+                          src={youtubeUrl}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{ borderRadius: "8px", backgroundColor: "#000" }}
+                        />
+                      ) : (
+                        <video
+                          src={editing.videoKey_ru}
+                          controls
+                          playsInline
+                          style={{ width: "100%", maxHeight: "160px", borderRadius: "8px", backgroundColor: "#000" }}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Название */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Название (EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="E.g. Kettlebell breathing on 7 points..."
+                  value={editing.title_en || ""}
+                  onChange={(e) => setEditing({ ...editing, title_en: e.target.value })}
+                />
+              </div>
+
+              {/* О методике */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>О методике (описание и инструкции на английском)</label>
+                <textarea
+                  className="form-field__input"
+                  style={{ ...textareaStyle, minHeight: "90px" }}
+                  placeholder="Enter detailed description and instructions in English..."
+                  value={editing.instructions_en || ""}
+                  onChange={(e) => setEditing({ ...editing, instructions_en: e.target.value })}
+                />
+              </div>
+
+              {/* Видеозапись на английском */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "14px" }}>
+                <label style={labelStyle}>Видеозапись (English)</label>
+                <input
+                  className="form-field__input"
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                  placeholder="Enter video link for EN version (YouTube / Rutube / CDN)..."
+                  value={(editing.videoKey_en || "").startsWith("data:") ? "" : (editing.videoKey_en || "")}
+                  onChange={(e) => handleVideoUrlChangeEN(e.target.value)}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <button
+                    type="button"
+                    style={buttonSecondaryStyle}
+                    onClick={() => document.getElementById("workout-video-upload-en").click()}
+                  >
+                    {editing.videoKey_en ? "Replace EN video file (MP4)" : "Upload EN video file (MP4)"}
+                  </button>
+                  {editing.videoKey_en && (
+                    <button
+                      type="button"
+                      style={{ ...buttonSecondaryStyle, color: "#d93025", borderColor: "#fca5a5" }}
+                      onClick={() => setEditing({ ...editing, videoKey_en: "", videoKey: editing.videoKey_ru || "" })}
+                    >
+                      Delete EN video
+                    </button>
+                  )}
+                  <input
+                    id="workout-video-upload-en"
+                    type="file"
+                    accept="video/mp4"
+                    onChange={handleVideoUploadEN}
+                    style={{ display: "none" }}
+                  />
+                </div>
+                {editing.videoKey_en && (
+                  <p style={{ ...tipStyle, color: "#1BAB7C", marginBottom: "6px" }}>
+                    ✓ English video attached ({(editing.videoKey_en || "").startsWith("data:") ? "Uploaded MP4 file" : "External URL"})
+                  </p>
+                )}
+                {editing.videoKey_en && (() => {
+                  const youtubeUrl = getYouTubeEmbedUrl(editing.videoKey_en);
+                  return (
+                    <div style={{ marginTop: "8px", border: "1px solid var(--color-border)", borderRadius: "14px", padding: "10px", backgroundColor: "#f9f9f9" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-text-secondary)", display: "block", marginBottom: "6px" }}>
+                        Video preview (EN):
+                      </span>
+                      {youtubeUrl ? (
+                        <iframe
+                          width="100%"
+                          height="160"
+                          src={youtubeUrl}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{ borderRadius: "8px", backgroundColor: "#000" }}
+                        />
+                      ) : (
+                        <video
+                          src={editing.videoKey_en}
+                          controls
+                          playsInline
+                          style={{ width: "100%", maxHeight: "160px", borderRadius: "8px", backgroundColor: "#000" }}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </>
+          )}
 
           {/* Категория */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -2442,89 +3068,6 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
               </div>
             </div>
           )}
-
-          {/* О методике */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <label style={labelStyle}>О методике (описание и инструкции)</label>
-            <textarea
-              className="form-field__input"
-              style={{ ...textareaStyle, minHeight: "90px" }}
-              placeholder="Введите подробное описание и инструкции к упражнению..."
-              value={editing.instructions}
-              onChange={(e) => setEditing({ ...editing, instructions: e.target.value })}
-            />
-          </div>
-
-          {/* Видеозапись */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "14px" }}>
-            <label style={labelStyle}>Видеозапись</label>
-            <input
-              className="form-field__input"
-              style={{ ...inputStyle, marginBottom: "8px" }}
-              placeholder="Вставьте ссылку на видео (YouTube / Rutube / CDN)..."
-              value={editing.videoKey.startsWith("data:") ? "" : editing.videoKey}
-              onChange={(e) => handleVideoUrlChange(e.target.value)}
-            />
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <button
-                type="button"
-                style={buttonSecondaryStyle}
-                onClick={() => document.getElementById("workout-video-upload").click()}
-              >
-                {editing.videoKey ? "Заменить видеофайл (MP4)" : "Загрузить видеофайл (MP4)"}
-              </button>
-              {editing.videoKey && (
-                <button
-                  type="button"
-                  style={{ ...buttonSecondaryStyle, color: "#d93025", borderColor: "#fca5a5" }}
-                  onClick={() => setEditing({ ...editing, videoKey: "", coverUrl: "" })}
-                >
-                  Удалить видео
-                </button>
-              )}
-              <input
-                id="workout-video-upload"
-                type="file"
-                accept="video/mp4"
-                onChange={handleVideoUpload}
-                style={{ display: "none" }}
-              />
-            </div>
-            {editing.videoKey && (
-              <p style={{ ...tipStyle, color: "#1BAB7C", marginBottom: "6px" }}>
-                ✓ Видео привязано ({editing.videoKey.startsWith("data:") ? "загруженный файл MP4" : "внешняя ссылка"})
-              </p>
-            )}
-            {editing.videoKey && (() => {
-              const youtubeUrl = getYouTubeEmbedUrl(editing.videoKey);
-              return (
-                <div style={{ marginTop: "8px", border: "1px solid var(--color-border)", borderRadius: "14px", padding: "10px", backgroundColor: "#f9f9f9" }}>
-                  <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-text-secondary)", display: "block", marginBottom: "6px" }}>
-                    Предпросмотр видео:
-                  </span>
-                  {youtubeUrl ? (
-                    <iframe
-                      width="100%"
-                      height="160"
-                      src={youtubeUrl}
-                      title="YouTube video player"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{ borderRadius: "8px", backgroundColor: "#000" }}
-                    />
-                  ) : (
-                    <video
-                      src={editing.videoKey}
-                      controls
-                      playsInline
-                      style={{ width: "100%", maxHeight: "160px", borderRadius: "8px", backgroundColor: "#000" }}
-                    />
-                  )}
-                </div>
-              );
-            })()}
-          </div>
 
           {/* Обложка / Превью */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "14px" }}>
@@ -2912,15 +3455,16 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
 
 // ------------------------- ГЛАВНЫЙ ЭКРАН -------------------------
 const TABS = [
-  { id: "users", label: "Пользователи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg> },
-  { id: "workouts", label: "Тренировки", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg> },
-  { id: "products", label: "Товары", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg> },
-  { id: "articles", label: "Статьи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
-  { id: "podcasts", label: "Подкасты", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg> },
-  { id: "orders", label: "Заказы", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg> },
+  { id: "users", labelKey: "Пользователи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg> },
+  { id: "workouts", labelKey: "Тренировки", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg> },
+  { id: "products", labelKey: "Товары", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg> },
+  { id: "articles", labelKey: "Статьи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
+  { id: "podcasts", labelKey: "Подкасты", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg> },
+  { id: "orders", labelKey: "Заказы", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg> },
 ];
 
 export default function AdminScreen({ onNavigate }) {
+  const { language, t } = useLanguage();
   const [tab, setTab] = useState("users");
 
   // Глобальные всплывающие UX элементы
@@ -2995,22 +3539,22 @@ export default function AdminScreen({ onNavigate }) {
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Назад</span>
+          <span>{t("Назад")}</span>
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Панель администратора</h1>
-          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Управление приложением</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>{t("Панель админа")}</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>{t("Управление приложением")}</p>
         </div>
       </header>
 
       {/* Вкладки */}
       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }} className="no-scrollbar">
-        {TABS.map((t) => {
-          const active = tab === t.id;
+        {TABS.map((tItem) => {
+          const active = tab === tItem.id;
           return (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+              key={tItem.id}
+              onClick={() => setTab(tItem.id)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -3026,8 +3570,8 @@ export default function AdminScreen({ onNavigate }) {
                 cursor: "pointer",
               }}
             >
-              {t.icon}
-              <span>{t.label}</span>
+              {tItem.icon}
+              <span>{t(tItem.labelKey)}</span>
             </button>
           );
         })}
@@ -3055,10 +3599,12 @@ export default function AdminScreen({ onNavigate }) {
         <div className="modal-overlay-admin" onClick={() => setDeleteConfirm(null)}>
           <div className="modal-admin" onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: "0 0 10px 0", fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)" }}>
-              Подтверждение удаления
+              {t("Подтверждение удаления")}
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: "1.5", fontWeight: 300 }}>
-              Вы уверены, что хотите удалить {deleteConfirm.type === "product" ? "товар" : deleteConfirm.type === "article" ? "статью" : deleteConfirm.type === "exercise" ? "тренировку" : "медиафайл"} <strong>«{deleteConfirm.name}»</strong>? Это действие необратимо.
+              {language === "EN"
+                ? `Are you sure you want to delete ${deleteConfirm.type === "product" ? "product" : deleteConfirm.type === "article" ? "article" : deleteConfirm.type === "exercise" ? "workout" : "media file"}`
+                : `Вы уверены, что хотите удалить ${deleteConfirm.type === "product" ? "товар" : deleteConfirm.type === "article" ? "статью" : deleteConfirm.type === "exercise" ? "тренировку" : "медиафайл"}`} <strong>«{deleteConfirm.name}»</strong>? {language === "EN" ? "This action cannot be undone." : "Это действие необратимо."}
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
               <button
@@ -3069,13 +3615,13 @@ export default function AdminScreen({ onNavigate }) {
                   setDeleteConfirm(null);
                 }}
               >
-                Удалить
+                {t("Удалить")}
               </button>
               <button
                 style={{ ...buttonSecondaryStyle, flex: 1 }}
                 onClick={() => setDeleteConfirm(null)}
               >
-                Отмена
+                {t("Отмена")}
               </button>
             </div>
           </div>

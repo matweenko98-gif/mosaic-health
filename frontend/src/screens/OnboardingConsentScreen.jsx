@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * OnboardingConsentScreen — Второй экран онбординга (согласие с методикой).
  */
 export default function OnboardingConsentScreen({ onNavigate }) {
+  const { t } = useLanguage();
   const [agreedSafety, setAgreedSafety] = useState(false);
   const [agreedPersonal, setAgreedPersonal] = useState(false);
 
@@ -13,10 +15,10 @@ export default function OnboardingConsentScreen({ onNavigate }) {
     <section className="screen screen--onboarding" id="screen-onboarding-consent">
       <header className="screen__header text-center" style={{ margin: "12px 0 8px" }}>
         <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px" }}>
-          Согласие с методикой
+          {t("Согласие с методикой")}
         </h1>
         <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
-          Правила безопасных тренировок
+          {t("Правила безопасных тренировок")}
         </p>
       </header>
 
@@ -37,17 +39,13 @@ export default function OnboardingConsentScreen({ onNavigate }) {
           }}
         >
           <p style={{ marginBottom: "8px" }}>
-            Методика «Мозаика Здоровья» базируется на основах прикладной кинезиологии
-            и правильной биомеханике движения.
+            {t("Методика «Мозаика Здоровья» базируется на основах прикладной кинезиологии и правильной биомеханике движения.")}
           </p>
           <p style={{ marginBottom: "8px" }}>
-            Перед началом тренировок, особенно по направлению «Гиревое дыхание»,
-            убедитесь в отсутствии острых воспалительных процессов и проконсультируйтесь
-            со специалистом центра.
+            {t("Перед началом тренировок, особенно по направлению «Гиревое дыхание», убедитесь в отсутствии острых воспалительных процессов и проконсультируйтесь со специалистом центра.")}
           </p>
           <p>
-            Выполняя упражнения, строго соблюдайте дозировку нагрузки и контролируйте
-            дыхательный ритм во избежание гипервентиляции.
+            {t("Выполняя упражнения, строго соблюдайте дозировку нагрузки и контролируйте дыхательный ритм во избежание гипервентиляции.")}
           </p>
         </div>
 
@@ -73,7 +71,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             onChange={(e) => setAgreedSafety(e.target.checked)}
             style={{ width: "18px", height: "18px", cursor: "pointer", marginTop: "2px", accentColor: "#1BAB7C" }}
           />
-          <span>Я ознакомлен(а) с противопоказаниями и правилами безопасности</span>
+          <span>{t("Я ознакомлен(а) с противопоказаниями и правилами безопасности")}</span>
         </label>
 
         {/* Второй Чекбокс */}
@@ -99,7 +97,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             style={{ width: "18px", height: "18px", cursor: "pointer", marginTop: "2px", accentColor: "#1BAB7C" }}
           />
           <span>
-            Обязуюсь использовать материалы методики только для личного использования
+            {t("Обязуюсь использовать материалы методики только для личного использования")}
           </span>
         </label>
 
@@ -117,7 +115,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
               transition: "all 0.2s ease"
             }}
           >
-            Начать использование
+            {t("Начать использование")}
           </button>
           <button
             style={{
@@ -139,7 +137,7 @@ export default function OnboardingConsentScreen({ onNavigate }) {
             }}
             onClick={() => onNavigate("onboarding-video")}
           >
-            Назад
+            {t("Назад")}
           </button>
         </div>
       </div>

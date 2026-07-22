@@ -52,7 +52,7 @@ export class ShopService {
       if (!product) throw new BadRequestException(`Товар ${item.productId} не найден`);
       return {
         productId: product.id,
-        name: product.name,
+        name: product.name_ru || product.name_en || '',
         price: product.price,
         quantity: item.quantity,
       };

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * SpecialistCodesScreen — Панель врача: коды доступа к индивидуальным тренировкам.
  * Врач создаёт коды, называет их пациентам; здесь видно, кто какой код активировал.
  */
 export default function SpecialistCodesScreen({ onNavigate }) {
+  const { t } = useLanguage();
   const [codes, setCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState("");
@@ -15,7 +17,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
   
   // Новые состояния
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("Все"); // Все, Свободные, Активные, Отозванные
+  const [activeTab, setActiveTab] = useState("Все"); // Все, Неактивированные, Активные, Отозванные
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [revokeConfirmId, setRevokeConfirmId] = useState(null);
   const [shareModalData, setShareModalData] = useState(null);
@@ -23,7 +25,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
 
   // Показ всплывающего уведомления
   const showToast = (message) => {
-    setToast({ visible: true, message });
+    setToast({ visible: true, message: t(message) });
   };
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
       const list = await api.get("/specialist/codes");
       setCodes(Array.isArray(list) ? list : []);
     } catch (e) {
-      setError(e?.message || "Не удалось загрузить коды");
+      setError(e?.message || t("Не удалось загрузить коды"));
     } finally {
       setLoading(false);
     }
@@ -181,22 +183,22 @@ export default function SpecialistCodesScreen({ onNavigate }) {
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Назад</span>
+          <span>{t("Назад")}</span>
         </button>
         <div className="header-title-container">
-          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>Панель врача</h1>
-          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>Коды доступа к индивидуальным тренировкам</p>
+          <h1 className="screen__title" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>{t("Панель врача")}</h1>
+          <p className="screen__subtitle" style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>{t("Коды доступа к индивидуальным тренировкам")}</p>
         </div>
       </header>
 
       {/* Создание кода */}
       <div className="card" style={{ padding: "16px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", marginBottom: "8px" }}>
         <label style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: 700, color: "var(--color-text)", display: "block", marginBottom: "6px" }}>
-          Пометка (для кого код)
+          {t("Пометка (для кого код)")}
         </label>
         <input
           type="text"
-          placeholder="например: Иван Петров, спина"
+          placeholder={t("например: Иван Петров, спина")}
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           className="form-field__input"
@@ -208,12 +210,12 @@ export default function SpecialistCodesScreen({ onNavigate }) {
           className="btn-save"
           style={{ opacity: creating ? 0.7 : 1 }}
         >
-          {creating ? "Создание…" : "+ Добавить код"}
+          {creating ? t("Генерация...") : `+ ${t("Сгенерировать новый код")}`}
         </button>
 
         {lastCreated && (
           <div style={{ marginTop: "14px", padding: "14px", borderRadius: "14px", background: "rgba(27,171,124,0.08)", border: "1px solid rgba(27,171,124,0.3)", textAlign: "center" }}>
-            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginBottom: "4px" }}>Новый код создан:</div>
+            <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginBottom: "4px" }}>{t("Новый код создан:")}</div>
             <div style={{ fontSize: "22px", fontWeight: 800, fontFamily: "'Manrope', sans-serif", letterSpacing: "2px", color: "#007F63" }}>{lastCreated}</div>
             
             <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "10px" }}>
@@ -233,7 +235,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                   cursor: "pointer"
                 }}
               >
-                Скопировать
+                {t("Скопировать")}
               </button>
               <button
                 onClick={() => handleShare(lastCreated)}
@@ -251,7 +253,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                   cursor: "pointer"
                 }}
               >
-                Поделиться
+                {t("Поделиться")}
               </button>
             </div>
           </div>
@@ -268,7 +270,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
       <div style={{ position: "relative", marginTop: "8px" }}>
         <input
           type="text"
-          placeholder="Поиск по пациенту, пометке или коду..."
+          placeholder={t("Поиск по коду, пометке или имени пациента...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -349,7 +351,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                 boxShadow: isActive ? "0 4px 10px rgba(0, 127, 99, 0.15)" : "none"
               }}
             >
-              {tab} <span style={{ opacity: 0.7, fontSize: "11px", marginLeft: "2px" }}>({count})</span>
+              {t(tab)} <span style={{ opacity: 0.7, fontSize: "11px", marginLeft: "2px" }}>({count})</span>
             </button>
           );
         })}
@@ -357,10 +359,10 @@ export default function SpecialistCodesScreen({ onNavigate }) {
 
       {/* Список кодов */}
       {loading ? (
-        <p style={{ color: "var(--color-text-secondary)", fontSize: "13px" }}>Загрузка…</p>
+        <p style={{ color: "var(--color-text-secondary)", fontSize: "13px" }}>{t("Загрузка…")}</p>
       ) : sortedCodes.length === 0 ? (
         <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", fontWeight: 300, textAlign: "center", padding: "20px 0" }}>
-          Коды не найдены.
+          {t("Коды не найдены")}
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -402,7 +404,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                     </div>
                     {c.label && (
                       <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", fontWeight: 500, marginTop: "2px" }}>
-                        Пометка: <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{c.label}</span>
+                        {t("Пометка")}: <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{c.label}</span>
                       </div>
                     )}
                   </div>
@@ -428,13 +430,13 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                         whiteSpace: "nowrap"
                       }}
                     >
-                      {free ? "Не активирован" : active ? "Активен" : "Отозван"}
+                      {free ? t("Свободен") : active ? t("Активирован") : t("Отозван")}
                     </span>
 
                     {(free || revoked) && (
                       <button
                         onClick={() => setDeleteConfirm({ id: c.id, code: c.code })}
-                        title="Удалить код"
+                        title={t("Удалить")}
                         style={{
                           border: "none",
                           background: "none",
@@ -475,23 +477,23 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                     }}
                   >
                     <div style={{ fontWeight: 600, color: "var(--color-text)" }}>
-                      Пациент: <span style={{ fontWeight: 700 }}>{c.activatedByName || "Зарегистрирован"}</span>
+                      {t("Пациент:")} <span style={{ fontWeight: 700 }}>{c.activatedByName || t("Пользователь")}</span>
                     </div>
                     <div style={{ color: "var(--color-text-secondary)", fontSize: "11.5px" }}>
                       Email: {c.activatedByEmail}
                     </div>
                     <div style={{ color: "var(--color-text-secondary)", fontSize: "11.5px" }}>
-                      Зарегистрирован: {formatDate(c.activatedByRegisteredAt, "—")}
+                      {t("Активирован:")} {formatDate(c.activatedByRegisteredAt, "—")}
                     </div>
                     <div style={{ height: "1px", background: "var(--color-border)", margin: "4px 0" }} />
                     <div style={{ display: "flex", justifyContent: "space-between", color: "var(--color-text)" }}>
-                      <span>Выполнено тренировок:</span>
+                      <span>{t("Всего выполнено")}:</span>
                       <span style={{ fontWeight: 700 }}>{c.workoutCount}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", color: "var(--color-text)" }}>
-                      <span>Последняя активность:</span>
+                      <span>{t("Последняя активность:")}</span>
                       <span style={{ fontWeight: 600, color: c.lastWorkout ? "var(--color-text)" : "var(--color-text-secondary)" }}>
-                        {formatDate(c.lastWorkout)}
+                        {formatDate(c.lastWorkout, "—")}
                       </span>
                     </div>
                   </div>
@@ -524,7 +526,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                     </svg>
-                    Скопировать
+                    {t("Скопировать")}
                   </button>
 
                   <button
@@ -556,7 +558,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                     </svg>
-                    Поделиться
+                    {t("Поделиться")}
                   </button>
 
                   {active && (
@@ -577,7 +579,7 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                       onMouseEnter={(e) => e.target.style.backgroundColor = "#fce8e6"}
                       onMouseLeave={(e) => e.target.style.backgroundColor = "#fff5f5"}
                     >
-                      Отозвать
+                      {t("Отозвать")}
                     </button>
                   )}
                 </div>

@@ -1,14 +1,8 @@
 import React, { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * WorkoutModal — модальное окно «плеера» тренировки.
- *
- * Показывает заглушку видеоплеера, название тренировки,
- * сетку параметров, описание методики
- * и кнопку «Отметить выполнение».
- * 
- * Расширен возможностью воспроизведения плейлиста,
- * навигации назад/вперед и переключения паузы.
  */
 export default function WorkoutModal({
   workout,
@@ -21,6 +15,7 @@ export default function WorkoutModal({
 }) {
   if (!workout) return null;
 
+  const { t, currentLang } = useLanguage();
   const [isPlaying, setIsPlaying] = useState(true);
 
   const isLastExercise = playlist.length === 0 || currentIndex === playlist.length - 1;
@@ -191,7 +186,7 @@ export default function WorkoutModal({
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>К списку</span>
+          <span>{t("К списку")}</span>
         </button>
 
         {/* Видеоплеер тренировки (реальное видео или заглушка) */}
@@ -233,7 +228,7 @@ export default function WorkoutModal({
               color: "var(--color-text-secondary)"
             }}>
               <span style={{ fontSize: "14px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)" }}>
-                Тренировка приостановлена
+                {t("Тренировка приостановлена")}
               </span>
               <button
                 onClick={() => setIsPlaying(true)}
@@ -253,7 +248,7 @@ export default function WorkoutModal({
                   justifyContent: "center"
                 }}
               >
-                ▶ Продолжить
+                {t("▶ Продолжить")}
               </button>
             </div>
           ) : (
@@ -273,7 +268,7 @@ export default function WorkoutModal({
                 </svg>
               </div>
               <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", marginTop: "12px", letterSpacing: ".3px" }}>
-                [Видеоплеер — воспроизведение]
+                [{currentLang === "EN" ? "Video Player — Playing" : "Видеоплеер — воспроизведение"}]
               </span>
             </>
           )}
@@ -298,7 +293,7 @@ export default function WorkoutModal({
                 color: "var(--color-text)"
               }}
             >
-              ← Назад
+              ← {t("Назад")}
             </button>
             
             {!workout.video && (
@@ -328,14 +323,14 @@ export default function WorkoutModal({
                     <rect x="6" y="4" width="4" height="16" rx="1" />
                     <rect x="14" y="4" width="4" height="16" rx="1" />
                   </svg>
-                  <span>Пауза</span>
+                  <span>{t("Пауза")}</span>
                 </>
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
-                  <span>Старт</span>
+                  <span>{t("Старт")}</span>
                 </>
               )}
             </button>
@@ -357,7 +352,7 @@ export default function WorkoutModal({
                 color: "var(--color-text)"
               }}
             >
-              Вперед →
+              {t("Вперед")} →
             </button>
           </div>
         )}
@@ -365,11 +360,11 @@ export default function WorkoutModal({
         {/* Название тренировки */}
         <div style={{ marginTop: "6px", marginBottom: "2px" }} className="shrink-0">
           <h2 style={{ margin: 0, fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "18px", color: "var(--color-text)" }}>
-            {workout.title}
+            {currentLang === "EN" ? (workout.title_en || t(workout.title)) : (workout.title_ru || workout.title)}
           </h2>
           {nextWorkout && (
             <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: "4px", fontWeight: 300 }}>
-              Далее: {nextWorkout.title}
+              {t("Далее")}: {currentLang === "EN" ? (nextWorkout.title_en || t(nextWorkout.title)) : (nextWorkout.title_ru || nextWorkout.title)}
             </div>
           )}
         </div>
@@ -388,7 +383,7 @@ export default function WorkoutModal({
           }} className="shrink-0">
             <div style={{ borderRight: "1px solid var(--color-border)" }}>
               <div style={{ fontSize: "10px", fontFamily: "'Manrope', sans-serif", letterSpacing: ".5px", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "700", marginBottom: "4px" }}>
-                Время упражнения
+                {t("Время упражнения")}
               </div>
               <div style={{ fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)" }}>
                 {workout.duration || "15 мин"}
@@ -396,7 +391,7 @@ export default function WorkoutModal({
             </div>
             <div>
               <div style={{ fontSize: "10px", fontFamily: "'Manrope', sans-serif", letterSpacing: ".5px", textTransform: "uppercase", color: "var(--color-text-secondary)", fontWeight: "700", marginBottom: "4px" }}>
-                Общее время
+                {t("Общее время")}
               </div>
               <div style={{ fontSize: "16px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", color: "var(--color-text)" }}>
                 {totalDurationMin ? `${totalDurationMin} мин` : (workout.duration || "15 мин")}
@@ -408,10 +403,10 @@ export default function WorkoutModal({
         {/* Блок: О методике */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", margin: "8px 0" }}>
           <h4 style={{ margin: 0, fontSize: "10px", fontFamily: "'Manrope', sans-serif", fontWeight: "800", textTransform: "uppercase", color: "var(--color-text-secondary)", letterSpacing: ".8px" }}>
-            О методике
+            {t("О методике")}
           </h4>
           <p style={{ margin: 0, fontSize: "13.5px", lineHeight: "1.6", color: "#4a4a4a", fontWeight: 300 }}>
-            {aboutText}
+            {t(aboutText)}
           </p>
         </div>
 
@@ -440,7 +435,7 @@ export default function WorkoutModal({
               }}
               onClick={handleComplete}
             >
-              ✓ Завершить тренировку
+              {t("✓ Завершить тренировку")}
             </button>
           )}
           
@@ -465,7 +460,7 @@ export default function WorkoutModal({
               transition: "background-color 0.15s ease"
             }}
           >
-            Закрыть
+            {t("Закрыть")}
           </button>
         </div>
       </div>

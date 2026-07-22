@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * LoginScreen — Экран Входа в приложение.
  * Выполнен в стиле просторного Apple-минимализма.
  */
 export default function LoginScreen({ onNavigate, onLogin }) {
+  const { t } = useLanguage();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -14,15 +16,15 @@ export default function LoginScreen({ onNavigate, onLogin }) {
     e.preventDefault();
     const trimmed = identifier.trim().toLowerCase();
     if (!trimmed) {
-      setError("Пожалуйста, введите Email");
+      setError(t("Пожалуйста, введите Email"));
       return;
     }
     if (!trimmed.includes("@") || !trimmed.includes(".")) {
-      setError("Вход выполняется по Email");
+      setError(t("Вход выполняется по Email"));
       return;
     }
     if (!password.trim()) {
-      setError("Пожалуйста, введите пароль");
+      setError(t("Пожалуйста, введите пароль"));
       return;
     }
 
@@ -31,7 +33,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
     try {
       await onLogin(trimmed, password);
     } catch (err) {
-      setError(err?.message || "Не удалось войти. Проверьте данные.");
+      setError(err?.message || t("Не удалось войти. Проверьте данные."));
     } finally {
       setIsSubmitting(false);
     }
@@ -40,9 +42,9 @@ export default function LoginScreen({ onNavigate, onLogin }) {
   return (
     <section className="screen screen--onboarding" id="screen-login">
       <header className="screen__header text-center" style={{ marginBottom: "12px" }}>
-        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>Вход</h1>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "26px", color: "var(--color-text)", letterSpacing: "-.6px", margin: 0 }}>{t("Вход")}</h1>
         <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 300 }}>
-          Добро пожаловать в Мозаику Здоровья
+          {t("Добро пожаловать в Мозаику Здоровья")}
         </p>
       </header>
 
@@ -57,12 +59,12 @@ export default function LoginScreen({ onNavigate, onLogin }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <label htmlFor="login-id" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-              Email или Телефон
+              {t("Email или Телефон")}
             </label>
             <input
               id="login-id"
               type="text"
-              placeholder="example@mail.com или +7..."
+              placeholder="example@mail.com"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               className="form-field__input"
@@ -74,7 +76,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <label htmlFor="login-password" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
-              Пароль
+              {t("Пароль")}
             </label>
             <input
               id="login-password"
@@ -98,7 +100,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
               opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            {isSubmitting ? "Вход…" : "Войти"}
+            {isSubmitting ? t("Вход…") : t("Войти")}
           </button>
         </form>
 
@@ -117,7 +119,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
               fontFamily: "'Manrope', sans-serif"
             }}
           >
-            Нет аккаунта? Зарегистрироваться
+            {t("Нет аккаунта? Зарегистрироваться")}
           </button>
         </div>
       </div>

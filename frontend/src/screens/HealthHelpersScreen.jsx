@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * HealthHelpersScreen — Экран «Масла и Омега-3».
  */
 export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("aromatherapy"); // "aromatherapy" | "omega3"
 
   function handleBuyClick() {
@@ -13,7 +15,7 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
   }
 
   function handleTelegramClick(expert) {
-    alert(`Переход в Telegram-канал эксперта (${expert})`);
+    alert(t("Переход в Telegram-канал эксперта") + ` (${expert})`);
   }
 
   return (
@@ -44,14 +46,14 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Назад</span>
+          <span>{t("Назад")}</span>
         </button>
         <div style={{ marginTop: "4px" }}>
           <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "24px", color: "var(--color-text)", letterSpacing: "-.5px", margin: 0 }}>
-            Масла и Омега-3
+            {t("Масла и Омега-3")}
           </h1>
           <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "2px", fontWeight: 300 }}>
-            Рекомендации и проверенные бренды
+            {t("Рекомендации и проверенные бренды")}
           </p>
         </div>
       </header>
@@ -69,12 +71,12 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
         flexShrink: 0
       }} className="no-scrollbar">
         {[
-          { id: "aromatherapy", label: "Ароматерапия", icon: (
+          { id: "aromatherapy", label: t("Ароматерапия"), icon: (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
             </svg>
           )},
-          { id: "omega3", label: "Омега-3", icon: (
+          { id: "omega3", label: t("Омега-3"), icon: (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>
             </svg>
@@ -148,17 +150,17 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
               </svg>
             </div>
             <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", letterSpacing: ".3px" }}>
-              [Фотография эфирных масел doTERRA]
+              [{t("Фотография эфирных масел doTERRA")}]
             </span>
           </div>
 
           {/* Вовлекающий баннер (белая просторная карточка) */}
           <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
-              Почему мы используем масла в методике
+              {t("Почему мы используем масла в методике")}
             </h3>
             <p style={{ fontSize: "13.5px", lineHeight: "1.68", color: "#4a4a4a", margin: 0, fontWeight: 300 }}>
-              Эфирные масла терапевтического класса помогают подготовить дыхательную систему к тренировкам, улучшают экскурсию легких, способствуют глубокому фокусу и помогают быстрее восстановить мышцы после нагрузок.
+              {t("Эфирные масла терапевтического класса помогают подготовить дыхательную систему к тренировкам, улучшают экскурсию легких, способствуют глубокому фокусу и помогают быстрее восстановить мышцы после нагрузок.")}
             </p>
           </div>
 
@@ -185,7 +187,7 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
                 transition: "background-color 0.15s ease"
               }}
             >
-              Купить масло
+              {t("Купить масло")}
             </button>
             <button
               onClick={() => handleTelegramClick("@AromaSpecialist")}
@@ -207,7 +209,7 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
                 transition: "background-color 0.15s ease"
               }}
             >
-              Telegram эксперта
+              {t("Telegram эксперта")}
             </button>
           </div>
         </div>
@@ -248,17 +250,17 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
               </svg>
             </div>
             <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", color: "var(--color-text-secondary)", letterSpacing: ".3px" }}>
-              [Фотография баночки Омега-3]
+              [{t("Фотография баночки Омега-3")}]
             </span>
           </div>
 
           {/* Описание пользы (белая просторная карточка) */}
           <div className="card" style={{ padding: "24px", borderRadius: "20px", background: "#fff", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}>
             <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)", margin: "0 0 10px 0" }}>
-              Описание
+              {t("Описание")}
             </h3>
             <p style={{ fontSize: "13.5px", lineHeight: "1.68", color: "#4a4a4a", margin: 0, fontWeight: 300 }}>
-              Незаменимые жирные кислоты снижают системное воспаление, ускоряют восстановление связок и поддерживают эластичность сосудистой стенки при интенсивном гиревом дыхании. Омега-3 способствует укреплению клеточных мембран, поддерживает здоровье сердечно-сосудистой системы и повышает общую выносливость организма при регулярных физических нагрузках.
+              {t("Незаменимые жирные кислоты снижают системное воспаление, ускоряют восстановление связок и поддерживают эластичность сосудистой стенки при интенсивном гиревом дыхании. Омега-3 способствует укреплению клеточных мембран, поддерживает здоровье сердечно-сосудистой системы и повышает общую выносливость организма при регулярных физических нагрузках.")}
             </p>
           </div>
 
@@ -285,7 +287,7 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
                 transition: "background-color 0.15s ease"
               }}
             >
-              Купить Омега-3
+              {t("Купить Омега-3")}
             </button>
 
             <button
@@ -308,7 +310,7 @@ export default function HealthHelpersScreen({ onNavigate, onOpenShopCategory }) 
                 transition: "background-color 0.15s ease"
               }}
             >
-              Telegram эксперта
+              {t("Telegram эксперта")}
             </button>
           </div>
         </div>
