@@ -427,4 +427,28 @@ export const translations = {
   "Пользователи не найдены": "No users found",
   "Роль": "Role",
   "Без названия": "Untitled",
+
+  // Code Activation & Patient Access
+  "Введите код от врача": "Enter access code from doctor",
+  "Введите код доступа": "Enter access code",
+  "Доступ открыт!": "Access unlocked!",
+  "Не удалось активировать код": "Failed to activate code",
+  "Код успешно активирован! Доступ открыт.": "Code successfully activated! Access unlocked.",
+  "Код не найден. Проверьте правильность.": "Code not found. Please check and try again.",
+  "Этот код был отозван и больше недействителен": "This code has been revoked and is no longer valid.",
+  "Этот код уже использован на другом аккаунте": "This code is already used on another account.",
+
+  // Onboarding & Registration
+  "Начать использование": "Start Using",
+  "Согласие с методикой": "Consent to Methodology",
+  "Правила безопасных тренировок": "Safe Workout Rules",
+  "Знакомство с методикой центра": "Introduction to Center's Methodology",
+  "Посмотрите краткое вводное видео о нашей уникальной системе оздоровления и восстановления баланса тела.": "Watch a brief introductory video about our unique health and body balance recovery system.",
+  "У меня уже есть аккаунт — войти": "I already have an account — Sign In",
+  "Методика «Мозаика Здоровья» базируется на основах прикладной кинезиологии и правильной биомеханике движения.": "The «Mosaic Health» methodology is based on applied kinesiology and correct movement biomechanics.",
+  "Перед началом тренировок, особенно по направлению «Гиревое дыхание», убедитесь в отсутствии острых воспалительных процессов и проконсультируйтесь со специалистом центра.": "Before starting workouts, especially in «Kettlebell Breathing», ensure there are no acute inflammatory processes and consult with a specialist at the center.",
+  "Выполняя упражнения, строго соблюдайте дозировку нагрузки и контролируйте дыхательный ритм во избежание гипервентиляции.": "When performing exercises, strictly observe the load dosage and control your breathing rhythm to avoid hyperventilation.",
+  "Я ознакомлен(а) с противопоказаниями и правилами безопасности": "I am familiar with contraindications and safety rules",
+  "Обязуюсь использовать материалы методики только для личного использования": "I undertake to use the methodology materials for personal use only",
 };
+

@@ -23,19 +23,20 @@ export default function ProfileScreen({
   const [isEditing, setIsEditing] = useState(false);
 
   // Состояния для активации кода
-  const [hasAccess, setHasAccess] = useState(false);
+  const [hasAccess, setHasAccess] = useState(isSpecialist || isAdmin);
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [codeSuccess, setCodeSuccess] = useState("");
   const [codeSubmitting, setCodeSubmitting] = useState(false);
 
   useEffect(() => {
-    const isPatient = role === "PATIENT" || role === "patient" || (!isSpecialist && !isAdmin);
-    if (isPatient) {
-      api.get("/me/access")
-        .then((r) => setHasAccess(!!r?.hasAccess))
-        .catch(() => setHasAccess(false));
+    if (isSpecialist || isAdmin) {
+      setHasAccess(true);
+      return;
     }
+    api.get("/me/access")
+      .then((r) => setHasAccess(!!r?.hasAccess))
+      .catch(() => setHasAccess(false));
   }, [role, isSpecialist, isAdmin]);
 
   // Локальные состояния для полей формы редактирования
@@ -619,7 +620,7 @@ export default function ProfileScreen({
                       onClick={async () => {
                         const code = codeInput.trim();
                         if (!code) {
-                          setCodeError("Введите код доступа");
+                          setCodeError(t("Введите код доступа"));
                           return;
                         }
                         setCodeError("");
@@ -628,10 +629,10 @@ export default function ProfileScreen({
                         try {
                           await api.post("/me/activate-code", { code });
                           setHasAccess(true);
-                          setCodeSuccess("Код успешно активирован! Доступ открыт.");
+                          setCodeSuccess(t("Код успешно активирован! Доступ открыт."));
                           setCodeInput("");
                         } catch (err) {
-                          setCodeError(err?.message || "Не удалось активировать код");
+                          setCodeError(t(err?.message) || t("Не удалось активировать код"));
                         } finally {
                           setCodeSubmitting(false);
                         }

@@ -194,26 +194,33 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const catalogWorkouts = React.useMemo(() => {
     const isRu = currentLang === "RU";
     return rawCatalog
-      .filter((ex) => isRu ? !!ex.title_ru : !!ex.title_en)
+      .filter((ex) => (isRu ? !!ex.title_ru || !!ex.title_en : !!ex.title_en || !!ex.title_ru))
       .map((ex) => formatExercise(ex, currentLang));
   }, [rawCatalog, currentLang]);
 
   const homeworkWorkouts = React.useMemo(() => {
     const isRu = currentLang === "RU";
     return rawHomework
-      .filter((ex) => isRu ? !!ex.title_ru : !!ex.title_en)
+      .filter((ex) => (isRu ? !!ex.title_ru || !!ex.title_en : !!ex.title_en || !!ex.title_ru))
       .map((ex) => formatExercise(ex, currentLang));
   }, [rawHomework, currentLang]);
 
   // Состояние активного таба для домашних тренировок
   const [selectedHomeworkTab, setSelectedHomeworkTab] = useState("Все");
 
+  const userRoleUpper = (user?.role || "").toUpperCase();
+  const isSpecialistOrAdmin = userRoleUpper === "ADMIN" || userRoleUpper === "SPECIALIST";
+
   // Доступ к индивидуальным тренировкам открывается кодом от врача (проверяется на сервере).
-  const [hasAccess, setHasAccess] = useState(false);
-  const isHomeworkUnlocked = hasAccess;
+  const [hasAccess, setHasAccess] = useState(isSpecialistOrAdmin);
+  const isHomeworkUnlocked = hasAccess || isSpecialistOrAdmin;
 
   useEffect(() => {
     let active = true;
+    if (isSpecialistOrAdmin) {
+      setHasAccess(true);
+      return;
+    }
     api
       .get("/me/access")
       .then((r) => {
@@ -225,7 +232,11 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isSpecialistOrAdmin]);
+
+  // Состояние видимости выделенного модального окна Домашнего задания
+  const [isHomeworkModalOpen, setIsHomeworkModalOpen] = useState(false);
+  const [isEditingComplex, setIsEditingComplex] = useState(false);
 
   // Окно активации кода доступа
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
@@ -236,7 +247,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   async function handleActivateCode() {
     const code = codeInput.trim();
     if (!code) {
-      setCodeError("Введите код от врача");
+      setCodeError(t("Введите код от врача"));
       return;
     }
     setCodeError("");
@@ -246,12 +257,12 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       setHasAccess(true);
       setIsCodeModalOpen(false);
       setCodeInput("");
-      setToast({ visible: true, message: "Доступ открыт!", type: "success" });
+      setToast({ visible: true, message: t("Доступ открыт!"), type: "success" });
       setIsSelectorOpen(false);
       setIsEditingComplex(customPlaylist.length === 0);
       setIsHomeworkModalOpen(true);
     } catch (err) {
-      setCodeError(err?.message || "Не удалось активировать код");
+      setCodeError(t(err?.message) || t("Не удалось активировать код"));
     } finally {
       setCodeSubmitting(false);
     }
@@ -347,10 +358,6 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
-
-  // Состояние видимости выделенного модального окна Домашнего задания
-  const [isHomeworkModalOpen, setIsHomeworkModalOpen] = useState(false);
-  const [isEditingComplex, setIsEditingComplex] = useState(false);
 
   useEffect(() => {
     if (!isSelectorOpen) {
@@ -528,7 +535,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "34px", lineHeight: 1.1, color: "#fff", letterSpacing: "-.6px", textShadow: "0 2px 14px rgba(0,30,22,.5)", maxWidth: "320px" }}>{t("Верните телу")}<br />{t("баланс и движение")}</span>
             <button onClick={() => setIsSelectorOpen(true)} style={{ display: "flex", border: "none", cursor: "pointer", alignItems: "center", gap: "8px", alignSelf: "flex-start", backgroundColor: "#fff", padding: "11px 18px", borderRadius: "999px", boxShadow: "0 8px 20px -6px rgba(0,30,22,.5)" }}>
               <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13px", color: "#007F63" }}>{t("Начать тренировку")}</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
             </button>
           </div>
         </div>
@@ -555,7 +562,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             style={{ position: "relative", height: "182px", borderRadius: "22px", overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", cursor: "pointer", justifyContent: "center", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)" }}
           >
             <div style={{ width: "54px", height: "54px", borderRadius: "16px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px -6px rgba(27,171,124,.4)" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1BAB7C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>
             </div>
             <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 600, fontSize: "12.5px", color: "#6E6E6E", letterSpacing: ".3px" }}>{t("Процесс тренировки")}</span>
           </div>
@@ -564,7 +571,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             style={{ marginTop: "13px", width: "100%", border: "none", cursor: "pointer", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", padding: "15px", borderRadius: "16px", boxShadow: "0 8px 20px -8px rgba(27,171,124,.6)", display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}
           >
             {t("Выбрать тренировку")}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
         </section>
 
@@ -587,9 +594,9 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               style={{ position: "absolute", top: "16px", right: "16px", width: "38px", height: "38px", borderRadius: "11px", background: "rgba(0,127,99,.1)", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               {isHomeworkUnlocked ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"><animate attributeName="rx" values="2;4;2" dur="2s" repeatCount="indefinite" /></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               )}
             </div>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "10px", letterSpacing: ".8px", color: "#007F63", background: "rgba(0,127,99,.1)", padding: "5px 11px", borderRadius: "999px" }}>
@@ -603,17 +610,17 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
               <span style={{ display: "flex", gap: "9px", fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#007F63", alignItems: "center" }}>
                 {isHomeworkUnlocked ? (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
                     {t("Открыть программу")}
                   </>
                 ) : (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     {t("Открывается по коду")}
                   </>
                 )}
               </span>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
             </div>
           </div>
         </section>
@@ -626,13 +633,13 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,148,124,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>{t("Масла и Омега-3")}</div>
               <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>{t("Нутрицевтики для здоровья тела")}</div>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
         </div>
 
@@ -644,13 +651,13 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "14px", background: "#fff", borderRadius: "18px", padding: "15px 16px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "46px", height: "46px", flex: "none", borderRadius: "13px", background: "rgba(0,127,99,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "15px", color: "#1d2321" }}>{t("Статьи и подкасты")}</div>
               <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px", fontWeight: 300 }}>{t("Знания о теле и движении")}</div>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
         </div>
 
@@ -985,7 +992,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                     {t("Индивидуальная программа реабилитации")}
                   </span>
                 </div>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007F63" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
               </button>
             </div>
 
@@ -1751,7 +1758,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
 
                   {/* Список тренировок с галочками/порядковыми номерами */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
-                    {homeworkExercises
+                    {homeworkWorkouts
                       .filter((item) => selectedHomeworkTab === "Все" || item.category === selectedHomeworkTab)
                       .filter((item) =>
                         item.title.toLowerCase().includes(homeworkSearch.toLowerCase()) ||

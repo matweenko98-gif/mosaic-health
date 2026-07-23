@@ -42,8 +42,8 @@ export class PatientCodesController {
   constructor(private readonly codes: CodesService) {}
 
   @Get('access')
-  access(@CurrentUser('id') userId: string) {
-    return this.codes.hasAccess(userId);
+  access(@CurrentUser() user: AuthUser) {
+    return this.codes.hasAccess(user);
   }
 
   @Post('activate-code')

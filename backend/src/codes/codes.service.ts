@@ -117,9 +117,12 @@ export class CodesService {
 
   // ---------- Пациент ----------
 
-  async hasAccess(userId: string) {
+  async hasAccess(user: AuthUser) {
+    if (user.role === Role.ADMIN || user.role === Role.SPECIALIST) {
+      return { hasAccess: true };
+    }
     const count = await this.prisma.accessCode.count({
-      where: { activatedById: userId, isRevoked: false },
+      where: { activatedById: user.id, isRevoked: false },
     });
     return { hasAccess: count > 0 };
   }
