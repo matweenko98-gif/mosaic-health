@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: backend
     # --include=dev нужен, чтобы при сборке были доступны инструменты (nest, prisma, tsx).
-    buildCommand: npm install --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy && npm run db:seed
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build && npx prisma db push && npm run db:seed
     startCommand: node dist/main.js
     healthCheckPath: /api/health
     envVars:
