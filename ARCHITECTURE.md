@@ -47,6 +47,9 @@
 | Mail | `mail/` | Отправка писем — **пока заглушка, пишет ссылки в лог** |
 | Prisma | `prisma/` | `PrismaService` — доступ к базе |
 
+`Exercises` теперь включает **админ-CRUD упражнений** (`exercises/exercises-admin.controller.ts`).
+Глобальный перехват ошибок — `common/all-exceptions.filter.ts` (подключён в `main.ts`).
+
 ### Ключевые механизмы авторизации (`auth/`)
 - `guards/jwt-auth.guard.ts` — **глобальный**, проверяет токен. Пропускает `@Public()`.
 - `guards/roles.guard.ts` — **глобальный**, проверяет `@Roles(...)`.
@@ -72,7 +75,8 @@
 | `GET/POST /api/me/history`, `GET /api/me/achievements` | вошедшие | `history/history.controller.ts` |
 | `GET /api/me/programs`, `/:id`, `/:id/progress` (GET/PATCH) | пациент (свои) | `programs/patient-programs.controller.ts` |
 | `GET /api/specialist/patients`, `POST/GET/PATCH/DELETE /api/specialist/programs` | врач/админ | `programs/specialist.controller.ts` |
-| `GET/POST /api/specialist/codes`, `DELETE /api/specialist/codes/:id` | врач/админ | `codes/codes.controller.ts` |
+| `GET/POST /api/specialist/codes`, `DELETE /api/specialist/codes/:id`, `POST /api/specialist/codes/:id/revoke` | врач/админ | `codes/codes.controller.ts` |
+| `POST/PATCH/DELETE /api/admin/exercises` | админ | `exercises/exercises-admin.controller.ts` |
 | `GET /api/me/access`, `POST /api/me/activate-code` | вошедшие | `codes/codes.controller.ts` |
 | `GET /api/articles`, `/:id`, `GET /api/podcasts`, `/:id` | вошедшие | `content/content.controller.ts` |
 | `POST/PATCH/DELETE /api/admin/articles`, `/api/admin/podcasts` | админ | `content/content-admin.controller.ts` |
@@ -93,15 +97,21 @@
 | `User` | Пользователь: email, пароль (хэш), **role** (PATIENT/SPECIALIST/ADMIN), имя, телефон, возраст, страна, аватар |
 | `UserSettings` | Напоминания, уведомления, язык |
 | `EmailToken` | Токены подтверждения email и сброса пароля |
-| `Exercise` | Упражнение: название, описание, длительность, категория, `videoKey`, `isIndividual` |
+| `Exercise` | Упражнение: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, длительность, категория, `videoKey`, `isIndividual` |
 | `Program` / `ProgramItem` | Индивидуальная программа врача пациенту и её упражнения (с порядком) |
 | `ProgramProgress` | Прогресс прохождения программы |
 | `WorkoutLog` | Запись о выполненной тренировке (история) |
-| `AccessCode` | **Код доступа**: `code` (5 букв), `label`, кто создал, кто активировал, когда |
-| `Article` / `Podcast` | Материалы (текст статьи в `body`, абзацы разделены пустой строкой) |
-| `Product` / `Order` / `OrderItem` | Магазин: товар (`imageKey`), заказ и его позиции |
+| `AccessCode` | **Код доступа**: `code` (5 букв), `label`, кто создал, кто активировал (`activatedById`), когда. Можно отозвать |
+| `Article` / `Podcast` | Материалы: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, у статьи `body_ru/body_en` |
+| `Product` / `Order` / `OrderItem` | Магазин: товар **двуязычный** (`name_ru/name_en`, `description_ru/description_en`, `imageKey`), заказ и его позиции |
 
 **Роли:** `PATIENT` (по умолчанию при регистрации), `SPECIALIST` (врач), `ADMIN`.
+
+> **⚠️ Двуязычность (RU/EN):** контент-таблицы (Exercise, Article, Podcast, Product) хранят поля на двух языках
+> (`*_ru` / `*_en`). Фронтенд выбирает язык через `useLanguage()` и показывает нужную версию.
+> При добавлении контентного поля заводи обе версии.
+> Часть админки прячет доп. параметры (публикация, наличие, картинка) внутри `description_*` как JSON —
+> фронтенд это распаковывает (см. `ShopScreen.jsx`, `CreatorMaterialsScreen.jsx`).
 
 ---
 
@@ -112,16 +122,20 @@
 | `src/App.jsx` | **Центр**: глобальное состояние + `renderScreen()` (switch по `currentScreen`). Сюда добавлять новые экраны |
 | `src/main.jsx` | Точка входа, оборачивает в `AuthProvider` |
 | `src/context/AuthContext.jsx` | Сессия: `user`, `isLoggedIn`, `login`, `register`, `logout`, восстановление сессии при загрузке |
+| `src/context/LanguageContext.jsx` | **Язык RU/EN**: хук `useLanguage()` → `t()` (перевод) и `currentLang` |
+| `src/lib/translations.js` | Словарь переводов интерфейса (RU/EN) |
 | `src/api/client.js` | Fetch-клиент: `api.get/post/patch/del`, токен в памяти, авто-refresh при 401 |
 | `src/api/auth.js` | Функции входа/регистрации/выхода/восстановления сессии |
 | `src/index.css` | ~1600 строк кастомных BEM-классов + CSS-переменные |
 | `src/data/mockData.js` | Остатки моков (история пуста, настройки) |
+| `src/data/originalExercises.js` | Исходный каталог упражнений (фронт) |
 | `src/data/countries.js` | Страны с флагами и телефонными кодами |
 
 ### Экраны (`src/screens/`) и их `currentScreen`-идентификаторы
 
 | id | Файл | Примечание |
 |---|---|---|
+| `role-selector` | `RoleSelectorScreen.jsx` | Экран выбора роли (bento-режим) |
 | `onboarding-video` | `OnboardingVideoScreen.jsx` | Первый экран, картинка-превью + кнопка входа |
 | `onboarding-consent` | `OnboardingConsentScreen.jsx` | Дисклеймер (90 дней, `localStorage.consentDate`) |
 | `login` / `register` | `LoginScreen.jsx` / `RegisterScreen.jsx` | Через сервер. Регистрация: 2 шага, флаги/коды стран |
@@ -225,3 +239,10 @@
 | 2026-07-01 | **Коды доступа**: модель `AccessCode`, панель врача, активация пациентом, 5 букв |
 | 2026-07-01 | **Панель администратора**: пользователи и роли, товары, статьи, подкасты, заказы |
 | 2026-07-01 | Магазин и материалы переведены на данные с сервера (тексты статей и фото товаров — в базе) |
+| 2026-07-01 | Документация: `ARCHITECTURE.md` (карта проекта) + автодеплой Render через Deploy Hook |
+| 2026-07-20 | *(второй разработчик)* Экран выбора роли (bento), рефакторинг админки, категории и черновики |
+| 2026-07-20 | *(второй разработчик)* Коды: активация при регистрации и в профиле, отзыв кода, дата регистрации пациента |
+| 2026-07-21 | *(второй разработчик)* Админ-управление тренировками, конструктор плейлистов, дублирование, превью-плеер |
+| 2026-07-22 | *(второй разработчик)* **Двуязычность RU/EN** на всех экранах, модалках и в админке (поля `*_ru`/`*_en`) |
+| 2026-07-24 | *(второй разработчик)* Глобальный перехват ошибок; сборка Render через `prisma db push` |
+| 2026-07-24 | Правила для ИИ (`AGENTS.md`, `.ai-rules`, `.cursorrules`, Copilot) + напоминание обновлять карту (GitHub Action) |
