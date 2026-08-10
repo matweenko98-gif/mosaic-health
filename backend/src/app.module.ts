@@ -13,6 +13,8 @@ import { CodesModule } from './codes/codes.module';
 import { ContentModule } from './content/content.module';
 import { ShopModule } from './shop/shop.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentsModule } from './payments/payments.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AppController } from './app.controller';
@@ -37,6 +39,8 @@ import { AppController } from './app.controller';
     ContentModule,
     ShopModule,
     AdminModule,
+    NotificationsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [

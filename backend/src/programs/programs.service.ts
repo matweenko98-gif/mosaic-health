@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateProgramDto, UpdateProgramDto, UpdateProgressDto } from './dto/programs.dto';
 
 const programInclude = {
@@ -12,7 +13,10 @@ const programInclude = {
 
 @Injectable()
 export class ProgramsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // ---------- Пациент ----------
 
@@ -75,7 +79,7 @@ export class ProgramsService {
     }
     // Уникальность пары (программа, упражнение) — убираем дубликаты, сохраняя порядок.
     const uniqueIds = [...new Set(dto.exerciseIds)];
-    return this.prisma.program.create({
+    const program = await this.prisma.program.create({
       data: {
         title: dto.title ?? 'Индивидуальная программа',
         patientId: dto.patientId,
@@ -84,6 +88,20 @@ export class ProgramsService {
       },
       include: programInclude,
     });
+
+    // Уведомляем пациента о новой индивидуальной программе.
+    await this.notifications
+      .notify(dto.patientId, {
+        type: 'program_new',
+        title_ru: 'Новая программа от специалиста',
+        title_en: 'New program from your specialist',
+        body_ru: `Вам назначена программа «${program.title}». Откройте раздел с домашними заданиями.`,
+        body_en: `You have a new program "${program.title}". Open your homework section.`,
+        data: { programId: program.id, screen: 'home' },
+      })
+      .catch(() => {});
+
+    return program;
   }
 
   async getProgram(programId: string) {

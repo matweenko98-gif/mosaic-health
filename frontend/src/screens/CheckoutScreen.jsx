@@ -1,29 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import { api } from "../api/client";
 
 /**
  * CheckoutScreen — Экран «Оформление заказа».
+ * Создаёт заказ на сервере и, если включена онлайн-оплата, отправляет на оплату.
  */
 export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   const { t } = useLanguage();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [paymentsEnabled, setPaymentsEnabled] = useState(false);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  function handleOrderSubmit(e) {
+  // Узнаём у сервера, включена ли онлайн-оплата (от этого зависит текст кнопки и поток).
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/payments/config")
+      .then((cfg) => {
+        if (active) setPaymentsEnabled(!!cfg?.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleOrderSubmit(e) {
     e.preventDefault();
     if (!name.trim() || !phone.trim() || !address.trim()) {
-      alert(t("Пожалуйста, заполните все поля формы"));
+      setError(t("Пожалуйста, заполните все поля формы"));
       return;
     }
+    if (cart.length === 0) {
+      setError(t("Корзина пуста"));
+      return;
+    }
+    setError("");
+    setSubmitting(true);
+    try {
+      // 1. Создаём заказ на сервере (цены и итог считаются на сервере).
+      const order = await api.post("/orders", {
+        recipientName: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        items: cart.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      });
 
-    alert(
-      t("Заказ успешно оформлен!") + `\n${t("Итого")}: ${totalPrice} ₽\n${t("Наш специалист свяжется с вами для подтверждения доставки.")}`
-    );
-    onClearCart();
-    onNavigate("home");
+      // 2. Если оплата включена — инициируем платёж и уходим на страницу оплаты.
+      if (paymentsEnabled) {
+        const pay = await api.post("/payments/create", { orderId: order.id });
+        onClearCart();
+        if (pay?.confirmationUrl) {
+          window.location.href = pay.confirmationUrl;
+          return;
+        }
+      }
+
+      // 3. Оплата выключена — заказ оформлен, специалист свяжется (прежняя схема).
+      onClearCart();
+      alert(
+        t("Заказ успешно оформлен!") +
+          `\n${t("Итого")}: ${totalPrice} ₽\n${t("Наш специалист свяжется с вами для подтверждения доставки.")}`
+      );
+      onNavigate("home");
+    } catch (err) {
+      setError(err?.message || t("Не удалось оформить заказ. Попробуйте ещё раз."));
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -121,13 +170,27 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
             <span style={{ fontWeight: "800", fontSize: "18px", color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>{totalPrice} ₽</span>
           </div>
 
+          {error && (
+            <p
+              role="alert"
+              style={{ color: "#EB6074", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 600, margin: "2px 0 0" }}
+            >
+              {error}
+            </p>
+          )}
+
           <button
             id="btn-confirm-order"
             type="submit"
             className="btn-save"
-            style={{ marginTop: "12px" }}
+            style={{ marginTop: "12px", opacity: submitting ? 0.6 : 1 }}
+            disabled={submitting}
           >
-            {t("Подтвердить заказ")}
+            {submitting
+              ? t("Обработка…")
+              : paymentsEnabled
+                ? t("Перейти к оплате")
+                : t("Подтвердить заказ")}
           </button>
         </form>
       </div>
