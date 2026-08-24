@@ -139,10 +139,28 @@ model Article {
   description_en String   @default("")
   body_ru        String   @default("")
   body_en        String   @default("")
+  category       String   @default("Практическая кинезиология")
   readTime       String   @default("")
   authorId       String?
   publishedAt    DateTime @default(now())
   author         User?    @relation(fields: [authorId], references: [id])
+}
+
+model ArticleCategory {
+  id        Int      @id @default(autoincrement())
+  name_ru   String   @unique
+  name_en   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@map("article_categories")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
 }
 
 model Podcast {

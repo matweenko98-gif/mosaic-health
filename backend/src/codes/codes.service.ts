@@ -72,6 +72,8 @@ export class CodesService {
         code: c.code,
         label: c.label,
         status,
+        specialistName: c.specialist?.name || null,
+        specialistEmail: c.specialist?.email || null,
         activatedByName: c.activatedBy?.name || null,
         activatedByEmail: c.activatedBy?.email || null,
         activatedByRegisteredAt: c.activatedBy?.createdAt || null,

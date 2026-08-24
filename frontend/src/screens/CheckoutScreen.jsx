@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import PhoneInput from "../components/PhoneInput";
 
 /**
  * CheckoutScreen — Экран «Оформление заказа».
@@ -7,8 +8,11 @@ import { useLanguage } from "../context/LanguageContext";
 export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   const { t } = useLanguage();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+375");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
+
+  const phone = `${dialCode} ${phoneNumber.trim()}`.trim();
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -88,15 +92,12 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
             <label htmlFor="checkout-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               {t("Телефон")}
             </label>
-            <input
+            <PhoneInput
               id="checkout-phone"
-              className="form-field__input"
-              type="tel"
-              placeholder="+7 (999) 999-99-99"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ borderRadius: "16px" }}
-              required
+              dialCode={dialCode}
+              onDialCodeChange={setDialCode}
+              phoneNumber={phoneNumber}
+              onPhoneNumberChange={setPhoneNumber}
             />
           </div>
 

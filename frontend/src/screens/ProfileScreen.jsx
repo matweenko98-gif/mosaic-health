@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
+import { countries } from "../data/countries";
+import PhoneInput from "../components/PhoneInput";
 
 /**
  * ProfileScreen — Экран «Профиль / Личный кабинет».
@@ -491,12 +493,26 @@ export default function ProfileScreen({
                   <label className="form-field__label" htmlFor="input-phone">
                     {t("Телефон")}
                   </label>
-                  <input
+                  <PhoneInput
                     id="input-phone"
-                    className="form-field__input"
-                    type="text"
-                    value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
+                    dialCode={(() => {
+                      const matched = countries.find((c) => formPhone && formPhone.startsWith(c.dialCode));
+                      return matched ? matched.dialCode : "+375";
+                    })()}
+                    onDialCodeChange={(code) => {
+                      const matched = countries.find((c) => formPhone && formPhone.startsWith(c.dialCode));
+                      const numberOnly = matched ? formPhone.slice(matched.dialCode.length).trim() : formPhone;
+                      setFormPhone(`${code} ${numberOnly}`.trim());
+                    }}
+                    phoneNumber={(() => {
+                      const matched = countries.find((c) => formPhone && formPhone.startsWith(c.dialCode));
+                      return matched ? formPhone.slice(matched.dialCode.length).trim() : formPhone;
+                    })()}
+                    onPhoneNumberChange={(num) => {
+                      const matched = countries.find((c) => formPhone && formPhone.startsWith(c.dialCode));
+                      const code = matched ? matched.dialCode : "+375";
+                      setFormPhone(`${code} ${num}`.trim());
+                    }}
                   />
                 </div>
 

@@ -129,6 +129,34 @@ async function seedProducts() {
 }
 
 async function seedContent() {
+  const articleCategories = [
+    { name_ru: 'Практическая кинезиология', name_en: 'Practical Kinesiology' },
+    { name_ru: 'Ароматерапия', name_en: 'Aromatherapy' },
+    { name_ru: 'Омега-3', name_en: 'Omega-3' },
+    { name_ru: 'Наши помощники', name_en: 'Our Helpers' },
+  ];
+  for (const cat of articleCategories) {
+    await prisma.articleCategory.upsert({
+      where: { name_ru: cat.name_ru },
+      create: cat,
+      update: cat,
+    });
+  }
+
+  const systemSettings = [
+    { key: 'expert_link_aroma_ru', value: 'https://t.me/AromaSpecialist' },
+    { key: 'expert_link_aroma_en', value: 'https://t.me/AromaSpecialist' },
+    { key: 'expert_link_omega_ru', value: 'https://t.me/OmegaSpecialist' },
+    { key: 'expert_link_omega_en', value: 'https://t.me/OmegaSpecialist' },
+  ];
+  for (const s of systemSettings) {
+    await prisma.systemSetting.upsert({
+      where: { key: s.key },
+      create: s,
+      update: {},
+    });
+  }
+
   const articles = [
     {
       id: 1,
@@ -136,6 +164,7 @@ async function seedContent() {
       title_en: 'Anatomy of Breathing: How a Kettlebell Helps the Lungs',
       description_ru: JSON.stringify({ description: 'Подробный разбор механики дыхания при кинезиотерапевтических нагрузках.', image: null, isPublished: true }),
       description_en: JSON.stringify({ description: 'A detailed breakdown of breathing mechanics under kinesiotherapeutic loads.', image: null, isPublished: true }),
+      category: 'Ароматерапия',
       readTime: '5 мин',
       body_ru: [
         'Дыхание — это не просто вдох и выдох. Это работа целой системы мышц: диафрагмы, межрёберных мышц, мышц живота и даже мышц шеи. Когда мы дышим поверхностно, большая часть этой системы «спит», а грудная клетка теряет подвижность.',
@@ -156,6 +185,7 @@ async function seedContent() {
       title_en: 'Why We Limp: Analysis of the Walking Pattern',
       description_ru: JSON.stringify({ description: 'Изучение связи между тонусом мышц стопы и правильной походкой.', image: null, isPublished: true }),
       description_en: JSON.stringify({ description: 'Studying the connection between foot muscle tone and correct gait.', image: null, isPublished: true }),
+      category: 'Практическая кинезиология',
       readTime: '8 мин',
       body_ru: [
         'Правильный шаг — это сложная согласованная работа десятков мышц. Когда одна из них выключается или, наоборот, перенапрягается, страдает весь паттерн движения: появляется хромота, перекос таза, боль в пояснице и коленях.',
@@ -168,6 +198,25 @@ async function seedContent() {
         'Most often, the problem starts from below - with the foot. If the foot muscles are weakened, shock absorption is lost, and the impact load with each step goes up - into the knees and spine. Hence the familiar "pulling lower back" after walking for a long time.',
         'The second key element is the gluteal muscles. It is they that should turn on at the moment of support on the leg. If they are "lazy", their work is taken over by the muscles of the lower back, which are not intended for this.',
         'Restoring the correct step goes from the bottom up: first, we restore sensitivity and strength to the foot, then we teach the gluteal muscles to turn on in time, and only then we work out the coordinated work of hands and feet. Kinesiotherapy solves this through simple but precise exercises that you will find in the workouts section.',
+      ].join('\n\n'),
+    },
+    {
+      id: 3,
+      title_ru: 'Омега-3 и эластичность связок: нутрициологический гид',
+      title_en: 'Omega-3 and Ligament Elasticity: A Nutritional Guide',
+      description_ru: JSON.stringify({ description: 'Влияние незаменимых жирных кислот на метаболизм соединительной ткани.', image: null, isPublished: true }),
+      description_en: JSON.stringify({ description: 'Impact of essential fatty acids on connective tissue metabolism.', image: null, isPublished: true }),
+      category: 'Омега-3',
+      readTime: '6 мин',
+      body_ru: [
+        'Полиненасыщенные жирные кислоты EPA и DHA служат ключевым строительным материалом для фосфолипидного слоя клеточных мембран.',
+        'При интенсивных тренировках и кинезиотерапии соединительная ткань и сосуды испытывают высокую нагрузку. Омега-3 снижает синтез провоспалительных эйкозаноидов, нормализует микроциркуляцию и ускоряет регенерацию мышечных волокон.',
+        'Для достижения максимального эффекта выбирайте триглицеридную форму высокой степени очистки с концентрацией EPA/DHA не менее 60%.',
+      ].join('\n\n'),
+      body_en: [
+        'Polyunsaturated fatty acids EPA and DHA serve as essential building blocks for cellular membrane phospholipids.',
+        'During intensive workouts and kinesiotherapy, connective tissues and blood vessels experience high loads. Omega-3 reduces pro-inflammatory eicosanoid synthesis and accelerates tissue regeneration.',
+        'For maximum effect, choose highly purified triglyceride forms with at least 60% EPA/DHA concentration.',
       ].join('\n\n'),
     },
   ];

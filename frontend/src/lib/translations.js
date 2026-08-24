@@ -450,5 +450,27 @@ export const translations = {
   "Выполняя упражнения, строго соблюдайте дозировку нагрузки и контролируйте дыхательный ритм во избежание гипервентиляции.": "When performing exercises, strictly observe the load dosage and control your breathing rhythm to avoid hyperventilation.",
   "Я ознакомлен(а) с противопоказаниями и правилами безопасности": "I am familiar with contraindications and safety rules",
   "Обязуюсь использовать материалы методики только для личного использования": "I undertake to use the methodology materials for personal use only",
+
+  // New Features: Access Code Author, Categories & Oils Landing
+  "Врач": "Doctor",
+  "Врач:": "Doctor:",
+  "Не указан": "Not specified",
+  "Практическая кинезиология": "Practical Kinesiology",
+  "Ароматерапия": "Aromatherapy",
+  "Омега-3": "Omega-3",
+  "Наши помощники": "Our Helpers",
+  "Категория статьи": "Article Category",
+  "Польза эфирных масел": "Benefits of Essential Oils",
+  "Польза Омега-3": "Benefits of Omega-3",
+  "Перейти в магазин": "Go to Shop",
+  "Консультация эксперта": "Expert Consultation",
+  "Telegram эксперта": "Expert's Telegram",
+  "Статьи по теме": "Articles on the topic",
+  "Вопросы по подбору и применению масел": "Questions on choosing and using essential oils",
+  "Персональный подбор дозировок Омега-3": "Personalized selection of Omega-3 dosages",
+  "Подписывайтесь на официальный канал эксперта, чтобы получать рекомендации, протоколы применения и задавать вопросы напрямую.": "Subscribe to the expert's official channel to receive recommendations, application protocols, and ask questions directly.",
+  "Экспертный хаб здоровья, масел и полезных добавок": "Expert hub for health, oils, and healthy supplements",
+  "Ссылка на Telegram эксперта не задана в настройках": "Expert's Telegram link is not configured in settings",
+  "В этой категории пока нет опубликованных статей.": "There are no published articles in this category yet."
 };
 

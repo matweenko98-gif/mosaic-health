@@ -1248,22 +1248,37 @@ function ProductsTab({ showToast, setDeleteConfirm }) {
 }
 
 // ------------------------- Раздел: СТАТЬИ -------------------------
-const blankArticle = { title_ru: "", title_en: "", descriptionText_ru: "", descriptionText_en: "", body_ru: "", body_en: "", readTime: "5 мин", isPublished: true, image: null };
+const blankArticle = { title_ru: "", title_en: "", descriptionText_ru: "", descriptionText_en: "", body_ru: "", body_en: "", category: "Практическая кинезиология", readTime: "5 мин", isPublished: true, image: null };
 
 function ArticlesTab({ showToast, setDeleteConfirm }) {
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [expertLinks, setExpertLinks] = useState({ aroma_ru: "", aroma_en: "", omega_ru: "", omega_en: "" });
+  const [showExpertLinks, setShowExpertLinks] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
   const [formLang, setFormLang] = useState("RU");
 
+  // Управление категориями
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [renamingCategory, setRenamingCategory] = useState(null);
+  const [renamedValue, setRenamedValue] = useState("");
+
   // Фильтры
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
 
   async function load() {
     try {
-      const list = await api.get("/articles");
+      const [list, catList, links] = await Promise.all([
+        api.get("/articles").catch(() => []),
+        api.get("/article-categories").catch(() => []),
+        api.get("/settings/expert-links").catch(() => null),
+      ]);
+
       const parsedList = (Array.isArray(list) ? list : []).map((a) => {
         let descriptionText_ru = "";
         let descriptionText_en = "";
@@ -1292,13 +1307,17 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
 
         return {
           ...a,
+          category: a.category || "Практическая кинезиология",
           descriptionText_ru,
           descriptionText_en,
           image,
           isPublished,
         };
       });
+
       setItems(parsedList);
+      setCategories(Array.isArray(catList) ? catList : []);
+      if (links) setExpertLinks(links);
     } catch (e) {
       setError(e?.message || "Ошибка загрузки статей");
     }
@@ -1308,6 +1327,65 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
     load();
   }, []);
 
+  async function addCategory() {
+    if (!newCategoryName.trim()) return;
+    try {
+      await api.post("/admin/article-categories", { name_ru: newCategoryName.trim() });
+      showToast(`Категория "${newCategoryName.trim()}" добавлена`);
+      setNewCategoryName("");
+      await load();
+    } catch (e) {
+      setError(e?.message || "Не удалось добавить категорию");
+    }
+  }
+
+  async function renameCategory(catName, newName) {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === catName) {
+      setRenamingCategory(null);
+      return;
+    }
+    try {
+      let catObj = categories.find((c) => c.name_ru === catName);
+      if (!catObj) {
+        catObj = await api.post("/admin/article-categories", { name_ru: catName });
+      }
+      await api.patch(`/admin/article-categories/${catObj.id}`, { name_ru: trimmed });
+      showToast(`Категория переименована в "${trimmed}"`);
+      setRenamingCategory(null);
+      await load();
+    } catch (e) {
+      setError(e?.message || "Не удалось переименовать категорию");
+    }
+  }
+
+  async function deleteCategory(catName) {
+    if (!window.confirm(`Удалить категорию "${catName}"?`)) {
+      return;
+    }
+    try {
+      let catObj = categories.find((c) => c.name_ru === catName);
+      if (!catObj) {
+        catObj = await api.post("/admin/article-categories", { name_ru: catName });
+      }
+      await api.del(`/admin/article-categories/${catObj.id}`);
+      showToast(`Категория "${catName}" удалена`);
+      await load();
+    } catch (e) {
+      setError(e?.message || "Не удалось удалить категорию");
+    }
+  }
+
+  async function saveExpertLinks() {
+    try {
+      await api.patch("/admin/settings/expert-links", expertLinks);
+      showToast("Ссылки эксперта сохранены");
+      setShowExpertLinks(false);
+    } catch (e) {
+      setError(e?.message || "Не удалось сохранить ссылки");
+    }
+  }
+
   async function saveWithPublish(isPublishedVal) {
     setError("");
     const hasTitleRu = !!(editing.title_ru || "").trim();
@@ -1316,13 +1394,11 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
     const hasImage = !!editing.image;
 
     if (!isPublishedVal) {
-      // Для черновика хотя бы одно поле на русском должно быть заполнено
       if (!hasTitleRu && !hasDescRu && !hasBodyRu && !hasImage) {
         setError("Заполните хотя бы одно поле на русском языке (Заголовок, Описание, Текст или Обложка), чтобы сохранить черновик");
         return;
       }
     } else {
-      // Для публикации заголовок (RU) обязателен
       if (!hasTitleRu) {
         setError("Пожалуйста, заполните Заголовок статьи (RU) для публикации");
         return;
@@ -1348,6 +1424,7 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
       description_en: descriptionJson_en,
       body_ru: editing.body_ru || "",
       body_en: editing.body_en || "",
+      category: editing.category || "Практическая кинезиология",
       readTime: editing.readTime || "5 мин",
     };
 
@@ -1527,6 +1604,48 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
           )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label style={labelStyle}>Категория статьи</label>
+              <button
+                type="button"
+                onClick={() => setShowCategoryManager(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#1BAB7C",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  fontFamily: "'Manrope', sans-serif",
+                  textDecoration: "underline",
+                  padding: 0,
+                  marginBottom: "4px"
+                }}
+              >
+                📁 Управление категориями
+              </button>
+            </div>
+            <select
+              style={selectStyle}
+              value={editing.category || "Практическая кинезиология"}
+              onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+            >
+              {Array.from(
+                new Set([
+                  "Практическая кинезиология",
+                  "Ароматерапия",
+                  "Омега-3",
+                  "Наши помощники",
+                  ...categories.map((c) => c.name_ru),
+                  ...items.map((i) => i.category).filter(Boolean),
+                ])
+              ).map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <label style={labelStyle}>Время чтения (например: 5 мин)</label>
             <input
               className="form-field__input"
@@ -1603,7 +1722,10 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
           </div>
         </div>
       ) : (
-        <button onClick={() => setEditing({ ...blankArticle })} className="btn-save" style={{ marginBottom: "14px" }}>+ Добавить статью</button>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
+          <button onClick={() => setEditing({ ...blankArticle })} className="btn-save" style={{ flex: 1, margin: 0 }}>+ Добавить статью</button>
+          <button onClick={() => setShowExpertLinks(true)} style={{ ...buttonSecondaryStyle, margin: 0 }}>🔗 Ссылки эксперта</button>
+        </div>
       )}
 
       {/* Список статей */}
@@ -1626,6 +1748,25 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
                 <option value="all">Все статусы</option>
                 <option value="published">Опубликованные</option>
                 <option value="draft">Черновики</option>
+              </select>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                style={{ ...selectStyle, flex: 1, marginBottom: 0 }}
+              >
+                <option value="all">Все категории</option>
+                {Array.from(
+                  new Set([
+                    "Практическая кинезиология",
+                    "Ароматерапия",
+                    "Омега-3",
+                    "Наши помощники",
+                    ...categories.map((c) => c.name_ru),
+                    ...items.map((i) => i.category).filter(Boolean),
+                  ])
+                ).map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
               <select
                 value={sortOrder}
@@ -1654,11 +1795,9 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
                       <div style={{ fontWeight: 700, fontSize: "13.5px", color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {a.title_ru || a.title_en || "Без названия"}
                       </div>
-                      {a.title_en && a.title_ru && (
-                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          EN: {a.title_en}
-                        </div>
-                      )}
+                      <div style={{ fontSize: "11.5px", color: "#007F63", fontWeight: "600", marginTop: "1px" }}>
+                        {a.category || "Практическая кинезиология"}
+                      </div>
                       <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "2px" }}>
                         {a.readTime} · Добавлено: {formatDate(a.publishedAt)}
                       </div>
@@ -1727,6 +1866,178 @@ function ArticlesTab({ showToast, setDeleteConfirm }) {
             )}
           </div>
         </>
+      )}
+
+      {/* Модальное окно: Управление категориями статей */}
+      {showCategoryManager && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "480px", padding: "20px", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>📁 Категории статей</h3>
+              <button onClick={() => setShowCategoryManager(false)} style={{ border: "none", background: "none", fontSize: "20px", cursor: "pointer", color: "var(--color-text-secondary)" }}>×</button>
+            </div>
+
+            {/* Добавление новой категории */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              <input
+                className="form-field__input"
+                style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                placeholder="Название новой категории..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCategory()}
+              />
+              <button onClick={addCategory} className="btn-save" style={{ margin: 0, padding: "0 16px", whiteSpace: "nowrap" }}>+ Добавить</button>
+            </div>
+
+            {/* Список существующих категорий */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {Array.from(
+                new Set([
+                  "Практическая кинезиология",
+                  "Ароматерапия",
+                  "Омега-3",
+                  "Наши помощники",
+                  ...categories.map((c) => c.name_ru),
+                ])
+              ).map((catName) => {
+                const isEditingThis = renamingCategory === catName;
+
+                return (
+                  <div key={catName} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#F9FAF9", borderRadius: "12px", border: "1px solid var(--color-border)" }}>
+                    {isEditingThis ? (
+                      <div style={{ display: "flex", gap: "6px", flex: 1, marginRight: "8px" }}>
+                        <input
+                          className="form-field__input"
+                          style={{ ...inputStyle, flex: 1, marginBottom: 0, padding: "4px 8px" }}
+                          value={renamedValue}
+                          onChange={(e) => setRenamedValue(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && renameCategory(catName, renamedValue)}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => renameCategory(catName, renamedValue)}
+                          style={{ border: "none", background: "none", color: "#1BAB7C", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
+                        >
+                          💾
+                        </button>
+                        <button
+                          onClick={() => setRenamingCategory(null)}
+                          style={{ border: "none", background: "none", color: "#ef4444", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--color-text)" }}>
+                        {catName}
+                      </span>
+                    )}
+
+                    {!isEditingThis && (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          onClick={() => { setRenamingCategory(catName); setRenamedValue(catName); }}
+                          style={{ border: "none", background: "none", color: "#1BAB7C", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
+                          title="Редактировать категорию"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteCategory(catName)}
+                          style={{ border: "none", background: "none", color: "#ef4444", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}
+                          title="Удалить категорию"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно: Настройка ссылок эксперта (RU/EN) */}
+      {showExpertLinks && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "480px", padding: "20px", boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>🔗 Ссылки эксперта / Telegram</h3>
+              <button onClick={() => setShowExpertLinks(false)} style={{ border: "none", background: "none", fontSize: "20px", cursor: "pointer", color: "var(--color-text-secondary)" }}>×</button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Ароматерапия (Telegram RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://t.me/your_aroma_channel_ru"
+                  value={expertLinks.aroma_ru || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, aroma_ru: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Ароматерапия (Telegram EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://t.me/your_aroma_channel_en"
+                  value={expertLinks.aroma_en || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, aroma_en: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Ароматерапия (Мессенджер Max RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://max.ru/your_aroma_channel"
+                  value={expertLinks.max_aroma_ru || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, max_aroma_ru: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Омега-3 (Telegram RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://t.me/your_omega_channel_ru"
+                  value={expertLinks.omega_ru || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, omega_ru: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Омега-3 (Telegram EN)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://t.me/your_omega_channel_en"
+                  value={expertLinks.omega_en || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, omega_en: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <label style={labelStyle}>Омега-3 (Мессенджер Max RU)</label>
+                <input
+                  className="form-field__input"
+                  style={inputStyle}
+                  placeholder="https://max.ru/your_omega_channel"
+                  value={expertLinks.max_omega_ru || ""}
+                  onChange={(e) => setExpertLinks({ ...expertLinks, max_omega_ru: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                <button onClick={saveExpertLinks} className="btn-save" style={{ flex: 1, margin: 0 }}>Сохранить ссылки</button>
+                <button onClick={() => setShowExpertLinks(false)} style={{ ...buttonSecondaryStyle, flex: 1 }}>Отмена</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

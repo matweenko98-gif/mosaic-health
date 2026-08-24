@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { countries } from "../data/countries";
 import { useLanguage } from "../context/LanguageContext";
+import PhoneInput from "../components/PhoneInput";
 
 /**
  * RegisterScreen — Экран Регистрации в приложении с двухшаговой формой.
@@ -143,43 +144,13 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 <label htmlFor="reg-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
                   {t("Телефон")}
                 </label>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <select
-                    aria-label={t("Код страны")}
-                    value={dialCode}
-                    onChange={(e) => setDialCode(e.target.value)}
-                    className="form-field__input"
-                    style={{
-                      borderRadius: "16px",
-                      cursor: "pointer",
-                      backgroundColor: "#fff",
-                      paddingRight: "36px",
-                      appearance: "none",
-                      WebkitAppearance: "none",
-                      backgroundImage:
-                        "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236E6E6E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 14px center",
-                    }}
-                  >
-                    {countries.map((c, i) => (
-                      <option key={`${c.dialCode}-${i}`} value={c.dialCode}>
-                        {c.flag} {c.name} ({c.dialCode})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    id="reg-phone"
-                    type="tel"
-                    placeholder="(29) 000-00-00"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="form-field__input"
-                    style={{
-                      borderRadius: "16px",
-                    }}
-                  />
-                </div>
+                <PhoneInput
+                  id="reg-phone"
+                  dialCode={dialCode}
+                  onDialCodeChange={setDialCode}
+                  phoneNumber={phoneNumber}
+                  onPhoneNumberChange={setPhoneNumber}
+                />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
