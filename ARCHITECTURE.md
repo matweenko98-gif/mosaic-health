@@ -268,3 +268,4 @@
 | 2026-07-27 | **Онлайн-оплата (ЮKassa)**: модуль `payments/` (абстракция `PaymentProvider` + webhook), поля оплаты в `Order`, статусы `PENDING_PAYMENT`/`PAID`, `CheckoutScreen` создаёт заказ на сервере + экран `payment-result`, статус оплаты в админке. За флагом `PAYMENTS_ENABLED` |
 | 2026-07-27 | **Уведомления**: модуль `notifications/` (лента + web-push), модели `Notification`/`PushSubscription`, «колокольчик» с сервера, уведомления о новой программе и оплате заказа |
 | 2026-07-27 | **PWA**: `manifest.webmanifest`, service worker (`public/sw.js`), иконки, баннер «Установить приложение» — установка ярлыком на рабочий стол |
+| 2026-08-24 | **Коды доступа, PhoneInput с флагами, YouTube плеер, Категории и Max**: Врач-создатель на карточках кодов, селектор флагов стран в `PhoneInput`, YouTube/Rutube <iframe> embed, полная свобода категорий в админке, посадочный хаб масел с кнопкой Мессенджер Max (RU) |
