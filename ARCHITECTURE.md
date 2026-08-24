@@ -44,8 +44,13 @@
 | Shop | `shop/` | Товары, заказы (+ админ) |
 | Admin | `admin/` | **Пользователи и смена ролей** |
 | Storage | `storage/` | Подписанные ссылки на медиа (S3) |
+| Payments | `payments/` | **Онлайн-оплата (ЮKassa)**: создание платежа, webhook. Абстракция `PaymentProvider` (задел под Stripe). За флагом `PAYMENTS_ENABLED` |
+| Notifications | `notifications/` | **Уведомления**: лента «колокольчика» + web-push (PWA). Глобальный модуль |
 | Mail | `mail/` | Отправка писем — **пока заглушка, пишет ссылки в лог** |
 | Prisma | `prisma/` | `PrismaService` — доступ к базе |
+
+`Exercises` теперь включает **админ-CRUD упражнений** (`exercises/exercises-admin.controller.ts`).
+Глобальный перехват ошибок — `common/all-exceptions.filter.ts` (подключён в `main.ts`).
 
 ### Ключевые механизмы авторизации (`auth/`)
 - `guards/jwt-auth.guard.ts` — **глобальный**, проверяет токен. Пропускает `@Public()`.
@@ -72,7 +77,8 @@
 | `GET/POST /api/me/history`, `GET /api/me/achievements` | вошедшие | `history/history.controller.ts` |
 | `GET /api/me/programs`, `/:id`, `/:id/progress` (GET/PATCH) | пациент (свои) | `programs/patient-programs.controller.ts` |
 | `GET /api/specialist/patients`, `POST/GET/PATCH/DELETE /api/specialist/programs` | врач/админ | `programs/specialist.controller.ts` |
-| `GET/POST /api/specialist/codes`, `DELETE /api/specialist/codes/:id` | врач/админ | `codes/codes.controller.ts` |
+| `GET/POST /api/specialist/codes`, `DELETE /api/specialist/codes/:id`, `POST /api/specialist/codes/:id/revoke` | врач/админ | `codes/codes.controller.ts` |
+| `POST/PATCH/DELETE /api/admin/exercises` | админ | `exercises/exercises-admin.controller.ts` |
 | `GET /api/me/access`, `POST /api/me/activate-code` | вошедшие | `codes/codes.controller.ts` |
 | `GET /api/articles`, `/:id`, `GET /api/podcasts`, `/:id` | вошедшие | `content/content.controller.ts` |
 | `POST/PATCH/DELETE /api/admin/articles`, `/api/admin/podcasts` | админ | `content/content-admin.controller.ts` |
@@ -81,6 +87,12 @@
 | `GET /api/admin/users`, `PATCH /api/admin/users/:id/role` | админ | `admin/admin.controller.ts` |
 | `GET /api/media/sign` | вошедшие (с проверкой прав) | `storage/media.controller.ts` |
 | `POST /api/media/upload-url` | врач/админ | `storage/media.controller.ts` |
+| `GET /api/payments/config` | все | `payments/payments.controller.ts` |
+| `POST /api/payments/create` | вошедшие | `payments/payments.controller.ts` |
+| `POST /api/payments/webhook/yookassa` | все (webhook ЮKassa) | `payments/payments.controller.ts` |
+| `GET /api/push/vapid-public-key` | все | `notifications/notifications.controller.ts` |
+| `POST /api/me/push/subscribe` \| `unsubscribe` | вошедшие | `notifications/notifications.controller.ts` |
+| `GET /api/me/notifications`, `PATCH /api/me/notifications/read-all`, `PATCH /api/me/notifications/:id/read` | вошедшие | `notifications/notifications.controller.ts` |
 
 ---
 
@@ -93,15 +105,23 @@
 | `User` | Пользователь: email, пароль (хэш), **role** (PATIENT/SPECIALIST/ADMIN), имя, телефон, возраст, страна, аватар |
 | `UserSettings` | Напоминания, уведомления, язык |
 | `EmailToken` | Токены подтверждения email и сброса пароля |
-| `Exercise` | Упражнение: название, описание, длительность, категория, `videoKey`, `isIndividual` |
+| `Exercise` | Упражнение: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, длительность, категория, `videoKey`, `isIndividual` |
 | `Program` / `ProgramItem` | Индивидуальная программа врача пациенту и её упражнения (с порядком) |
 | `ProgramProgress` | Прогресс прохождения программы |
 | `WorkoutLog` | Запись о выполненной тренировке (история) |
-| `AccessCode` | **Код доступа**: `code` (5 букв), `label`, кто создал, кто активировал, когда |
-| `Article` / `Podcast` | Материалы (текст статьи в `body`, абзацы разделены пустой строкой) |
-| `Product` / `Order` / `OrderItem` | Магазин: товар (`imageKey`), заказ и его позиции |
+| `AccessCode` | **Код доступа**: `code` (5 букв), `label`, кто создал, кто активировал (`activatedById`), когда. Можно отозвать |
+| `Article` / `Podcast` | Материалы: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, у статьи `body_ru/body_en` |
+| `Product` / `Order` / `OrderItem` | Магазин: товар **двуязычный** (`name_ru/name_en`, `description_ru/description_en`, `imageKey`), заказ и его позиции. У `Order` — `currency`, `paymentProvider`, `paymentId`, `paidAt`; статусы `NEW → PENDING_PAYMENT → PAID → CONFIRMED → SHIPPED → CANCELLED` |
+| `Notification` | Уведомление пользователю (лента «колокольчика»), двуязычное, поле `data` (JSON) для навигации, `readAt` |
+| `PushSubscription` | Подписка браузера/устройства на web-push (`endpoint`, `p256dh`, `auth`) |
 
 **Роли:** `PATIENT` (по умолчанию при регистрации), `SPECIALIST` (врач), `ADMIN`.
+
+> **⚠️ Двуязычность (RU/EN):** контент-таблицы (Exercise, Article, Podcast, Product) хранят поля на двух языках
+> (`*_ru` / `*_en`). Фронтенд выбирает язык через `useLanguage()` и показывает нужную версию.
+> При добавлении контентного поля заводи обе версии.
+> Часть админки прячет доп. параметры (публикация, наличие, картинка) внутри `description_*` как JSON —
+> фронтенд это распаковывает (см. `ShopScreen.jsx`, `CreatorMaterialsScreen.jsx`).
 
 ---
 
@@ -112,16 +132,20 @@
 | `src/App.jsx` | **Центр**: глобальное состояние + `renderScreen()` (switch по `currentScreen`). Сюда добавлять новые экраны |
 | `src/main.jsx` | Точка входа, оборачивает в `AuthProvider` |
 | `src/context/AuthContext.jsx` | Сессия: `user`, `isLoggedIn`, `login`, `register`, `logout`, восстановление сессии при загрузке |
+| `src/context/LanguageContext.jsx` | **Язык RU/EN**: хук `useLanguage()` → `t()` (перевод) и `currentLang` |
+| `src/lib/translations.js` | Словарь переводов интерфейса (RU/EN) |
 | `src/api/client.js` | Fetch-клиент: `api.get/post/patch/del`, токен в памяти, авто-refresh при 401 |
 | `src/api/auth.js` | Функции входа/регистрации/выхода/восстановления сессии |
 | `src/index.css` | ~1600 строк кастомных BEM-классов + CSS-переменные |
 | `src/data/mockData.js` | Остатки моков (история пуста, настройки) |
+| `src/data/originalExercises.js` | Исходный каталог упражнений (фронт) |
 | `src/data/countries.js` | Страны с флагами и телефонными кодами |
 
 ### Экраны (`src/screens/`) и их `currentScreen`-идентификаторы
 
 | id | Файл | Примечание |
 |---|---|---|
+| `role-selector` | `RoleSelectorScreen.jsx` | Экран выбора роли (bento-режим) |
 | `onboarding-video` | `OnboardingVideoScreen.jsx` | Первый экран, картинка-превью + кнопка входа |
 | `onboarding-consent` | `OnboardingConsentScreen.jsx` | Дисклеймер (90 дней, `localStorage.consentDate`) |
 | `login` / `register` | `LoginScreen.jsx` / `RegisterScreen.jsx` | Через сервер. Регистрация: 2 шага, флаги/коды стран |
@@ -129,7 +153,8 @@
 | `profile` | `ProfileScreen.jsx` (~1000 строк) | Профиль, достижения, история, вход в панели |
 | `health-helpers` | `HealthHelpersScreen.jsx` | Масла/Омега-3, «Купить» → магазин/Добавки |
 | `creator-materials` | `CreatorMaterialsScreen.jsx` | Статьи (модалка с текстом) + подкасты (плеер) — **с сервера** |
-| `shop` / `cart` / `checkout` | `ShopScreen.jsx` / `CartScreen.jsx` / `CheckoutScreen.jsx` | Товары — **с сервера**; корзина/оформление — пока локально |
+| `shop` / `cart` / `checkout` | `ShopScreen.jsx` / `CartScreen.jsx` / `CheckoutScreen.jsx` | Товары — **с сервера**; оформление создаёт заказ на сервере и, если `PAYMENTS_ENABLED`, ведёт на оплату ЮKassa |
+| `payment-result` | `PaymentResultScreen.jsx` | Возврат после оплаты (ЮKassa `return_url` → `/?screen=payment-result&order=…`), опрашивает статус заказа |
 | `specialist-codes` | `SpecialistCodesScreen.jsx` | **Панель врача**: коды доступа |
 | `admin` | `AdminScreen.jsx` | **Панель админа**: пользователи/товары/статьи/подкасты/заказы |
 
@@ -139,6 +164,11 @@
 ### Компоненты
 - `components/WorkoutModal.jsx` — плеер тренировки (реальное `<video>`, если у упражнения есть `video`).
 - `components/BottomNav.jsx` — нижняя навигация.
+- `components/NotificationBell.jsx` — «колокольчик»: лента уведомлений с сервера + включение push.
+- `components/InstallPrompt.jsx` — баннер «Установить приложение» (PWA; на iOS — подсказка).
+- `src/pwa.js` — регистрация service worker'а (`public/sw.js`) и подписка на web-push.
+
+**PWA:** `public/manifest.webmanifest`, `public/sw.js` (офлайн-оболочка + приём push), иконки `public/icon-192.png`/`icon-512.png`/`apple-touch-icon.png`. SW регистрируется только в собранной версии (`import.meta.env.PROD`).
 
 ---
 
@@ -155,11 +185,11 @@
 | **Профиль (сохранение имени/фото/данных)** | ❌ локально (`App.handleUserSave`) |
 | **Настройки** | ❌ локально (`App.setSettings`) |
 | **История тренировок и достижения** | ❌ локально (`App.handleWorkoutComplete`, считается в `ProfileScreen`) |
-| **Корзина и оформление заказа** | ❌ локально (`CheckoutScreen` — `alert`) |
+| **Оформление заказа** | ✅ **сервер** (`POST /orders`); корзина — локально до оформления |
+| **Онлайн-оплата (ЮKassa)** | ✅ **сервер** — код готов, за флагом `PAYMENTS_ENABLED`; «боевой» запуск — после переезда на постоянный сервер (webhook) |
+| **Уведомления (лента + web-push)** | ✅ **сервер** — код готов; push шлётся при заданных VAPID-ключах |
 | **Содержимое ДЗ / каталог упражнений** | ❌ «зашито» в `HomeScreen.jsx` |
 | Медиа (видео/аудио) | ❌ статикой в `frontend/public/demo-video.mp4` |
-
-**Это главный остаток работы (остаток Фазы 8b).**
 
 ---
 
@@ -188,7 +218,7 @@
 | **Render** (бэкенд) | **ВРУЧНУЮ**: Manual Deploy → Deploy latest commit (репозиторий чужой → автодеплой не настроен) |
 | **Supabase** (база) | Миграции и seed применяются **во время сборки Render** (`prisma migrate deploy && npm run db:seed`) |
 
-**Переменные окружения бэкенда** (`backend/.env.example`): `DATABASE_URL`, `DIRECT_URL` (на Render — одинаковые, прямое подключение 5432), `JWT_*`, `FRONTEND_URL`, `S3_*` (если не задан `S3_ENDPOINT` — медиа выключено, приложение не падает).
+**Переменные окружения бэкенда** (`backend/.env.example`): `DATABASE_URL`, `DIRECT_URL` (на Render — одинаковые, прямое подключение 5432), `JWT_*`, `FRONTEND_URL`, `S3_*` (если не задан `S3_ENDPOINT` — медиа выключено, приложение не падает), `PAYMENTS_ENABLED` + `YOOKASSA_*` (оплата; при `false` — выключена), `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` (web-push; без ключей push выключен, остаётся лента).
 
 **Демо-аккаунты** (пароль `Demo12345`): `admin@mosaic.health`, `doctor@mosaic.health`, `patient@mosaic.health`.
 **Демо-коды** (для свежей базы): `ALPHA` (активирован пациентом), `BRAVO` (свободный).
@@ -202,6 +232,9 @@
 - **Один код — один аккаунт**: повторная активация другим пользователем → 409.
 - **Локальная и прод-база разные**: аккаунты, созданные локально, в Supabase не появятся.
 - **RLS в Supabase выключен** — это нормально: доступ проверяет бэкенд, браузер в базу напрямую не ходит.
+- **Оплата за флагом `PAYMENTS_ENABLED`**: пока `false` — `CheckoutScreen` оформляет заказ по старой схеме («специалист свяжется»). Webhook ЮKassa требует постоянно включённого сервера — «боевой» запуск после переезда с бесплатного хостinga на VPS.
+- **Web-push и «установка» на iOS**: push на iPhone работает только после добавления приложения на экран «Домой». Ключи VAPID генерируются `npx web-push generate-vapid-keys`; при их отсутствии остаётся лента «колокольчика».
+- **Локальная база разработчика была на старой схеме** (до двуязычности). После правок оплаты синхронизация: `npx prisma db push --force-reset && npm run db:seed` (сбросит демо-данные локально).
 - **Русский язык** — комментарии, тексты интерфейса, сообщения об ошибках.
 - Мёртвые артефакты в репозитории (`Мозаика Здоровья 2.html`, `backup_headers/`) — не трогать, не восстанавливать.
 
@@ -225,3 +258,13 @@
 | 2026-07-01 | **Коды доступа**: модель `AccessCode`, панель врача, активация пациентом, 5 букв |
 | 2026-07-01 | **Панель администратора**: пользователи и роли, товары, статьи, подкасты, заказы |
 | 2026-07-01 | Магазин и материалы переведены на данные с сервера (тексты статей и фото товаров — в базе) |
+| 2026-07-01 | Документация: `ARCHITECTURE.md` (карта проекта) + автодеплой Render через Deploy Hook |
+| 2026-07-20 | *(второй разработчик)* Экран выбора роли (bento), рефакторинг админки, категории и черновики |
+| 2026-07-20 | *(второй разработчик)* Коды: активация при регистрации и в профиле, отзыв кода, дата регистрации пациента |
+| 2026-07-21 | *(второй разработчик)* Админ-управление тренировками, конструктор плейлистов, дублирование, превью-плеер |
+| 2026-07-22 | *(второй разработчик)* **Двуязычность RU/EN** на всех экранах, модалках и в админке (поля `*_ru`/`*_en`) |
+| 2026-07-24 | *(второй разработчик)* Глобальный перехват ошибок; сборка Render через `prisma db push` |
+| 2026-07-24 | Правила для ИИ (`AGENTS.md`, `.ai-rules`, `.cursorrules`, Copilot) + напоминание обновлять карту (GitHub Action) |
+| 2026-07-27 | **Онлайн-оплата (ЮKassa)**: модуль `payments/` (абстракция `PaymentProvider` + webhook), поля оплаты в `Order`, статусы `PENDING_PAYMENT`/`PAID`, `CheckoutScreen` создаёт заказ на сервере + экран `payment-result`, статус оплаты в админке. За флагом `PAYMENTS_ENABLED` |
+| 2026-07-27 | **Уведомления**: модуль `notifications/` (лента + web-push), модели `Notification`/`PushSubscription`, «колокольчик» с сервера, уведомления о новой программе и оплате заказа |
+| 2026-07-27 | **PWA**: `manifest.webmanifest`, service worker (`public/sw.js`), иконки, баннер «Установить приложение» — установка ярлыком на рабочий стол |

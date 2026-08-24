@@ -1,0 +1,28 @@
+# Напоминание обновлять карту проекта.
+# Если в пуше менялся код (backend/ или frontend/src/), но ARCHITECTURE.md не тронут —
+# в логах Actions появляется предупреждение. Не блокирует, просто напоминает.
+name: architecture-reminder
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Проверить, обновлена ли карта проекта
+        run: |
+          FILES=$(git diff --name-only HEAD~1 HEAD || true)
+          CODE_CHANGED=$(echo "$FILES" | grep -E '^(backend/|frontend/src/)' || true)
+          ARCH_CHANGED=$(echo "$FILES" | grep -E '^ARCHITECTURE\.md$' || true)
+          if [ -n "$CODE_CHANGED" ] && [ -z "$ARCH_CHANGED" ]; then
+            echo "::warning::Код изменился, но ARCHITECTURE.md не обновлён. Не забудьте обновить карту проекта (таблицы + Журнал изменений)."
+            echo "Изменённые файлы кода:"
+            echo "$CODE_CHANGED"
+          else
+            echo "OK: либо код не менялся, либо ARCHITECTURE.md обновлён вместе с кодом."
+          fi

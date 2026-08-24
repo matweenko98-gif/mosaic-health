@@ -9,6 +9,9 @@ import CreatorMaterialsScreen from "./screens/CreatorMaterialsScreen";
 import ShopScreen from "./screens/ShopScreen";
 import CartScreen from "./screens/CartScreen";
 import CheckoutScreen from "./screens/CheckoutScreen";
+import PaymentResultScreen from "./screens/PaymentResultScreen";
+import InstallPrompt from "./components/InstallPrompt";
+import NotificationBell from "./components/NotificationBell";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import SpecialistCodesScreen from "./screens/SpecialistCodesScreen";
@@ -40,10 +43,22 @@ export default function App() {
 
   // --- Навигация. Стартовый экран определяется после проверки сессии. ---
   const [currentScreen, setCurrentScreen] = useState(null);
+  // Заказ, по которому показываем результат оплаты (возврат с ЮKassa).
+  const [paymentOrderId, setPaymentOrderId] = useState(null);
 
   // Когда статус входа определён — выбираем первый экран
   useEffect(() => {
     if (authLoading || currentScreen !== null) return;
+
+    // Возврат со страницы оплаты: ЮKassa присылает на /?screen=payment-result&order=...
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("screen") === "payment-result") {
+      setPaymentOrderId(params.get("order") || null);
+      setCurrentScreen("payment-result");
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+
     if (isLoggedIn) {
       const roleUpper = (authUser?.role || "").toUpperCase();
       if (roleUpper === "SPECIALIST" || roleUpper === "ADMIN") {
@@ -260,6 +275,13 @@ export default function App() {
             onNavigate={setCurrentScreen}
           />
         );
+      case "payment-result":
+        return (
+          <PaymentResultScreen
+            orderId={paymentOrderId}
+            onNavigate={setCurrentScreen}
+          />
+        );
       case "specialist-codes":
         return <SpecialistCodesScreen onNavigate={setCurrentScreen} />;
       case "admin":
@@ -441,27 +463,8 @@ function AppContent({
               </button>
             </div>
 
-            {/* Иконка колокольчика (Уведомления) */}
-            <button
-              className="notification-bell-btn"
-              onClick={() => alert(t("У вас нет новых уведомлений"))}
-              aria-label={t("Уведомления")}
-            >
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#1d2321"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span style={{ position: "absolute", margin: "-16px 0 0 16px", width: "7px", height: "7px", background: "#EB6074", borderRadius: "50%", border: "1.5px solid #fff" }}></span>
-            </button>
+            {/* Колокольчик уведомлений (лента с сервера + включение push) */}
+            <NotificationBell isLoggedIn={isLoggedIn} onNavigate={setCurrentScreen} />
           </div>
         </header>
 
@@ -472,6 +475,9 @@ function AppContent({
         {showBottomNav && (
           <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
         )}
+
+        {/* Предложение установить приложение (PWA) — после входа, не на онбординге */}
+        {isLoggedIn && !isOnboardingScreen && <InstallPrompt />}
       </div>
     </div>
   );

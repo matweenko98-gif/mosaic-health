@@ -2489,7 +2489,35 @@ function PodcastsTab({ showToast, setDeleteConfirm }) {
 }
 
 // ------------------------- Раздел: ЗАКАЗЫ -------------------------
-const ORDER_STATUS = { NEW: "Новый", CONFIRMED: "Подтверждён", SHIPPED: "Отправлен", CANCELLED: "Отменён" };
+const ORDER_STATUS = {
+  NEW: "Новый",
+  PENDING_PAYMENT: "Ожидает оплаты",
+  PAID: "Оплачен",
+  CONFIRMED: "Подтверждён",
+  SHIPPED: "Отправлен",
+  CANCELLED: "Отменён",
+};
+
+/** Бейдж оплаты заказа (для админа): оплачен / ожидает оплаты / не оплачен. */
+function PaymentBadge({ order }) {
+  let bg = "#f3f4f6";
+  let color = "var(--color-text-secondary)";
+  let label = "Не оплачен";
+  if (order.status === "PAID") {
+    bg = "#e6f6ef";
+    color = "#1BAB7C";
+    label = "Оплачен";
+  } else if (order.status === "PENDING_PAYMENT") {
+    bg = "#fff4e0";
+    color = "#B8860B";
+    label = "Ожидает оплаты";
+  }
+  return (
+    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: bg, color, whiteSpace: "nowrap" }}>
+      {label}
+    </span>
+  );
+}
 
 function OrdersTab({ showToast }) {
   const [items, setItems] = useState([]);
@@ -2533,7 +2561,10 @@ function OrdersTab({ showToast }) {
           {items.map((o) => (
             <div key={o.id} style={{ ...cardStyle }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--color-text)" }}>{o.recipientName} · {o.total} ₽</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: "14px", color: "var(--color-text)" }}>{o.recipientName} · {o.total} {o.currency === "RUB" || !o.currency ? "₽" : o.currency}</span>
+                  <PaymentBadge order={o} />
+                </div>
                 <select
                   value={o.status}
                   onChange={(e) => setStatus(o.id, e.target.value)}
@@ -2548,6 +2579,12 @@ function OrdersTab({ showToast }) {
               <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "4px" }}>
                 {o.phone} · {o.address}
               </div>
+              {o.paymentId && (
+                <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "4px" }}>
+                  Платёж: {o.paymentProvider || "yookassa"} · {o.paymentId}
+                  {o.paidAt ? ` · оплачен ${formatDate(o.paidAt)}` : ""}
+                </div>
+              )}
               <div style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginTop: "4px" }}>
                 {(o.items || []).map((i) => `${i.name} ×${i.quantity}`).join(", ")}
               </div>

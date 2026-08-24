@@ -471,6 +471,30 @@ export const translations = {
   "Подписывайтесь на официальный канал эксперта, чтобы получать рекомендации, протоколы применения и задавать вопросы напрямую.": "Subscribe to the expert's official channel to receive recommendations, application protocols, and ask questions directly.",
   "Экспертный хаб здоровья, масел и полезных добавок": "Expert hub for health, oils, and healthy supplements",
   "Ссылка на Telegram эксперта не задана в настройках": "Expert's Telegram link is not configured in settings",
-  "В этой категории пока нет опубликованных статей.": "There are no published articles in this category yet."
+  "В этой категории пока нет опубликованных статей.": "There are no published articles in this category yet.",
+
+  // Оплата, результат оплаты, установка приложения, уведомления
+  "Перейти к оплате": "Proceed to payment",
+  "Обработка…": "Processing…",
+  "Не удалось оформить заказ. Попробуйте ещё раз.": "Could not place the order. Please try again.",
+  "Проверяем оплату…": "Checking payment…",
+  "Это займёт несколько секунд.": "This will take a few seconds.",
+  "Оплата прошла успешно": "Payment successful",
+  "Спасибо! Мы свяжемся с вами для подтверждения доставки.": "Thank you! We will contact you to confirm delivery.",
+  "Оплата обрабатывается": "Payment is being processed",
+  "Подтверждение платежа может занять некоторое время. Статус заказа появится в профиле.": "Payment confirmation may take some time. The order status will appear in your profile.",
+  "Не удалось проверить оплату": "Couldn't verify the payment",
+  "Проверьте статус заказа в профиле чуть позже.": "Check the order status in your profile a bit later.",
+  "Мои заказы": "My orders",
+  "На главную": "Go to home",
+  "Установить приложение": "Install app",
+  "Установить": "Install",
+  "Ярлык на рабочем столе и запуск без браузера.": "A home screen shortcut that launches without a browser.",
+  "Нажмите «Поделиться» и выберите «На экран „Домой“».": "Tap Share and choose Add to Home Screen.",
+  "Уведомления": "Notifications",
+  "Прочитать все": "Mark all read",
+  "Пока нет уведомлений": "No notifications yet",
+  "Включить уведомления на телефон": "Enable phone notifications",
+  "Не удалось включить уведомления. Установите приложение и разрешите уведомления в системе.": "Couldn't enable notifications. Install the app and allow notifications in your system settings.",
 };
 
