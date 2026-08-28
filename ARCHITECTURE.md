@@ -88,11 +88,13 @@
 | `GET /api/media/sign` | вошедшие (с проверкой прав) | `storage/media.controller.ts` |
 | `POST /api/media/upload-url` | врач/админ | `storage/media.controller.ts` |
 | `GET /api/payments/config` | все | `payments/payments.controller.ts` |
-| `POST /api/payments/create` | вошедшие | `payments/payments.controller.ts` |
+| `POST /api/payments/create`, `POST /api/payments/create-homework` | вошедшие | `payments/payments.controller.ts` |
 | `POST /api/payments/webhook/yookassa` | все (webhook ЮKassa) | `payments/payments.controller.ts` |
 | `GET /api/push/vapid-public-key` | все | `notifications/notifications.controller.ts` |
 | `POST /api/me/push/subscribe` \| `unsubscribe` | вошедшие | `notifications/notifications.controller.ts` |
 | `GET /api/me/notifications`, `PATCH /api/me/notifications/read-all`, `PATCH /api/me/notifications/:id/read` | вошедшие | `notifications/notifications.controller.ts` |
+| `GET /api/contacts` | все | `contacts/contacts.controller.ts` |
+| `POST/PATCH/DELETE /api/admin/contacts` | админ | `contacts/contacts-admin.controller.ts` |
 
 ---
 
@@ -102,7 +104,7 @@
 
 | Таблица | Смысл |
 |---|---|
-| `User` | Пользователь: email, пароль (хэш), **role** (PATIENT/SPECIALIST/ADMIN), имя, телефон, возраст, страна, аватар |
+| `User` | Пользователь: email, пароль (хэш), **role** (PATIENT/SPECIALIST/ADMIN), имя, телефон, возраст, страна, аватар, **homeworkPaidUntil** (оплата ДЗ) |
 | `UserSettings` | Напоминания, уведомления, язык |
 | `EmailToken` | Токены подтверждения email и сброса пароля |
 | `Exercise` | Упражнение: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, длительность, категория, `videoKey`, `isIndividual` |
@@ -111,9 +113,10 @@
 | `WorkoutLog` | Запись о выполненной тренировке (история) |
 | `AccessCode` | **Код доступа**: `code` (5 букв), `label`, кто создал, кто активировал (`activatedById`), когда. Можно отозвать |
 | `Article` / `Podcast` | Материалы: **двуязычные** `title_ru/title_en`, `description_ru/description_en`, у статьи `body_ru/body_en` |
-| `Product` / `Order` / `OrderItem` | Магазин: товар **двуязычный** (`name_ru/name_en`, `description_ru/description_en`, `imageKey`), заказ и его позиции. У `Order` — `currency`, `paymentProvider`, `paymentId`, `paidAt`; статусы `NEW → PENDING_PAYMENT → PAID → CONFIRMED → SHIPPED → CANCELLED` |
+| `Product` / `Order` / `OrderItem` | Магазин: товар **двуязычный** (`name_ru/name_en`, `description_ru/description_en`, `imageKey`), заказ и его позиции. У `Order` — **type** (`PRODUCT` / `HOMEWORK_SUBSCRIPTION`), `currency`, `paymentProvider`, `paymentId`, `paidAt`; статусы `NEW → PENDING_PAYMENT → PAID → CONFIRMED → SHIPPED → CANCELLED` |
 | `Notification` | Уведомление пользователю (лента «колокольчика»), двуязычное, поле `data` (JSON) для навигации, `readAt` |
 | `PushSubscription` | Подписка браузера/устройства на web-push (`endpoint`, `p256dh`, `auth`) |
+| `ContactBranch` | **Контакты и филиалы**: двуязычные `city_ru/city_en`, `address_ru/address_en`, `phone`, `whatsapp`, `workHours_ru/workHours_en`, `sortOrder` |
 
 **Роли:** `PATIENT` (по умолчанию при регистрации), `SPECIALIST` (врач), `ADMIN`.
 
@@ -269,3 +272,8 @@
 | 2026-07-27 | **Уведомления**: модуль `notifications/` (лента + web-push), модели `Notification`/`PushSubscription`, «колокольчик» с сервера, уведомления о новой программе и оплате заказа |
 | 2026-07-27 | **PWA**: `manifest.webmanifest`, service worker (`public/sw.js`), иконки, баннер «Установить приложение» — установка ярлыком на рабочий стол |
 | 2026-08-24 | **Коды доступа, PhoneInput с флагами, YouTube плеер, Категории и Max**: Врач-создатель на карточках кодов, селектор флагов стран в `PhoneInput`, YouTube/Rutube <iframe> embed, полная свобода категорий в админке, посадочный хаб масел с кнопкой Мессенджер Max (RU) |
+| 2026-08-24 | **Блок контактов центра на главном экране**: добавлены карточки всех 5 филиалов (Владикавказ, Сочи, Новокузнецк, Черногория, Дубай) с кликабельными номерами телефонов и прямым переходом в WhatsApp |
+| 2026-08-24 | **Платный 2-этапный доступ к Домашним заданиям**: ДЗ закрыто под 2 условия (1. Оплата подписки `POST /api/payments/create-homework` + 2. Ввод 5-буквенного ключа от врача). Статьи, подкасты, масла и каталог тренировок остаются в открытом бесплатном доступе |
+| 2026-08-28 | **Блок контактов**: удалена зелёная точка из заголовка «Контакты и филиалы» |
+| 2026-08-28 | **Вкладка «Контакты» в Админ-панели и динамические филиалы**: Модель `ContactBranch`, бэкенд-модуль `contacts/` (GET /api/contacts, POST/PATCH/DELETE /api/admin/contacts), отдельная вкладка «Контакты» в админ-панели (добавление, редактирование, удаление, сортировка филиалов) и динамическая отрисовка плашек контактов на главном экране |
+| 2026-08-28 | **Блок контактов**: удалена кнопка-ссылка на WhatsApp в плашках филиалов, оставлены только кликабельные номера телефонов |

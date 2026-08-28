@@ -18,6 +18,7 @@ model User {
   age                  String            @default("")
   country              String            @default("")
   hasRehabilitation    Boolean           @default(false)
+  homeworkPaidUntil    DateTime?
   avatarKey            String?
   emailVerifiedAt      DateTime?
   createdAt            DateTime          @default(now())
@@ -190,9 +191,15 @@ model Product {
   orderItems     OrderItem[]
 }
 
+enum OrderType {
+  PRODUCT
+  HOMEWORK_SUBSCRIPTION
+}
+
 model Order {
   id              String      @id @default(cuid())
   userId          String?
+  type            OrderType   @default(PRODUCT)
   recipientName   String
   phone           String
   address         String
@@ -266,4 +273,20 @@ enum OrderStatus {
   CONFIRMED
   SHIPPED
   CANCELLED
+}
+
+model ContactBranch {
+  id           Int      @id @default(autoincrement())
+  city_ru      String
+  city_en      String   @default("")
+  address_ru   String   @default("")
+  address_en   String   @default("")
+  phone        String   @default("")
+  whatsapp     String   @default("")
+  workHours_ru String   @default("")
+  workHours_en String   @default("")
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@map("contact_branches")
 }

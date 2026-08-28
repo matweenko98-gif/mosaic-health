@@ -317,10 +317,24 @@ async function seedUsers(exercises: RawExercise[]) {
   console.log('  Демо-аккаунты: admin@mosaic.health, doctor@mosaic.health, patient@mosaic.health (пароль у всех: Demo12345)');
 }
 
+async function seedBranches() {
+  const branches = [
+    { id: 1, city_ru: 'Владикавказ', city_en: 'Vladikavkaz', address_ru: 'Гастелло, 73', address_en: 'Gastello str., 73', phone: '+7 (906) 495-88-61', whatsapp: 'https://wa.me/79064958861', sortOrder: 1 },
+    { id: 2, city_ru: 'Сочи', city_en: 'Sochi', address_ru: 'Курортный проспект, 86', address_en: 'Kurortny Ave., 86', phone: '+7 (989) 166-03-03', whatsapp: 'https://wa.me/79891660303', sortOrder: 2 },
+    { id: 3, city_ru: 'Новокузнецк', city_en: 'Novokuznetsk', address_ru: 'пр. Пионерский, 42', address_en: 'Pionersky Ave., 42', phone: '+7 (905) 969-55-00', whatsapp: 'https://wa.me/79059695500', sortOrder: 3 },
+    { id: 4, city_ru: 'Черногория', city_en: 'Montenegro', address_ru: 'Будва, Бечичи', address_en: 'Budva, Becici', phone: '+382 (68) 807-204', whatsapp: 'https://wa.me/38268807204', sortOrder: 4 },
+    { id: 5, city_ru: 'Дубай', city_en: 'Dubai', address_ru: 'Business Bay, Iris Bay Tower', address_en: 'Business Bay, Iris Bay Tower', phone: '+971 (58) 580-7204', whatsapp: 'https://wa.me/971585807204', sortOrder: 5 },
+  ];
+  for (const b of branches) {
+    await prisma.contactBranch.upsert({ where: { id: b.id }, create: b, update: b });
+  }
+  console.log(`  Филиалов: ${branches.length}`);
+}
+
 async function fixSequences() {
   // После вставки с явными id выравниваем счётчики автоинкремента,
   // чтобы новые записи не конфликтовали по id.
-  for (const table of ['Exercise', 'Product', 'Article', 'Podcast']) {
+  for (const table of ['Exercise', 'Product', 'Article', 'Podcast', 'contact_branches']) {
     await prisma.$executeRawUnsafe(
       `SELECT setval(pg_get_serial_sequence('"${table}"', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 1))`,
     );
@@ -332,6 +346,7 @@ async function main() {
   const exercises = await seedExercises();
   await seedProducts();
   await seedContent();
+  await seedBranches();
   await seedUsers(exercises);
   await fixSequences();
   console.log('Готово.');

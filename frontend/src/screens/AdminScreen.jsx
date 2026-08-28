@@ -3801,6 +3801,341 @@ function WorkoutsTab({ showToast, setDeleteConfirm }) {
   );
 }
 
+function ContactsTab({ showToast, setDeleteConfirm }) {
+  const { language, t } = useLanguage();
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [formLang, setFormLang] = useState("RU");
+  const [form, setForm] = useState({
+    city_ru: "",
+    city_en: "",
+    address_ru: "",
+    address_en: "",
+    phone: "",
+    whatsapp: "",
+    workHours_ru: "",
+    workHours_en: "",
+    sortOrder: 0,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const loadBranches = async () => {
+    try {
+      setLoading(true);
+      const data = await api.get("/contacts");
+      setBranches(data);
+    } catch (err) {
+      console.error("Failed to load branches:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBranches();
+  }, []);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({
+      city_ru: "",
+      city_en: "",
+      address_ru: "",
+      address_en: "",
+      phone: "",
+      whatsapp: "",
+      workHours_ru: "",
+      workHours_en: "",
+      sortOrder: 0,
+    });
+  };
+
+  const handleEdit = (branch) => {
+    setEditingId(branch.id);
+    setForm({
+      city_ru: branch.city_ru || "",
+      city_en: branch.city_en || "",
+      address_ru: branch.address_ru || "",
+      address_en: branch.address_en || "",
+      phone: branch.phone || "",
+      whatsapp: branch.whatsapp || "",
+      workHours_ru: branch.workHours_ru || "",
+      workHours_en: branch.workHours_en || "",
+      sortOrder: branch.sortOrder ?? 0,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.city_ru.trim()) {
+      showToast(language === "EN" ? "City name (RU) is required" : "Укажите название города (RU)");
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload = {
+        city_ru: form.city_ru.trim(),
+        city_en: form.city_en.trim(),
+        address_ru: form.address_ru.trim(),
+        address_en: form.address_en.trim(),
+        phone: form.phone.trim(),
+        whatsapp: form.whatsapp.trim(),
+        workHours_ru: form.workHours_ru.trim(),
+        workHours_en: form.workHours_en.trim(),
+        sortOrder: parseInt(form.sortOrder, 10) || 0,
+      };
+
+      if (editingId) {
+        await api.patch(`/admin/contacts/${editingId}`, payload);
+        showToast(language === "EN" ? "Branch updated" : "Филиал обновлён");
+      } else {
+        await api.post("/admin/contacts", payload);
+        showToast(language === "EN" ? "Branch added" : "Филиал добавлен");
+      }
+      resetForm();
+      loadBranches();
+    } catch (err) {
+      console.error("Save branch error:", err);
+      showToast(language === "EN" ? "Failed to save branch" : "Ошибка сохранения филиала");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (branch) => {
+    setDeleteConfirm({
+      name: language === "EN" ? (branch.city_en || branch.city_ru) : branch.city_ru,
+      type: "branch",
+      action: async () => {
+        try {
+          await api.del(`/admin/contacts/${branch.id}`);
+          showToast(language === "EN" ? "Branch deleted" : "Филиал удалён");
+          loadBranches();
+        } catch (err) {
+          console.error("Delete branch error:", err);
+          showToast(language === "EN" ? "Failed to delete branch" : "Ошибка удаления филиала");
+        }
+      },
+    });
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Форма создания/редактирования */}
+      <div style={cardStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <h3 style={{ margin: 0, fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)" }}>
+            {editingId ? t("Редактировать филиал") : t("Добавить филиал")}
+          </h3>
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              style={{ ...buttonSecondaryStyle, padding: "6px 12px", fontSize: "12px" }}
+            >
+              {t("Отмена")}
+            </button>
+          )}
+        </div>
+
+        <FormLanguageToggle current={formLang} onChange={setFormLang} />
+
+        <form onSubmit={handleSubmit}>
+          {formLang === "RU" ? (
+            <>
+              <div>
+                <label style={labelStyle}>{t("Город")} (RU) *</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="например: Владикавказ"
+                  value={form.city_ru}
+                  onChange={(e) => setForm({ ...form, city_ru: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{t("Адрес")} (RU)</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="например: ул. Гастелло, 73"
+                  value={form.address_ru}
+                  onChange={(e) => setForm({ ...form, address_ru: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{t("Часы работы")} (RU)</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="например: Пн-Сб: 09:00 - 20:00"
+                  value={form.workHours_ru}
+                  onChange={(e) => setForm({ ...form, workHours_ru: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label style={labelStyle}>{t("Город")} (EN)</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="e.g. Vladikavkaz"
+                  value={form.city_en}
+                  onChange={(e) => setForm({ ...form, city_en: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{t("Адрес")} (EN)</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="e.g. Gastello str., 73"
+                  value={form.address_en}
+                  onChange={(e) => setForm({ ...form, address_en: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{t("Часы работы")} (EN)</label>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  placeholder="e.g. Mon-Sat: 09:00 - 20:00"
+                  value={form.workHours_en}
+                  onChange={(e) => setForm({ ...form, workHours_en: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            <div>
+              <label style={labelStyle}>{t("Телефон")}</label>
+              <input
+                type="text"
+                style={inputStyle}
+                placeholder="+7 (906) 495-88-61"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>{t("Порядок")}</label>
+              <input
+                type="number"
+                style={inputStyle}
+                placeholder="1"
+                value={form.sortOrder}
+                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn-save"
+            disabled={saving}
+            style={{ width: "100%", marginTop: "8px", backgroundColor: "#1BAB7C" }}
+          >
+            {saving ? t("Сохранение...") : editingId ? t("Сохранить изменения") : t("Добавить филиал")}
+          </button>
+        </form>
+      </div>
+
+      {/* Список филиалов */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <h3 style={{ margin: "4px 0", fontFamily: "'Manrope', sans-serif", fontSize: "16px", fontWeight: "800", color: "var(--color-text)" }}>
+          {t("Контакты и филиалы")} ({branches.length})
+        </h3>
+
+        {loading ? (
+          <p style={{ color: "var(--color-text-secondary)", fontSize: "13px" }}>{t("Загрузка...")}</p>
+        ) : branches.length === 0 ? (
+          <p style={{ color: "var(--color-text-secondary)", fontSize: "13px" }}>{t("Нет филиалов")}</p>
+        ) : (
+          branches.map((branch) => {
+            const city = language === "EN" ? (branch.city_en || branch.city_ru) : branch.city_ru;
+            const address = language === "EN" ? (branch.address_en || branch.address_ru) : branch.address_ru;
+            const workHours = language === "EN" ? (branch.workHours_en || branch.workHours_ru) : branch.workHours_ru;
+
+            return (
+              <div key={branch.id} style={{ ...cardStyle, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: "800", fontSize: "15px", color: "var(--color-text)" }}>
+                        {city}
+                      </span>
+                      {branch.sortOrder > 0 && (
+                        <span style={{ fontSize: "11px", fontWeight: "600", color: "#1BAB7C", background: "rgba(27,171,124,.1)", padding: "2px 8px", borderRadius: "999px" }}>
+                          #{branch.sortOrder}
+                        </span>
+                      )}
+                    </div>
+                    {address && (
+                      <div style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "3px" }}>
+                        📍 {address}
+                      </div>
+                    )}
+                    {branch.phone && (
+                      <div style={{ fontSize: "12.5px", color: "var(--color-text)", marginTop: "2px", fontWeight: "600" }}>
+                        📞 {branch.phone}
+                      </div>
+                    )}
+                    {workHours && (
+                      <div style={{ fontSize: "11.5px", color: "#6E6E6E", marginTop: "2px" }}>
+                        🕒 {workHours}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(branch)}
+                      style={{
+                        border: "none",
+                        background: "rgba(27,171,124,.1)",
+                        color: "#1BAB7C",
+                        borderRadius: "10px",
+                        padding: "6px 10px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ✏️ {t("Изменить")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(branch)}
+                      style={{
+                        border: "none",
+                        background: "rgba(239,68,68,.1)",
+                        color: "#ef4444",
+                        borderRadius: "10px",
+                        padding: "6px 10px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ------------------------- ГЛАВНЫЙ ЭКРАН -------------------------
 const TABS = [
   { id: "users", labelKey: "Пользователи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg> },
@@ -3809,6 +4144,7 @@ const TABS = [
   { id: "articles", labelKey: "Статьи", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
   { id: "podcasts", labelKey: "Подкасты", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg> },
   { id: "orders", labelKey: "Заказы", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg> },
+  { id: "contacts", labelKey: "Контакты", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> },
 ];
 
 export default function AdminScreen({ onNavigate }) {
@@ -3931,6 +4267,7 @@ export default function AdminScreen({ onNavigate }) {
       {tab === "articles" && <ArticlesTab showToast={showToast} setDeleteConfirm={setDeleteConfirm} />}
       {tab === "podcasts" && <PodcastsTab showToast={showToast} setDeleteConfirm={setDeleteConfirm} />}
       {tab === "orders" && <OrdersTab showToast={showToast} />}
+      {tab === "contacts" && <ContactsTab showToast={showToast} setDeleteConfirm={setDeleteConfirm} />}
 
       {/* Мягкое Apple-style Toast уведомление */}
       {toast.visible && (
@@ -3951,8 +4288,8 @@ export default function AdminScreen({ onNavigate }) {
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "var(--color-text-secondary)", lineHeight: "1.5", fontWeight: 300 }}>
               {language === "EN"
-                ? `Are you sure you want to delete ${deleteConfirm.type === "product" ? "product" : deleteConfirm.type === "article" ? "article" : deleteConfirm.type === "exercise" ? "workout" : "media file"}`
-                : `Вы уверены, что хотите удалить ${deleteConfirm.type === "product" ? "товар" : deleteConfirm.type === "article" ? "статью" : deleteConfirm.type === "exercise" ? "тренировку" : "медиафайл"}`} <strong>«{deleteConfirm.name}»</strong>? {language === "EN" ? "This action cannot be undone." : "Это действие необратимо."}
+                ? `Are you sure you want to delete ${deleteConfirm.type === "product" ? "product" : deleteConfirm.type === "article" ? "article" : deleteConfirm.type === "exercise" ? "workout" : deleteConfirm.type === "branch" ? "branch" : "media file"}`
+                : `Вы уверены, что хотите удалить ${deleteConfirm.type === "product" ? "товар" : deleteConfirm.type === "article" ? "статью" : deleteConfirm.type === "exercise" ? "тренировку" : deleteConfirm.type === "branch" ? "филиал" : "медиафайл"}`} <strong>«{deleteConfirm.name}»</strong>? {language === "EN" ? "This action cannot be undone." : "Это действие необратимо."}
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
               <button
