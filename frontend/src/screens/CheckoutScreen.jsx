@@ -14,16 +14,20 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [paymentsEnabled, setPaymentsEnabled] = useState(false);
+  const [currency, setCurrency] = useState("RUB");
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const curSymbol = { RUB: "₽", AED: "AED", EUR: "€", USD: "$" }[currency] || currency;
 
-  // Узнаём у сервера, включена ли онлайн-оплата (от этого зависит текст кнопки и поток).
+  // Узнаём у сервера, включена ли онлайн-оплата и валюту (текст кнопки, символ, поток).
   useEffect(() => {
     let active = true;
     api
       .get("/payments/config")
       .then((cfg) => {
-        if (active) setPaymentsEnabled(!!cfg?.enabled);
+        if (!active) return;
+        setPaymentsEnabled(!!cfg?.enabled);
+        if (cfg?.currency) setCurrency(cfg.currency);
       })
       .catch(() => {});
     return () => {
@@ -66,7 +70,7 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
       onClearCart();
       alert(
         t("Заказ успешно оформлен!") +
-          `\n${t("Итого")}: ${totalPrice} ₽\n${t("Наш специалист свяжется с вами для подтверждения доставки.")}`
+          `\n${t("Итого")}: ${totalPrice} ${curSymbol}\n${t("Наш специалист свяжется с вами для подтверждения доставки.")}`
       );
       onNavigate("home");
     } catch (err) {
@@ -167,7 +171,7 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
           {/* Итоговый суммарь */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--color-border)", paddingTop: "14px", marginTop: "4px" }}>
             <span style={{ fontWeight: "700", fontSize: "14px", fontFamily: "'Manrope', sans-serif" }}>{t("Сумма к оплате")}: </span>
-            <span style={{ fontWeight: "800", fontSize: "18px", color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>{totalPrice} ₽</span>
+            <span style={{ fontWeight: "800", fontSize: "18px", color: "#1BAB7C", fontFamily: "'Manrope', sans-serif" }}>{totalPrice} {curSymbol}</span>
           </div>
 
           {error && (

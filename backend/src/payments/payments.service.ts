@@ -10,29 +10,48 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { YookassaProvider } from './providers/yookassa.provider';
-import { ReceiptData } from './providers/payment-provider.interface';
+import { StripeProvider } from './providers/stripe.provider';
+import { PaymentProvider, ReceiptData } from './providers/payment-provider.interface';
 
 /**
- * Оплата заказов. Провайдер сейчас один — ЮKassa (Россия); выбран через
- * абстракцию `PaymentProvider`, чтобы позже добавить международный без переделки.
+ * Оплата заказов. Провайдер выбирается настройкой `PAYMENTS_PROVIDER`
+ * (`stripe` — Дубай/Черногория, по умолчанию; `yookassa` — Россия).
+ * Оба реализуют общий интерфейс `PaymentProvider`.
  *
- * Включается флагом `PAYMENTS_ENABLED=true`. Пока выключено — эндпоинты оплаты
+ * Включается флагом `PAYMENTS_ENABLED`. Пока выключено — эндпоинты оплаты
  * отвечают 503, а фронт оформляет заказ по старой схеме («специалист свяжется»).
  */
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger('PaymentsService');
+  private readonly providers: Record<string, PaymentProvider>;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly provider: YookassaProvider,
+    private readonly yookassa: YookassaProvider,
+    private readonly stripe: StripeProvider,
     private readonly notifications: NotificationsService,
-  ) {}
+  ) {
+    this.providers = { yookassa: this.yookassa, stripe: this.stripe };
+  }
 
   get enabled(): boolean {
     const v = this.config.get<string>('PAYMENTS_ENABLED');
     return v === 'true' || v === '1';
+  }
+
+  get providerName(): string {
+    const name = (this.config.get<string>('PAYMENTS_PROVIDER') || 'stripe').toLowerCase();
+    return this.providers[name] ? name : 'stripe';
+  }
+
+  get currency(): string {
+    return this.config.get<string>('STORE_CURRENCY') || 'AED';
+  }
+
+  private get activeProvider(): PaymentProvider {
+    return this.providers[this.providerName];
   }
 
   private get frontendUrl(): string {
@@ -60,20 +79,22 @@ export class PaymentsService {
       throw new BadRequestException('Заказ уже оплачен');
     }
 
+    const provider = this.activeProvider;
     const returnUrl = `${this.frontendUrl}/?screen=payment-result&order=${order.id}`;
-    const result = await this.provider.createPayment({
+    const result = await provider.createPayment({
       orderId: order.id,
       amount: order.total,
       currency: order.currency,
       description: `Заказ №${this.orderNo(order.id)} — Мозаика Здоровья`,
       returnUrl,
-      receipt: this.buildReceipt(order),
+      cancelUrl: `${returnUrl}&canceled=1`,
+      receipt: this.buildReceipt(order), // важно для ЮKassa (54-ФЗ); Stripe игнорирует
     });
 
     await this.prisma.order.update({
       where: { id: order.id },
       data: {
-        paymentProvider: this.provider.name,
+        paymentProvider: provider.name,
         paymentId: result.paymentId,
         status: 'PENDING_PAYMENT',
       },
@@ -83,11 +104,14 @@ export class PaymentsService {
   }
 
   /**
-   * Чек для 54-ФЗ. По умолчанию выключен (`YOOKASSA_SEND_RECEIPT` != true),
+   * Чек для 54-ФЗ (ЮKassa). По умолчанию выключен (`YOOKASSA_SEND_RECEIPT` != true),
    * т.к. требует корректной ставки НДС и настроенной фискализации в кабинете.
-   * Включается заказчиком, когда касса настроена.
    */
-  private buildReceipt(order: { phone: string; currency: string; items: { name: string; price: number; quantity: number }[] }): ReceiptData | undefined {
+  private buildReceipt(order: {
+    phone: string;
+    currency: string;
+    items: { name: string; price: number; quantity: number }[];
+  }): ReceiptData | undefined {
     if (this.config.get<string>('YOOKASSA_SEND_RECEIPT') !== 'true') return undefined;
     const vatCode = Number(this.config.get<string>('YOOKASSA_VAT_CODE') ?? 1);
     const phone = order.phone?.replace(/[^\d+]/g, '') || undefined;
@@ -105,19 +129,22 @@ export class PaymentsService {
   }
 
   /**
-   * Обработка уведомления ЮKassa. Телу не доверяем — перепроверяем статус
-   * платежа запросом к API. Идемпотентно: повторное событие не создаёт дублей.
-   * Всегда отвечаем 200, чтобы ЮKassa не слала бесконечные повторы.
+   * Обработка уведомления провайдера. Телу не доверяем — перепроверяем статус
+   * платежа запросом к API провайдера. Идемпотентно: повторное событие не создаёт
+   * дублей. Всегда отвечаем 200, чтобы провайдер не слал бесконечные повторы.
    */
-  async handleWebhook(body: any) {
-    const paymentId: string | undefined = body?.object?.id;
+  async handleWebhook(providerName: string, body: any) {
+    const provider = this.providers[providerName];
+    if (!provider) return { ok: true };
+
+    const paymentId = provider.extractWebhookPaymentId(body);
     if (!paymentId) return { ok: true };
 
     let status;
     try {
-      status = await this.provider.getPaymentStatus(paymentId);
+      status = await provider.getPaymentStatus(paymentId);
     } catch (e) {
-      this.logger.warn(`Не удалось проверить платёж ${paymentId}: ${e}`);
+      this.logger.warn(`Не удалось проверить платёж ${paymentId} (${providerName}): ${e}`);
       return { ok: true };
     }
 
@@ -142,9 +169,8 @@ export class PaymentsService {
           data: { orderId: order.id, screen: 'profile' },
         });
       }
-      this.logger.log(`Заказ ${order.id} оплачен (платёж ${paymentId})`);
+      this.logger.log(`Заказ ${order.id} оплачен (${providerName}, платёж ${paymentId})`);
     } else if (status.status === 'canceled' && order.status === 'PENDING_PAYMENT') {
-      // Оплата отменена/не завершена — возвращаем заказ в исходное состояние.
       await this.prisma.order.update({ where: { id: order.id }, data: { status: 'NEW' } });
     }
 

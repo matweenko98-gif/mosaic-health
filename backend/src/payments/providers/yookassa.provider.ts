@@ -60,6 +60,10 @@ export class YookassaProvider implements PaymentProvider {
     };
   }
 
+  extractWebhookPaymentId(body: any): string | undefined {
+    return body?.object?.id;
+  }
+
   async getPaymentStatus(paymentId: string): Promise<PaymentStatus> {
     const res = await fetch(`${API}/payments/${paymentId}`, {
       headers: { Authorization: this.authHeader() },

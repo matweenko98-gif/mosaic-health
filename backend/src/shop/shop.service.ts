@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateOrderDto,
@@ -9,7 +10,10 @@ import {
 
 @Injectable()
 export class ShopService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   // ---------- Товары ----------
   listProducts(category?: string) {
@@ -59,6 +63,8 @@ export class ShopService {
     });
     const total = itemsData.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
+    const currency = this.config.get<string>('STORE_CURRENCY') || 'AED';
+
     return this.prisma.order.create({
       data: {
         userId: userId ?? undefined,
@@ -66,6 +72,7 @@ export class ShopService {
         phone: dto.phone,
         address: dto.address,
         total,
+        currency,
         items: { create: itemsData },
       },
       include: { items: true },

@@ -17,7 +17,11 @@ export class PaymentsController {
   @Public()
   @Get('payments/config')
   config() {
-    return { enabled: this.payments.enabled, provider: 'yookassa' };
+    return {
+      enabled: this.payments.enabled,
+      provider: this.payments.providerName,
+      currency: this.payments.currency,
+    };
   }
 
   @Post('payments/create')
@@ -28,7 +32,14 @@ export class PaymentsController {
   @Public()
   @HttpCode(200)
   @Post('payments/webhook/yookassa')
-  webhook(@Body() body: any) {
-    return this.payments.handleWebhook(body);
+  yookassaWebhook(@Body() body: any) {
+    return this.payments.handleWebhook('yookassa', body);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @Post('payments/webhook/stripe')
+  stripeWebhook(@Body() body: any) {
+    return this.payments.handleWebhook('stripe', body);
   }
 }

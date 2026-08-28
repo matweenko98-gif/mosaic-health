@@ -21,10 +21,11 @@ export interface ReceiptData {
 
 export interface CreatePaymentInput {
   orderId: string;
-  amount: number; // целое в основной валюте (у нас Order.total, ₽)
-  currency: string; // 'RUB'
+  amount: number; // целое в основной единице валюты (Order.total): ₽ / AED / €
+  currency: string; // 'RUB' | 'AED' | 'EUR'
   description: string;
   returnUrl: string;
+  cancelUrl?: string; // куда вернуть при отмене (использует Stripe)
   receipt?: ReceiptData;
 }
 
@@ -46,4 +47,6 @@ export interface PaymentProvider {
   readonly name: string;
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
   getPaymentStatus(paymentId: string): Promise<PaymentStatus>;
+  /** Достаёт id платежа/сессии из тела webhook (у провайдеров разная форма). */
+  extractWebhookPaymentId(body: any): string | undefined;
 }

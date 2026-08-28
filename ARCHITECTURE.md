@@ -44,7 +44,7 @@
 | Shop | `shop/` | Товары, заказы (+ админ) |
 | Admin | `admin/` | **Пользователи и смена ролей** |
 | Storage | `storage/` | Подписанные ссылки на медиа (S3) |
-| Payments | `payments/` | **Онлайн-оплата (ЮKassa)**: создание платежа, webhook. Абстракция `PaymentProvider` (задел под Stripe). За флагом `PAYMENTS_ENABLED` |
+| Payments | `payments/` | **Онлайн-оплата**: абстракция `PaymentProvider` + `StripeProvider` (Дубай/Черногория) и `YookassaProvider` (Россия). Выбор через `PAYMENTS_PROVIDER`, валюта — `STORE_CURRENCY`. За флагом `PAYMENTS_ENABLED` |
 | Notifications | `notifications/` | **Уведомления**: лента «колокольчика» + web-push (PWA). Глобальный модуль |
 | Mail | `mail/` | Отправка писем — **пока заглушка, пишет ссылки в лог** |
 | Prisma | `prisma/` | `PrismaService` — доступ к базе |
@@ -89,7 +89,7 @@
 | `POST /api/media/upload-url` | врач/админ | `storage/media.controller.ts` |
 | `GET /api/payments/config` | все | `payments/payments.controller.ts` |
 | `POST /api/payments/create` | вошедшие | `payments/payments.controller.ts` |
-| `POST /api/payments/webhook/yookassa` | все (webhook ЮKassa) | `payments/payments.controller.ts` |
+| `POST /api/payments/webhook/stripe` \| `yookassa` | все (webhook провайдера) | `payments/payments.controller.ts` |
 | `GET /api/push/vapid-public-key` | все | `notifications/notifications.controller.ts` |
 | `POST /api/me/push/subscribe` \| `unsubscribe` | вошедшие | `notifications/notifications.controller.ts` |
 | `GET /api/me/notifications`, `PATCH /api/me/notifications/read-all`, `PATCH /api/me/notifications/:id/read` | вошедшие | `notifications/notifications.controller.ts` |
@@ -218,7 +218,7 @@
 | **Render** (бэкенд) | **ВРУЧНУЮ**: Manual Deploy → Deploy latest commit (репозиторий чужой → автодеплой не настроен) |
 | **Supabase** (база) | Миграции и seed применяются **во время сборки Render** (`prisma migrate deploy && npm run db:seed`) |
 
-**Переменные окружения бэкенда** (`backend/.env.example`): `DATABASE_URL`, `DIRECT_URL` (на Render — одинаковые, прямое подключение 5432), `JWT_*`, `FRONTEND_URL`, `S3_*` (если не задан `S3_ENDPOINT` — медиа выключено, приложение не падает), `PAYMENTS_ENABLED` + `YOOKASSA_*` (оплата; при `false` — выключена), `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` (web-push; без ключей push выключен, остаётся лента).
+**Переменные окружения бэкенда** (`backend/.env.example`): `DATABASE_URL`, `DIRECT_URL` (на Render — одинаковые, прямое подключение 5432), `JWT_*`, `FRONTEND_URL`, `S3_*` (если не задан `S3_ENDPOINT` — медиа выключено, приложение не падает), `PAYMENTS_ENABLED` (оплата; при `false` — выключена), `PAYMENTS_PROVIDER` (`stripe`/`yookassa`), `STORE_CURRENCY` (`AED`/`EUR`/`RUB`), `STRIPE_SECRET_KEY`, `YOOKASSA_*`, `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` (web-push; без ключей push выключен, остаётся лента).
 
 **Демо-аккаунты** (пароль `Demo12345`): `admin@mosaic.health`, `doctor@mosaic.health`, `patient@mosaic.health`.
 **Демо-коды** (для свежей базы): `ALPHA` (активирован пациентом), `BRAVO` (свободный).
@@ -232,7 +232,8 @@
 - **Один код — один аккаунт**: повторная активация другим пользователем → 409.
 - **Локальная и прод-база разные**: аккаунты, созданные локально, в Supabase не появятся.
 - **RLS в Supabase выключен** — это нормально: доступ проверяет бэкенд, браузер в базу напрямую не ходит.
-- **Оплата за флагом `PAYMENTS_ENABLED`**: пока `false` — `CheckoutScreen` оформляет заказ по старой схеме («специалист свяжется»). Webhook ЮKassa требует постоянно включённого сервера — «боевой» запуск после переезда с бесплатного хостinga на VPS.
+- **Оплата за флагом `PAYMENTS_ENABLED`**: пока `false` — `CheckoutScreen` оформляет заказ по старой схеме («специалист свяжется»). Webhook требует постоянно включённого сервера — «боевой» запуск после переезда с бесплатного хостinga на VPS.
+- **Две кассы, не заменяют друг друга**: Stripe (юрлицо ОАЭ) обслуживает Дубай/Черногорию, но **не проводит российские карты** (санкции) → для России отдельная касса ЮKassa (ООО). Активный провайдер задаётся `PAYMENTS_PROVIDER`; статус платежа всегда перепроверяется запросом к API провайдера (телу webhook не доверяем).
 - **Web-push и «установка» на iOS**: push на iPhone работает только после добавления приложения на экран «Домой». Ключи VAPID генерируются `npx web-push generate-vapid-keys`; при их отсутствии остаётся лента «колокольчика».
 - **Локальная база разработчика была на старой схеме** (до двуязычности). После правок оплаты синхронизация: `npx prisma db push --force-reset && npm run db:seed` (сбросит демо-данные локально).
 - **Русский язык** — комментарии, тексты интерфейса, сообщения об ошибках.
@@ -268,3 +269,4 @@
 | 2026-07-27 | **Онлайн-оплата (ЮKassa)**: модуль `payments/` (абстракция `PaymentProvider` + webhook), поля оплаты в `Order`, статусы `PENDING_PAYMENT`/`PAID`, `CheckoutScreen` создаёт заказ на сервере + экран `payment-result`, статус оплаты в админке. За флагом `PAYMENTS_ENABLED` |
 | 2026-07-27 | **Уведомления**: модуль `notifications/` (лента + web-push), модели `Notification`/`PushSubscription`, «колокольчик» с сервера, уведомления о новой программе и оплате заказа |
 | 2026-07-27 | **PWA**: `manifest.webmanifest`, service worker (`public/sw.js`), иконки, баннер «Установить приложение» — установка ярлыком на рабочий стол |
+| 2026-08-10 | **Stripe (Дубай-first)**: `StripeProvider` (Checkout Session) рядом с ЮKassa, выбор через `PAYMENTS_PROVIDER`, мультивалюта `STORE_CURRENCY` (AED/EUR/RUB), webhook `/payments/webhook/stripe`, валюта в `/payments/config` и на checkout. Стратегия: сначала Дубай+Черногория (Stripe/ОАЭ), Россия (ЮKassa) — позже |
