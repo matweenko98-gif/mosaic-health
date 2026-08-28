@@ -1,30 +1,48 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Controller, ForbiddenException, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { CodesService } from '../codes/codes.service';
+import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('exercises')
 export class ExercisesController {
-  constructor(private readonly exercises: ExercisesService) { }
+  constructor(
+    private readonly exercises: ExercisesService,
+    private readonly codes: CodesService,
+  ) {}
 
-  // Общий каталог тренировок
+  // Доступ к индивидуальным (платным) упражнениям = код от врача + оплата.
+  // Врач/админ — всегда. Проверяем на сервере, а не только в интерфейсе.
+  private async assertHomeworkAccess(user: AuthUser) {
+    const { hasAccess } = await this.codes.hasAccess(user);
+    if (!hasAccess) {
+      throw new ForbiddenException(
+        'Доступ к домашним заданиям закрыт: нужен код от врача и оплаченная подписка',
+      );
+    }
+  }
+
+  // Общий каталог тренировок — открыт всем (бесплатный контент).
   @Public()
   @Get()
   catalog(@Query('category') category?: string) {
     return this.exercises.findCatalog(category);
   }
 
-  // Список индивидуальных упражнений — для пациентов, врачей и админов
-  @Public()
+  // Индивидуальные упражнения (ДЗ) — только с открытым доступом.
   @Get('individual')
-  individual(@Query('category') category?: string) {
+  async individual(@CurrentUser() user: AuthUser, @Query('category') category?: string) {
+    await this.assertHomeworkAccess(user);
     return this.exercises.findIndividual(category);
   }
 
-  @Public()
+  // Одно упражнение: индивидуальное — только с доступом, общее — любому вошедшему.
   @Get(':id')
-  one(@Param('id', ParseIntPipe) id: number) {
-    return this.exercises.findOne(id);
+  async one(@CurrentUser() user: AuthUser, @Param('id', ParseIntPipe) id: number) {
+    const exercise = await this.exercises.findOne(id);
+    if (exercise.isIndividual) {
+      await this.assertHomeworkAccess(user);
+    }
+    return exercise;
   }
 }

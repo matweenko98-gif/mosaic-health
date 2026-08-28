@@ -2,6 +2,8 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CodesService } from '../codes/codes.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CreateProgramDto, UpdateProgramDto, UpdateProgressDto } from './dto/programs.dto';
 
 const programInclude = {
@@ -16,42 +18,59 @@ export class ProgramsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly codes: CodesService,
   ) {}
 
   // ---------- Пациент ----------
 
-  listForPatient(patientId: string) {
+  /**
+   * Доступ к ДЗ для пациента = активный код от врача + оплаченная подписка.
+   * Для врача/админа доступ всегда открыт. Проверяется на выдаче контента,
+   * а не только в интерфейсе, чтобы платный контент нельзя было получить через API.
+   */
+  private async assertHomeworkAccess(user: AuthUser) {
+    const { hasAccess } = await this.codes.hasAccess(user);
+    if (!hasAccess) {
+      throw new ForbiddenException(
+        'Доступ к домашним заданиям закрыт: нужен код от врача и оплаченная подписка',
+      );
+    }
+  }
+
+  async listForPatient(user: AuthUser) {
+    await this.assertHomeworkAccess(user);
     return this.prisma.program.findMany({
-      where: { patientId },
+      where: { patientId: user.id },
       include: programInclude,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async getForPatient(patientId: string, programId: string) {
+  async getForPatient(user: AuthUser, programId: string) {
+    await this.assertHomeworkAccess(user);
     const program = await this.prisma.program.findUnique({
       where: { id: programId },
       include: programInclude,
     });
-    if (!program || program.patientId !== patientId) {
+    if (!program || program.patientId !== user.id) {
       throw new NotFoundException('Программа не найдена');
     }
     return program;
   }
 
-  async getProgress(patientId: string, programId: string) {
-    await this.getForPatient(patientId, programId); // проверка доступа
+  async getProgress(user: AuthUser, programId: string) {
+    await this.getForPatient(user, programId); // проверка доступа + принадлежности
     const progress = await this.prisma.programProgress.findUnique({ where: { programId } });
     return progress ?? { programId, currentIndex: -1, queue: [] };
   }
 
-  async updateProgress(patientId: string, programId: string, dto: UpdateProgressDto) {
-    await this.getForPatient(patientId, programId); // проверка доступа
+  async updateProgress(user: AuthUser, programId: string, dto: UpdateProgressDto) {
+    await this.getForPatient(user, programId); // проверка доступа + принадлежности
     return this.prisma.programProgress.upsert({
       where: { programId },
       create: {
         programId,
-        userId: patientId,
+        userId: user.id,
         currentIndex: dto.currentIndex,
         queue: dto.queue ?? [],
       },

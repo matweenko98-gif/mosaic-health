@@ -505,6 +505,8 @@ export const translations = {
   "Проверьте статус заказа в профиле чуть позже.": "Check the order status in your profile a bit later.",
   "Мои заказы": "My orders",
   "На главную": "Go to home",
+  "Оплатить доступ": "Pay for access",
+  "Доступ к персональной программе открыт.": "Access to your personal program is now open.",
   "Установить приложение": "Install app",
   "Установить": "Install",
   "Ярлык на рабочем столе и запуск без браузера.": "A home screen shortcut that launches without a browser.",

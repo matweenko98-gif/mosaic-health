@@ -172,16 +172,14 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [rawHomework, setRawHomework] = useState([]);
   const [workoutsLoading, setWorkoutsLoading] = useState(true);
 
+  // Общий каталог тренировок — доступен всем, грузим один раз.
   useEffect(() => {
     let active = true;
-    Promise.all([
-      api.get("/exercises").catch(() => []),
-      api.get("/exercises/individual").catch(() => []),
-    ])
-      .then(([catalog, homework]) => {
-        if (!active) return;
-        setRawCatalog(catalog || []);
-        setRawHomework(homework || []);
+    api
+      .get("/exercises")
+      .catch(() => [])
+      .then((catalog) => {
+        if (active) setRawCatalog(catalog || []);
       })
       .finally(() => {
         if (active) setWorkoutsLoading(false);
@@ -244,6 +242,25 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     };
   }, [isSpecialistOrAdmin]);
 
+  // Индивидуальные упражнения (ДЗ) грузим только при открытом доступе —
+  // эндпоинт защищён на сервере, поэтому без доступа он и так вернёт отказ.
+  useEffect(() => {
+    if (!isHomeworkUnlocked) {
+      setRawHomework([]);
+      return;
+    }
+    let active = true;
+    api
+      .get("/exercises/individual")
+      .catch(() => [])
+      .then((homework) => {
+        if (active) setRawHomework(homework || []);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isHomeworkUnlocked]);
+
   // Загрузка динамического списка филиалов
   const [branches, setBranches] = useState([]);
   useEffect(() => {
@@ -277,6 +294,26 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [isHomeworkPaymentModalOpen, setIsHomeworkPaymentModalOpen] = useState(false);
   const [homeworkPaySubmitting, setHomeworkPaySubmitting] = useState(false);
   const [homeworkPayError, setHomeworkPayError] = useState("");
+  // Цена и валюта доступа берутся с сервера, чтобы не расходиться с реальным списанием.
+  const [homeworkPrice, setHomeworkPrice] = useState(1500);
+  const [payCurSymbol, setPayCurSymbol] = useState("₽");
+  const homeworkPriceStr = `${homeworkPrice.toLocaleString("ru-RU")} ${payCurSymbol}`;
+
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/payments/config")
+      .then((cfg) => {
+        if (!active) return;
+        if (cfg?.homeworkPrice) setHomeworkPrice(cfg.homeworkPrice);
+        const sym = { RUB: "₽", AED: "AED", EUR: "€", USD: "$" }[cfg?.currency] || cfg?.currency;
+        if (sym) setPayCurSymbol(sym);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleCreateHomeworkPayment() {
     setHomeworkPayError("");
@@ -1284,7 +1321,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 </span>
               </div>
               <div style={{ fontSize: "22px", fontWeight: "800", color: "#007F63", fontFamily: "'Manrope', sans-serif" }}>
-                1 500 ₽ <span style={{ fontSize: "12px", color: "#6E6E6E", fontWeight: "400" }}>/ {t("1 год доступа")}</span>
+                {homeworkPriceStr} <span style={{ fontSize: "12px", color: "#6E6E6E", fontWeight: "400" }}>/ {t("1 год доступа")}</span>
               </div>
             </div>
 
@@ -1313,7 +1350,7 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                   transition: "all 0.2s ease"
                 }}
               >
-                {homeworkPaySubmitting ? t("Загрузка…") : t("Оплатить доступ (1 500 ₽)")}
+                {homeworkPaySubmitting ? t("Загрузка…") : `${t("Оплатить доступ")} (${homeworkPriceStr})`}
               </button>
               <button
                 onClick={() => setIsHomeworkPaymentModalOpen(false)}

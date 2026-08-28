@@ -5,5 +5,6 @@ import { SpecialistCodesController, PatientCodesController } from './codes.contr
 @Module({
   controllers: [SpecialistCodesController, PatientCodesController],
   providers: [CodesService],
+  exports: [CodesService],
 })
 export class CodesModule {}

@@ -21,6 +21,7 @@ export class PaymentsController {
       enabled: this.payments.enabled,
       provider: this.payments.providerName,
       currency: this.payments.currency,
+      homeworkPrice: this.payments.homeworkPrice,
     };
   }
 

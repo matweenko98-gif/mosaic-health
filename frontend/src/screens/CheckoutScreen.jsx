@@ -16,8 +16,8 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [paymentsEnabled, setPaymentsEnabled] = useState(false);
-  // По умолчанию — как дефолт на сервере (STORE_CURRENCY=AED); реальная валюта придёт из /payments/config.
-  const [currency, setCurrency] = useState("AED");
+  // По умолчанию — как дефолт на сервере (STORE_CURRENCY=RUB); реальная валюта придёт из /payments/config.
+  const [currency, setCurrency] = useState("RUB");
 
   const phone = `${dialCode} ${phoneNumber.trim()}`.trim();
 

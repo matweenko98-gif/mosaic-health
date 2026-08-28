@@ -63,7 +63,7 @@ export class ShopService {
     });
     const total = itemsData.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-    const currency = this.config.get<string>('STORE_CURRENCY') || 'AED';
+    const currency = this.config.get<string>('STORE_CURRENCY') || 'RUB';
 
     return this.prisma.order.create({
       data: {

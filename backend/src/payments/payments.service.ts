@@ -42,12 +42,16 @@ export class PaymentsService {
   }
 
   get providerName(): string {
-    const name = (this.config.get<string>('PAYMENTS_PROVIDER') || 'stripe').toLowerCase();
-    return this.providers[name] ? name : 'stripe';
+    const name = (this.config.get<string>('PAYMENTS_PROVIDER') || 'yookassa').toLowerCase();
+    return this.providers[name] ? name : 'yookassa';
   }
 
   get currency(): string {
-    return this.config.get<string>('STORE_CURRENCY') || 'AED';
+    return this.config.get<string>('STORE_CURRENCY') || 'RUB';
+  }
+
+  get homeworkPrice(): number {
+    return Number(this.config.get<string>('HOMEWORK_PRICE') ?? 1500);
   }
 
   private get activeProvider(): PaymentProvider {
@@ -111,21 +115,32 @@ export class PaymentsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    // Цена доступа к индивидуальной программе (по умолчанию 1500 руб или из конфига)
+    // Уже есть активный доступ — повторно платить не нужно.
+    if (user.homeworkPaidUntil && user.homeworkPaidUntil > new Date()) {
+      throw new BadRequestException('Доступ к программе уже оплачен и активен');
+    }
+
     const price = Number(this.config.get<string>('HOMEWORK_PRICE') ?? 1500);
 
-    const order = await this.prisma.order.create({
-      data: {
-        userId,
-        type: 'HOMEWORK_SUBSCRIPTION',
-        recipientName: user.name || user.email,
-        phone: user.phone || '',
-        address: 'Цифровой доступ к программе',
-        total: price,
-        currency: 'RUB',
-        status: 'PENDING_PAYMENT',
-      },
+    // Переиспользуем незавершённый заказ, чтобы двойной клик не плодил дубли и списания.
+    let order = await this.prisma.order.findFirst({
+      where: { userId, type: 'HOMEWORK_SUBSCRIPTION', status: 'PENDING_PAYMENT' },
+      orderBy: { createdAt: 'desc' },
     });
+    if (!order) {
+      order = await this.prisma.order.create({
+        data: {
+          userId,
+          type: 'HOMEWORK_SUBSCRIPTION',
+          recipientName: user.name || user.email,
+          phone: user.phone || '',
+          address: 'Цифровой доступ к программе',
+          total: price,
+          currency: this.currency,
+          status: 'PENDING_PAYMENT',
+        },
+      });
+    }
 
     const provider = this.activeProvider;
     const returnUrl = `${this.frontendUrl}/?screen=payment-result&order=${order.id}`;
@@ -136,6 +151,11 @@ export class PaymentsService {
       description: `Доступ к персональной программе — Мозаика Здоровья`,
       returnUrl,
       cancelUrl: `${returnUrl}&canceled=1`,
+      receipt: this.buildReceipt({
+        phone: order.phone,
+        currency: order.currency,
+        items: [{ name: 'Доступ к персональной программе', price: order.total, quantity: 1 }],
+      }),
     });
 
     await this.prisma.order.update({
@@ -209,13 +229,21 @@ export class PaymentsService {
       });
 
       if (order.type === 'HOMEWORK_SUBSCRIPTION' && order.userId) {
-        // Доступ предоставляется на 1 год (365 дней)
-        const paidUntil = new Date();
-        paidUntil.setFullYear(paidUntil.getFullYear() + 1);
+        // Продлеваем на 1 год от текущей даты окончания (если доступ ещё активен) —
+        // раннее продление не должно укорачивать уже оплаченный срок.
+        const dbUser = await this.prisma.user.findUnique({
+          where: { id: order.userId },
+          select: { homeworkPaidUntil: true },
+        });
+        const base =
+          dbUser?.homeworkPaidUntil && dbUser.homeworkPaidUntil > new Date()
+            ? new Date(dbUser.homeworkPaidUntil)
+            : new Date();
+        base.setFullYear(base.getFullYear() + 1);
 
         await this.prisma.user.update({
           where: { id: order.userId },
-          data: { homeworkPaidUntil: paidUntil },
+          data: { homeworkPaidUntil: base },
         });
       }
 
@@ -235,7 +263,10 @@ export class PaymentsService {
       }
       this.logger.log(`Заказ ${order.id} оплачен (${providerName}, платёж ${paymentId})`);
     } else if (status.status === 'canceled' && order.status === 'PENDING_PAYMENT') {
-      await this.prisma.order.update({ where: { id: order.id }, data: { status: 'NEW' } });
+      // Товарный заказ возвращаем в NEW; цифровую подписку — в CANCELLED,
+      // чтобы она не попадала в очередь доставки магазина.
+      const nextStatus = order.type === 'HOMEWORK_SUBSCRIPTION' ? 'CANCELLED' : 'NEW';
+      await this.prisma.order.update({ where: { id: order.id }, data: { status: nextStatus } });
     }
 
     return { ok: true };

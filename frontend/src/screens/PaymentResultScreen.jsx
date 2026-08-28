@@ -11,6 +11,7 @@ export default function PaymentResultScreen({ orderId, onNavigate }) {
   const { t } = useLanguage();
   // status: "loading" | "paid" | "pending" | "error"
   const [status, setStatus] = useState("loading");
+  const [orderType, setOrderType] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -20,10 +21,12 @@ export default function PaymentResultScreen({ orderId, onNavigate }) {
     async function check() {
       try {
         const orders = await api.get("/me/orders");
-        const order = Array.isArray(orders)
-          ? orders.find((o) => o.id === orderId) || orders[0]
-          : null;
+        // Строго по нашему заказу — не подменяем на «последний», иначе можно
+        // показать «оплачено» по чужому/старому заказу.
+        const order = Array.isArray(orders) ? orders.find((o) => o.id === orderId) : null;
         if (!active) return;
+
+        if (order) setOrderType(order.type || "PRODUCT");
 
         if (order && order.status === "PAID") {
           setStatus("paid");
@@ -63,7 +66,10 @@ export default function PaymentResultScreen({ orderId, onNavigate }) {
       icon: "✓",
       color: "#1BAB7C",
       title: t("Оплата прошла успешно"),
-      text: t("Спасибо! Мы свяжемся с вами для подтверждения доставки."),
+      text:
+        orderType === "HOMEWORK_SUBSCRIPTION"
+          ? t("Доступ к персональной программе открыт.")
+          : t("Спасибо! Мы свяжемся с вами для подтверждения доставки."),
     },
     pending: {
       icon: "⏳",

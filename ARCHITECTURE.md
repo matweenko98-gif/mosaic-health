@@ -71,9 +71,9 @@
 | `GET/PATCH /api/me` | вошедшие | `users/users.controller.ts` |
 | `POST /api/me/avatar/upload-url`, `PATCH /api/me/avatar` | вошедшие | `users/users.controller.ts` |
 | `GET/PATCH /api/me/settings` | вошедшие | `users/users.controller.ts` |
-| `GET /api/exercises` | вошедшие | `exercises/exercises.controller.ts` |
-| `GET /api/exercises/individual` | врач/админ | `exercises/exercises.controller.ts` |
-| `GET /api/exercises/:id` | вошедшие | `exercises/exercises.controller.ts` |
+| `GET /api/exercises` | **все** (публичный каталог) | `exercises/exercises.controller.ts` |
+| `GET /api/exercises/individual` | вошедшие **с доступом** (код+оплата) / врач / админ | `exercises/exercises.controller.ts` |
+| `GET /api/exercises/:id` | вошедшие; индивидуальное — только с доступом | `exercises/exercises.controller.ts` |
 | `GET/POST /api/me/history`, `GET /api/me/achievements` | вошедшие | `history/history.controller.ts` |
 | `GET /api/me/programs`, `/:id`, `/:id/progress` (GET/PATCH) | пациент (свои) | `programs/patient-programs.controller.ts` |
 | `GET /api/specialist/patients`, `POST/GET/PATCH/DELETE /api/specialist/programs` | врач/админ | `programs/specialist.controller.ts` |
@@ -278,3 +278,6 @@
 | 2026-08-24 | *(второй разработчик)* **Платный 2-этапный доступ к Домашним заданиям**: ДЗ закрыто под 2 условия (1. Оплата подписки `POST /api/payments/create-homework` + 2. Ввод 5-буквенного ключа от врача). Статьи, подкасты, масла и каталог тренировок — в открытом доступе |
 | 2026-08-28 | *(второй разработчик)* **Вкладка «Контакты» в админке и динамические филиалы**: модель `ContactBranch`, модуль `contacts/` (`GET /api/contacts`, `POST/PATCH/DELETE /api/admin/contacts`), управление филиалами в админке и динамическая отрисовка на главном экране |
 | 2026-08-28 | **Слияние Stripe с работой второго разработчика** + исправления авто-ревью: отмена/истечение Stripe-сессии возвращает заказ в NEW, webhook Stripe реагирует только на `checkout.session.*`, согласована валюта на checkout, чек 54-ФЗ только для рублёвых заказов |
+| 2026-08-28 | **РФ/ЮKassa по умолчанию** (`PAYMENTS_PROVIDER=yookassa`, `STORE_CURRENCY=RUB`); Дубай/Stripe — позже |
+| 2026-08-28 | **Код-ревью, исправления (9)**: 🔴 **`/me/programs` теперь гейтит доступ к ДЗ на сервере** (код врача + оплата, а не только в UI — `ProgramsService` через `CodesService.hasAccess`); оплата ДЗ шлёт чек, продлевает срок от текущей даты, защищена от дублей; цена ДЗ — из `HOMEWORK_PRICE` (в `/payments/config`) и на экране; экран результата не подменяет заказ и учитывает цифровой тип |
+| 2026-08-28 | 🔴 **Закрыта утечка платного контента**: `GET /api/exercises/individual` и `/exercises/:id` были `@Public()` — отдавали упражнения ДЗ кому угодно. Теперь требуют авторизацию + доступ (код+оплата); каталог `/exercises` остаётся публичным. Фронт грузит ДЗ только при открытом доступе |
