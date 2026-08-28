@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import PhoneInput from "../components/PhoneInput";
 import { api } from "../api/client";
 
 /**
@@ -9,12 +10,16 @@ import { api } from "../api/client";
 export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
   const { t } = useLanguage();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+375");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [paymentsEnabled, setPaymentsEnabled] = useState(false);
-  const [currency, setCurrency] = useState("RUB");
+  // По умолчанию — как дефолт на сервере (STORE_CURRENCY=AED); реальная валюта придёт из /payments/config.
+  const [currency, setCurrency] = useState("AED");
+
+  const phone = `${dialCode} ${phoneNumber.trim()}`.trim();
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const curSymbol = { RUB: "₽", AED: "AED", EUR: "€", USD: "$" }[currency] || currency;
@@ -59,11 +64,13 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
       // 2. Если оплата включена — инициируем платёж и уходим на страницу оплаты.
       if (paymentsEnabled) {
         const pay = await api.post("/payments/create", { orderId: order.id });
-        onClearCart();
         if (pay?.confirmationUrl) {
+          onClearCart();
           window.location.href = pay.confirmationUrl;
           return;
         }
+        // Оплата включена, но ссылка не пришла — не показываем ложный «успех».
+        throw new Error(t("Не удалось оформить заказ. Попробуйте ещё раз."));
       }
 
       // 3. Оплата выключена — заказ оформлен, специалист свяжется (прежняя схема).
@@ -141,15 +148,12 @@ export default function CheckoutScreen({ cart, onClearCart, onNavigate }) {
             <label htmlFor="checkout-phone" style={{ fontSize: "12.5px", fontFamily: "'Manrope', sans-serif", fontWeight: "700", color: "var(--color-text)", paddingLeft: "4px" }}>
               {t("Телефон")}
             </label>
-            <input
+            <PhoneInput
               id="checkout-phone"
-              className="form-field__input"
-              type="tel"
-              placeholder="+7 (999) 999-99-99"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ borderRadius: "16px" }}
-              required
+              dialCode={dialCode}
+              onDialCodeChange={setDialCode}
+              phoneNumber={phoneNumber}
+              onPhoneNumberChange={setPhoneNumber}
             />
           </div>
 

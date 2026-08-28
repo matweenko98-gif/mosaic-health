@@ -149,8 +149,10 @@ export default function SpecialistCodesScreen({ onNavigate }) {
     const labelMatch = (c.label || "").toLowerCase().includes(query);
     const nameMatch = (c.activatedByName || "").toLowerCase().includes(query);
     const emailMatch = (c.activatedByEmail || "").toLowerCase().includes(query);
+    const specNameMatch = (c.specialistName || "").toLowerCase().includes(query);
+    const specEmailMatch = (c.specialistEmail || "").toLowerCase().includes(query);
 
-    return codeMatch || labelMatch || nameMatch || emailMatch;
+    return codeMatch || labelMatch || nameMatch || emailMatch || specNameMatch || specEmailMatch;
   });
 
   const tabFilteredCodes = filteredCodes.filter((c) => {
@@ -407,6 +409,9 @@ export default function SpecialistCodesScreen({ onNavigate }) {
                         {t("Пометка")}: <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{c.label}</span>
                       </div>
                     )}
+                    <div style={{ fontSize: "12px", color: "#007F63", fontWeight: 600, marginTop: "4px" }}>
+                      {t("Врач")}: {c.specialistName || c.specialistEmail || t("Не указан")}
+                    </div>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

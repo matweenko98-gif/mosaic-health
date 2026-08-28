@@ -7,6 +7,7 @@ export class CreateArticleDto {
   @IsOptional() @IsString() description_en?: string;
   @IsOptional() @IsString() body_ru?: string;
   @IsOptional() @IsString() body_en?: string;
+  @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() readTime?: string;
 }
 
@@ -17,7 +18,27 @@ export class UpdateArticleDto {
   @IsOptional() @IsString() description_en?: string;
   @IsOptional() @IsString() body_ru?: string;
   @IsOptional() @IsString() body_en?: string;
+  @IsOptional() @IsString() category?: string;
   @IsOptional() @IsString() readTime?: string;
+}
+
+export class CreateArticleCategoryDto {
+  @IsString() name_ru: string;
+  @IsOptional() @IsString() name_en?: string;
+}
+
+export class UpdateArticleCategoryDto {
+  @IsOptional() @IsString() name_ru?: string;
+  @IsOptional() @IsString() name_en?: string;
+}
+
+export class UpdateExpertLinksDto {
+  @IsOptional() @IsString() aroma_ru?: string;
+  @IsOptional() @IsString() aroma_en?: string;
+  @IsOptional() @IsString() omega_ru?: string;
+  @IsOptional() @IsString() omega_en?: string;
+  @IsOptional() @IsString() max_aroma_ru?: string;
+  @IsOptional() @IsString() max_omega_ru?: string;
 }
 
 export class CreatePodcastDto {

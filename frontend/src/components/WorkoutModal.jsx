@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import { getYoutubeEmbedUrl } from "../screens/CreatorMaterialsScreen";
 
 /**
  * WorkoutModal — модальное окно «плеера» тренировки.
@@ -206,14 +207,32 @@ export default function WorkoutModal({
           boxShadow: "inset 0 0 20px rgba(0,0,0,0.03)"
         }}>
           {workout.video ? (
-            <video
-              key={workout.id}
-              src={workout.video}
-              controls
-              playsInline
-              preload="metadata"
-              style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
-            />
+            (() => {
+              const youtubeEmbed = getYoutubeEmbedUrl(workout.video);
+              if (youtubeEmbed) {
+                return (
+                  <iframe
+                    key={workout.id}
+                    src={youtubeEmbed}
+                    title={workout.title || workout.label}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    style={{ width: "100%", height: "100%", border: "none", background: "#000" }}
+                  />
+                );
+              }
+              return (
+                <video
+                  key={workout.id}
+                  src={workout.video}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                />
+              );
+            })()
           ) : !isPlaying ? (
             <div style={{
               position: "absolute",

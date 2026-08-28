@@ -103,6 +103,52 @@ export class PaymentsService {
     return { confirmationUrl: result.confirmationUrl, paymentId: result.paymentId, orderId: order.id };
   }
 
+  /** Инициировать оплату доступа к персональным «Домашним заданиям». */
+  async createHomeworkPayment(userId: string) {
+    if (!this.enabled) {
+      throw new ServiceUnavailableException('Онлайн-оплата временно недоступна');
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    // Цена доступа к индивидуальной программе (по умолчанию 1500 руб или из конфига)
+    const price = Number(this.config.get<string>('HOMEWORK_PRICE') ?? 1500);
+
+    const order = await this.prisma.order.create({
+      data: {
+        userId,
+        type: 'HOMEWORK_SUBSCRIPTION',
+        recipientName: user.name || user.email,
+        phone: user.phone || '',
+        address: 'Цифровой доступ к программе',
+        total: price,
+        currency: 'RUB',
+        status: 'PENDING_PAYMENT',
+      },
+    });
+
+    const provider = this.activeProvider;
+    const returnUrl = `${this.frontendUrl}/?screen=payment-result&order=${order.id}`;
+    const result = await provider.createPayment({
+      orderId: order.id,
+      amount: order.total,
+      currency: order.currency,
+      description: `Доступ к персональной программе — Мозаика Здоровья`,
+      returnUrl,
+      cancelUrl: `${returnUrl}&canceled=1`,
+    });
+
+    await this.prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentProvider: provider.name,
+        paymentId: result.paymentId,
+      },
+    });
+
+    return { confirmationUrl: result.confirmationUrl, paymentId: result.paymentId, orderId: order.id };
+  }
+
   /**
    * Чек для 54-ФЗ (ЮKassa). По умолчанию выключен (`YOOKASSA_SEND_RECEIPT` != true),
    * т.к. требует корректной ставки НДС и настроенной фискализации в кабинете.
@@ -113,6 +159,8 @@ export class PaymentsService {
     items: { name: string; price: number; quantity: number }[];
   }): ReceiptData | undefined {
     if (this.config.get<string>('YOOKASSA_SEND_RECEIPT') !== 'true') return undefined;
+    // Фискальный чек 54-ФЗ — только для рублёвых заказов (ЮKassa принимает чек только в RUB).
+    if (order.currency !== 'RUB') return undefined;
     const vatCode = Number(this.config.get<string>('YOOKASSA_VAT_CODE') ?? 1);
     const phone = order.phone?.replace(/[^\d+]/g, '') || undefined;
     return {
@@ -159,14 +207,30 @@ export class PaymentsService {
         where: { id: order.id },
         data: { status: 'PAID', paidAt: new Date() },
       });
+
+      if (order.type === 'HOMEWORK_SUBSCRIPTION' && order.userId) {
+        // Доступ предоставляется на 1 год (365 дней)
+        const paidUntil = new Date();
+        paidUntil.setFullYear(paidUntil.getFullYear() + 1);
+
+        await this.prisma.user.update({
+          where: { id: order.userId },
+          data: { homeworkPaidUntil: paidUntil },
+        });
+      }
+
       if (order.userId) {
         await this.notifications.notify(order.userId, {
           type: 'order_paid',
           title_ru: 'Оплата получена',
           title_en: 'Payment received',
-          body_ru: `Заказ №${this.orderNo(order.id)} оплачен. Мы свяжемся для подтверждения доставки.`,
-          body_en: `Order #${this.orderNo(order.id)} is paid. We will contact you to confirm delivery.`,
-          data: { orderId: order.id, screen: 'profile' },
+          body_ru: order.type === 'HOMEWORK_SUBSCRIPTION'
+            ? 'Доступ к персональной программе успешно оплачен!'
+            : `Заказ №${this.orderNo(order.id)} оплачен. Мы свяжемся для подтверждения доставки.`,
+          body_en: order.type === 'HOMEWORK_SUBSCRIPTION'
+            ? 'Access to personal program successfully paid!'
+            : `Order #${this.orderNo(order.id)} is paid. We will contact you to confirm delivery.`,
+          data: { orderId: order.id, screen: order.type === 'HOMEWORK_SUBSCRIPTION' ? 'home' : 'profile' },
         });
       }
       this.logger.log(`Заказ ${order.id} оплачен (${providerName}, платёж ${paymentId})`);

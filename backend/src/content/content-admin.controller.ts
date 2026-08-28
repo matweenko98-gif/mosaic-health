@@ -12,9 +12,12 @@ import { ContentService } from './content.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
+  CreateArticleCategoryDto,
   CreateArticleDto,
   CreatePodcastDto,
+  UpdateArticleCategoryDto,
   UpdateArticleDto,
+  UpdateExpertLinksDto,
   UpdatePodcastDto,
 } from './dto/content.dto';
 
@@ -39,6 +42,29 @@ export class ContentAdminController {
   @Delete('articles/:id')
   deleteArticle(@Param('id', ParseIntPipe) id: number) {
     return this.content.deleteArticle(id);
+  }
+
+  @Post('article-categories')
+  createCategory(@Body() dto: CreateArticleCategoryDto) {
+    return this.content.createArticleCategory(dto);
+  }
+
+  @Patch('article-categories/:id')
+  updateCategory(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateArticleCategoryDto,
+  ) {
+    return this.content.updateArticleCategory(id, dto);
+  }
+
+  @Delete('article-categories/:id')
+  deleteCategory(@Param('id', ParseIntPipe) id: number) {
+    return this.content.deleteArticleCategory(id);
+  }
+
+  @Patch('settings/expert-links')
+  updateExpertLinks(@Body() dto: UpdateExpertLinksDto) {
+    return this.content.updateExpertLinks(dto);
   }
 
   @Post('podcasts')

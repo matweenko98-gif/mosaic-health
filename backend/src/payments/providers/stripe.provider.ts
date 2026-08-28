@@ -58,15 +58,22 @@ export class StripeProvider implements PaymentProvider {
   }
 
   extractWebhookPaymentId(body: any): string | undefined {
-    // Stripe шлёт событие вида { type, data: { object: { id } } }.
+    // На один платёж Stripe шлёт несколько событий. Нас интересуют только события
+    // Checkout-сессии — у остальных в data.object.id id не сессии (pi_/ch_...),
+    // и запрос checkout.sessions.retrieve по ним завершится ошибкой.
+    const type: string = body?.type ?? '';
+    if (!type.startsWith('checkout.session.')) return undefined;
     return body?.data?.object?.id;
   }
 
   async getPaymentStatus(sessionId: string): Promise<PaymentStatus> {
     const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    // Приводим статус к общему словарю: истёкшую/отменённую сессию помечаем 'canceled',
+    // чтобы общий обработчик вернул заказ в исходное состояние (как у ЮKassa).
+    const status = session.status === 'expired' ? 'canceled' : session.payment_status;
     return {
       paymentId: session.id,
-      status: session.payment_status, // 'paid' | 'unpaid' | 'no_payment_required'
+      status, // 'paid' | 'unpaid' | 'no_payment_required' | 'canceled'
       paid: session.payment_status === 'paid',
       orderId: (session.metadata?.orderId as string) || undefined,
       amount: session.amount_total != null ? session.amount_total / 100 : undefined,

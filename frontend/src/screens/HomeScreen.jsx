@@ -211,28 +211,57 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const userRoleUpper = (user?.role || "").toUpperCase();
   const isSpecialistOrAdmin = userRoleUpper === "ADMIN" || userRoleUpper === "SPECIALIST";
 
-  // Доступ к индивидуальным тренировкам открывается кодом от врача (проверяется на сервере).
-  const [hasAccess, setHasAccess] = useState(isSpecialistOrAdmin);
-  const isHomeworkUnlocked = hasAccess || isSpecialistOrAdmin;
+  // Доступ к индивидуальным тренировкам открывается кодом от врача И оплатой подписки.
+  const [accessInfo, setAccessInfo] = useState({
+    hasAccess: isSpecialistOrAdmin,
+    hasCode: isSpecialistOrAdmin,
+    hasPaid: isSpecialistOrAdmin,
+  });
+  const isHomeworkUnlocked = accessInfo.hasAccess || isSpecialistOrAdmin;
 
   useEffect(() => {
     let active = true;
     if (isSpecialistOrAdmin) {
-      setHasAccess(true);
+      setAccessInfo({ hasAccess: true, hasCode: true, hasPaid: true });
       return;
     }
     api
       .get("/me/access")
       .then((r) => {
-        if (active) setHasAccess(!!r?.hasAccess);
+        if (active) {
+          setAccessInfo({
+            hasAccess: !!r?.hasAccess,
+            hasCode: !!r?.hasCode,
+            hasPaid: !!r?.hasPaid,
+          });
+        }
       })
       .catch(() => {
-        if (active) setHasAccess(false);
+        if (active) setAccessInfo({ hasAccess: false, hasCode: false, hasPaid: false });
       });
     return () => {
       active = false;
     };
   }, [isSpecialistOrAdmin]);
+
+  // Загрузка динамического списка филиалов
+  const [branches, setBranches] = useState([]);
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/contacts")
+      .then((data) => {
+        if (active && Array.isArray(data)) {
+          setBranches(data);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch branches:", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Состояние видимости выделенного модального окна Домашнего задания
   const [isHomeworkModalOpen, setIsHomeworkModalOpen] = useState(false);
@@ -244,6 +273,28 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
   const [codeError, setCodeError] = useState("");
   const [codeSubmitting, setCodeSubmitting] = useState(false);
 
+  // Окно оплаты персональной программы
+  const [isHomeworkPaymentModalOpen, setIsHomeworkPaymentModalOpen] = useState(false);
+  const [homeworkPaySubmitting, setHomeworkPaySubmitting] = useState(false);
+  const [homeworkPayError, setHomeworkPayError] = useState("");
+
+  async function handleCreateHomeworkPayment() {
+    setHomeworkPayError("");
+    setHomeworkPaySubmitting(true);
+    try {
+      const pay = await api.post("/payments/create-homework");
+      if (pay?.confirmationUrl) {
+        window.location.href = pay.confirmationUrl;
+      } else {
+        setHomeworkPayError(t("Не удалось инициировать оплату. Попробуйте позже."));
+      }
+    } catch (err) {
+      setHomeworkPayError(err?.message || t("Ошибка при создании платежа"));
+    } finally {
+      setHomeworkPaySubmitting(false);
+    }
+  }
+
   async function handleActivateCode() {
     const code = codeInput.trim();
     if (!code) {
@@ -254,13 +305,26 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
     setCodeSubmitting(true);
     try {
       await api.post("/me/activate-code", { code });
-      setHasAccess(true);
       setIsCodeModalOpen(false);
       setCodeInput("");
-      setToast({ visible: true, message: t("Доступ открыт!"), type: "success" });
-      setIsSelectorOpen(false);
-      setIsEditingComplex(customPlaylist.length === 0);
-      setIsHomeworkModalOpen(true);
+
+      const newAccess = await api.get("/me/access").catch(() => ({}));
+      const updatedInfo = {
+        hasAccess: !!newAccess?.hasAccess,
+        hasCode: !!newAccess?.hasCode,
+        hasPaid: !!newAccess?.hasPaid,
+      };
+      setAccessInfo(updatedInfo);
+
+      if (updatedInfo.hasAccess) {
+        setToast({ visible: true, message: t("Доступ открыт!"), type: "success" });
+        setIsSelectorOpen(false);
+        setIsEditingComplex(customPlaylist.length === 0);
+        setIsHomeworkModalOpen(true);
+      } else if (!updatedInfo.hasPaid) {
+        setToast({ visible: true, message: t("Код подтверждён! Оплатите подпись для доступа."), type: "success" });
+        setIsHomeworkPaymentModalOpen(true);
+      }
     } catch (err) {
       setCodeError(t(err?.message) || t("Не удалось активировать код"));
     } finally {
@@ -424,8 +488,12 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
       setIsSelectorOpen(false);
       setIsEditingComplex(customPlaylist.length === 0);
       setIsHomeworkModalOpen(true);
-    } else {
-      // Доступа нет — предлагаем ввести код от врача.
+    } else if (!accessInfo.hasPaid) {
+      // Шаг 1: Оплата подписки на программу
+      setHomeworkPayError("");
+      setIsHomeworkPaymentModalOpen(true);
+    } else if (!accessInfo.hasCode) {
+      // Шаг 2: Активация ключа от врача
       setCodeInput("");
       setCodeError("");
       setIsCodeModalOpen(true);
@@ -683,13 +751,129 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
             style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "10px", background: "#fff", borderRadius: "18px", padding: "15px 14px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", transition: "transform .18s ease, box-shadow .18s ease" }}
           >
             <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(0,148,184,.12)", display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "flex-start" }}>
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0094B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0094B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
             </div>
             <div style={{ textAlign: "left", width: "100%" }}>
               <div style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 700, fontSize: "13.5px", color: "#1d2321" }}>{t("Наш Telegram")}</div>
               <div style={{ fontSize: "11px", color: "#6E6E6E", marginTop: "1px", fontWeight: 300 }}>{t("Сообщество")}</div>
             </div>
           </button>
+        </section>
+
+        {/* 8. Контакты и филиалы центра */}
+        <section className="bento-grid__item bento-grid__item--full" style={{ marginTop: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", padding: "0 2px" }}>
+            <h2 style={{ margin: 0, fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "20px", color: "#1d2321", letterSpacing: "-.4px" }}>
+              {t("Контакты и филиалы")}
+            </h2>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {branches.length > 0 ? (
+              branches.map((b) => {
+                const city = currentLang === "EN" ? (b.city_en || b.city_ru) : b.city_ru;
+                const address = currentLang === "EN" ? (b.address_en || b.address_ru) : b.address_ru;
+                const workHours = currentLang === "EN" ? (b.workHours_en || b.workHours_ru) : b.workHours_ru;
+
+                return (
+                  <div key={b.id} style={{ background: "#fff", borderRadius: "18px", padding: "16px 18px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "rgba(0,127,99,.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#007F63", flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                      </div>
+                      <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "15px", color: "#1d2321" }}>
+                        {city}
+                      </span>
+                    </div>
+
+                    {address && (
+                      <div style={{ fontSize: "13px", color: "#4a4a4a", lineHeight: 1.4, paddingLeft: "40px" }}>
+                        {address}
+                      </div>
+                    )}
+
+                    {workHours && (
+                      <div style={{ fontSize: "12px", color: "#6E6E6E", paddingLeft: "40px" }}>
+                        🕒 {workHours}
+                      </div>
+                    )}
+
+                    <div style={{ paddingLeft: "40px", marginTop: "2px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {b.phone && (
+                        <a
+                          href={`tel:${b.phone.replace(/[^+\d]/g, "")}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            background: "rgba(0,127,99,.08)",
+                            color: "#007F63",
+                            padding: "8px 14px",
+                            borderRadius: "10px",
+                            fontFamily: "'Manrope',sans-serif",
+                            fontWeight: 700,
+                            fontSize: "13.5px",
+                            textDecoration: "none",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                          {b.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              /* Владикавказ fallback */
+              <div style={{ background: "#fff", borderRadius: "18px", padding: "16px 18px", boxShadow: "0 12px 40px rgba(0, 127, 99, 0.04), 0 10px 30px rgba(0, 0, 0, 0.03)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "rgba(0,127,99,.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#007F63", flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontFamily: "'Manrope',sans-serif", fontWeight: 800, fontSize: "15px", color: "#1d2321" }}>
+                    {t("Владикавказ")}
+                  </span>
+                </div>
+                <div style={{ fontSize: "13px", color: "#4a4a4a", lineHeight: 1.4, paddingLeft: "40px" }}>
+                  Гастелло, 73
+                </div>
+                <div style={{ paddingLeft: "40px", marginTop: "2px" }}>
+                  <a
+                    href="tel:+79064958861"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      background: "rgba(0,127,99,.08)",
+                      color: "#007F63",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      fontFamily: "'Manrope',sans-serif",
+                      fontWeight: 700,
+                      fontSize: "13.5px",
+                      textDecoration: "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    +7 906 495 88 61
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       </div>
 
@@ -1051,6 +1235,102 @@ export default function HomeScreen({ onWorkoutComplete, onNavigate }) {
                 style={{ flex: 1.4, padding: "12px", borderRadius: "14px", border: "none", background: "#1BAB7C", color: "#fff", fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: "14px", cursor: "pointer", opacity: codeSubmitting ? 0.7 : 1 }}
               >
                 {codeSubmitting ? t("Проверка…") : t("Активировать")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* === Модальное окно оплаты доступа к персональной программе === */}
+      {isHomeworkPaymentModalOpen && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsHomeworkPaymentModalOpen(false); }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "420px", padding: "24px" }}>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <div
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "18px",
+                  background: "rgba(0,127,99,0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 12px",
+                  color: "#007F63"
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h3 style={{ margin: "0 0 6px 0", fontSize: "20px", fontWeight: "800", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
+                {t("Оплата персональной программы")}
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary)", margin: 0, lineHeight: "1.5", fontWeight: 300 }}>
+                {t("Для доступа к вашим индивидуальным домашним тренировкам необходимо активировать подписку.")}
+              </p>
+            </div>
+
+            <div style={{ background: "rgba(0,148,184,0.06)", borderRadius: "16px", padding: "16px", marginBottom: "20px", border: "1px solid rgba(0,148,184,0.12)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--color-text)", fontFamily: "'Manrope', sans-serif" }}>
+                  {t("Индивидуальная программа реабилитации")}
+                </span>
+              </div>
+              <div style={{ fontSize: "22px", fontWeight: "800", color: "#007F63", fontFamily: "'Manrope', sans-serif" }}>
+                1 500 ₽ <span style={{ fontSize: "12px", color: "#6E6E6E", fontWeight: "400" }}>/ {t("1 год доступа")}</span>
+              </div>
+            </div>
+
+            {homeworkPayError && (
+              <div style={{ color: "#d93025", fontSize: "13px", fontFamily: "'Manrope', sans-serif", fontWeight: 500, backgroundColor: "#fce8e6", padding: "10px 12px", borderRadius: "12px", border: "1px solid #fad2cf", marginBottom: "14px" }}>
+                {homeworkPayError}
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <button
+                onClick={handleCreateHomeworkPayment}
+                disabled={homeworkPaySubmitting}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "14px",
+                  border: "none",
+                  background: "#007F63",
+                  color: "#fff",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: "700",
+                  fontSize: "15px",
+                  cursor: homeworkPaySubmitting ? "wait" : "pointer",
+                  boxShadow: "0 8px 20px -6px rgba(0,127,99,.5)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                {homeworkPaySubmitting ? t("Загрузка…") : t("Оплатить доступ (1 500 ₽)")}
+              </button>
+              <button
+                onClick={() => setIsHomeworkPaymentModalOpen(false)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "14px",
+                  border: "1.5px solid #a6a6a1",
+                  background: "#fff",
+                  color: "var(--color-text)",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: "700",
+                  fontSize: "13.5px",
+                  cursor: "pointer"
+                }}
+              >
+                {t("Отмена")}
               </button>
             </div>
           </div>

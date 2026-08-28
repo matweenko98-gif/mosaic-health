@@ -29,6 +29,11 @@ export class PaymentsController {
     return this.payments.createForOrder(userId, dto.orderId);
   }
 
+  @Post('payments/create-homework')
+  createHomework(@CurrentUser('id') userId: string) {
+    return this.payments.createHomeworkPayment(userId);
+  }
+
   @Public()
   @HttpCode(200)
   @Post('payments/webhook/yookassa')

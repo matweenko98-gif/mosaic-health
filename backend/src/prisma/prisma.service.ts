@@ -8,7 +8,19 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
-    await this.$connect();
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        await this.$connect();
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) throw err;
+        // eslint-disable-next-line no-console
+        console.warn(`[PrismaService] Подключение к БД не удалось, повтор через 2с... (${err.message})`);
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
   }
 
   async onModuleDestroy() {

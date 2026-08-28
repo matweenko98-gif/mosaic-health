@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { randomInt } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -15,7 +16,10 @@ const CODE_LENGTH = 5;
 
 @Injectable()
 export class CodesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   private randomCode(): string {
     let code = '';
@@ -72,6 +76,8 @@ export class CodesService {
         code: c.code,
         label: c.label,
         status,
+        specialistName: c.specialist?.name || null,
+        specialistEmail: c.specialist?.email || null,
         activatedByName: c.activatedBy?.name || null,
         activatedByEmail: c.activatedBy?.email || null,
         activatedByRegisteredAt: c.activatedBy?.createdAt || null,
@@ -119,12 +125,25 @@ export class CodesService {
 
   async hasAccess(user: AuthUser) {
     if (user.role === Role.ADMIN || user.role === Role.SPECIALIST) {
-      return { hasAccess: true };
+      return { hasAccess: true, hasCode: true, hasPaid: true };
     }
+
     const count = await this.prisma.accessCode.count({
       where: { activatedById: user.id, isRevoked: false },
     });
-    return { hasAccess: count > 0 };
+    const hasCode = count > 0;
+
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { homeworkPaidUntil: true },
+    });
+
+    const paymentsEnabled = this.config.get<string>('PAYMENTS_ENABLED') === 'true' || this.config.get<string>('PAYMENTS_ENABLED') === '1';
+    const hasPaid = !paymentsEnabled || !!(dbUser?.homeworkPaidUntil && dbUser.homeworkPaidUntil > new Date());
+
+    const hasAccess = hasCode && hasPaid;
+
+    return { hasAccess, hasCode, hasPaid };
   }
 
   async activate(userId: string, rawCode: string) {
