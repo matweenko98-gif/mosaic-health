@@ -226,7 +226,7 @@ export default function RegisterScreen({ onNavigate, onRegister }) {
                 >
                   {countries.map((c) => (
                     <option key={c.name} value={c.name}>
-                      {c.flag} {c.name}
+                      {c.flag} {t(c.name)}
                     </option>
                   ))}
                 </select>

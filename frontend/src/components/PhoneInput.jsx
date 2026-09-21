@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { countries } from "../data/countries";
+import { useLanguage } from "../context/LanguageContext";
+import CountryFlag from "./CountryFlag";
 
 /**
  * PhoneInput — Переиспользуемый компонент ввода международного телефона
@@ -14,6 +16,7 @@ export default function PhoneInput({
   disabled = false,
   style = {},
 }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -55,10 +58,11 @@ export default function PhoneInput({
             color: "var(--color-text)",
             whiteSpace: "nowrap",
             flexShrink: 0,
+            width: "auto",
             marginBottom: 0,
           }}
         >
-          <span style={{ fontSize: "19px", lineHeight: 1 }}>{currentCountry.flag}</span>
+          <CountryFlag code={currentCountry.code} />
           <span>{currentCountry.dialCode}</span>
           <svg
             width="12"
@@ -89,6 +93,7 @@ export default function PhoneInput({
           className="form-field__input"
           style={{
             flex: 1,
+            minWidth: 0,
             height: "48px",
             borderRadius: "16px",
             fontSize: "14px",
@@ -155,8 +160,8 @@ export default function PhoneInput({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "19px" }}>{c.flag}</span>
-                  <span>{c.name}</span>
+                  <CountryFlag code={c.code} size={24} />
+                  <span>{t(c.name)}</span>
                 </div>
                 <span style={{ color: "var(--color-text-secondary)", fontWeight: "600", fontSize: "13px" }}>
                   {c.dialCode}
